@@ -1,15 +1,15 @@
 [submodule "SHA-Intrinsics"]
 	path = SHA-Intrinsics
-	url = https://github.com/noloader/SHA-Intrinsics
+	url = git@github.com:noloader/SHA-Intrinsics
 [submodule "mx3"]
 	path = mx3
-	url = https://github.com/jonmaiga/mx3
+	url = git@github.com:jonmaiga/mx3
 [submodule "prvhash"]
 	path = prvhash
-	url = https://github.com/avaneev/prvhash
+	url = git@github.com:avaneev/prvhash
 [submodule "hash-garage"]
 	path = hash-garage
-	url = https://github.com/gzm55/hash-garage
+	url = git@github.com:gzm55/hash-garage
 [submodule "komihash"]
 	path = komihash
-	url = https://github.com/avaneev/komihash.git
+	url = git@github.com:avaneev/komihash.git
