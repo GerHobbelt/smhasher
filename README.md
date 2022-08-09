@@ -1,8 +1,6 @@
 SMhasher
 ========
 
-[![SMHasher support vis xs:code](doc/SMhasher-banner.png)](https://xscode.com/rurban/smhasher)
-
 [![Linux Build status](https://travis-ci.org/rurban/smhasher.svg?branch=master)](https://travis-ci.org/rurban/smhasher/) [![Windows Build status](https://ci.appveyor.com/api/projects/status/tb6ckfcrhqi6pwn9/branch/master?svg=true)](https://ci.appveyor.com/project/rurban/smhasher) [![FreeBSD Build status](https://api.cirrus-ci.com/github/rurban/smhasher.svg?branch=master)](https://cirrus-ci.com/github/rurban/smhasher)
 
 | Hash function                                 |      MiB/sec |cycl./hash|cycl./map   | size| Quality problems               |
@@ -204,6 +202,8 @@ SMhasher
 | [halftime_hash512](doc/halftime_hash512.txt)  |      7681.62 |   125.81 | 274.01 (3) |3550 |                            |
 | [nmhash32](doc/nmhash32.txt)                  |      7850.01 |    56.74 | 207.59 (1) |2445 |                            |
 | [nmhash32x](doc/nmhash32x.txt)                |      7850.92 |    46.94 | 193.94 (1) |1494 |                            |
+| [k-hashv32](doc/k-hashv32.txt)                |      7079.27 |    62.44 | 213.31 (1) |1280 |                            |
+| [k-hashv64](doc/k-hashv32.txt)                |      7850.92 |    46.94 | 193.94 (1) |1279 |                            |
 | [komihash](doc/komihash.txt)                  |     10444.53 |    39.55 | 176.50 (1) | 728 |                            |
 
 The sortable table variants:
@@ -441,8 +441,3 @@ Typical undefined behaviour (**UB**) problems:
 
   With: FNV1A\_Pippip\_Yurii, FNV1A_Totenschiff, pair\_multiply\_shift, sumhash32
   shift exponent 64 is too large for 64-bit type 'long unsigned int'
-
-SUPPORT
--------
-
-You can get professional support here: <https://xscode.com/rurban/smhasher>

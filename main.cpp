@@ -227,14 +227,14 @@ HashInfo g_hashes[] =
 #  else  
 #   define CRC32_VERIF   0x0C7346F0
 #   define CRC64_VERIF   0xE7C3FD0E
-#endif
-#ifndef HAVE_BROKEN_MSVC_CRC32C_HW
+#  endif
+# ifndef HAVE_BROKEN_MSVC_CRC32C_HW
   { crc32c_hw_test,       32, CRC32_VERIF, "crc32_hw",    "SSE4.2 crc32 in HW", POOR, {0x111c2232} /* !! */},
   { crc64c_hw_test,       64, CRC64_VERIF, "crc64_hw",    "SSE4.2 crc64 in HW", POOR, {0x0} /* !! */ },
-#endif
-#if defined(__SSE4_2__) && (defined(__i686__) || defined(_M_IX86) || defined(__x86_64__))
+# endif
+# if defined(__SSE4_2__) && (defined(__i686__) || defined(__x86_64__)) && !defined(_MSC_VER)
   { crc32c_hw1_test,      32, 0x0C7346F0,  "crc32_hw1",   "Faster Adler SSE4.2 crc32 on Intel HW", POOR, {0x111c2232} /* !! */},
-#endif
+# endif
 #endif
   // 32bit crashes
 #if defined(HAVE_CLMUL) && !defined(_MSC_VER) && defined(__x86_64__)
@@ -272,7 +272,7 @@ HashInfo g_hashes[] =
   { sdbm_test,            32, 0x582AF769, "sdbm",        "sdbm as in perl5", POOR, {0UL} /* !! */ },
   { x17_test,             32, 0x8128E14C, "x17",         "x17", POOR, {} },
   { libiberty_test,       32, 0x584FBC20, "libiberty",   "libiberty htab_hash_string", POOR, {0x2ba97ba0} },
-  { gcc_test,             32, 0x584FBC20, "gcc",         "gcc libcpp", POOR, {0xbaa0af90} },
+  { gcc_test,             32, 0xC6239327, "gcc",         "gcc libcpp", POOR, {0xbaa0af90} },
   // also called jhash:
   { JenkinsOOAT_test,     32, 0x83E133DA, "JenkinsOOAT", "Bob Jenkins' OOAT as in perl 5.18", POOR, {0UL} /* !! */ },
   { JenkinsOOAT_perl_test,32, 0xEE05869B, "JenkinsOOAT_perl", "Bob Jenkins' OOAT as in old perl5", POOR, {0UL} /* !! */},
@@ -517,7 +517,7 @@ HashInfo g_hashes[] =
   { aesnihash_test,       64, 0xA68E0D42, "aesnihash",    "majek's seeded aesnihash with aesenc, 64-bit for x64", POOR,
     {0x70736575} },
 #endif
-#if defined(HAVE_SSE2) && defined(__x86_64__) && !defined(_WIN32)
+#if defined(HAVE_SSE2) && defined(__x86_64__) && !defined(_WIN32) && !defined(_MSC_VER)
   { falkhash_test_cxx,    64, 0x2F99B071, "falkhash",    "falkhash.asm with aesenc, 64-bit for x64", POOR, {} },
 #endif
 #ifdef HAVE_MEOW_HASH
@@ -632,7 +632,7 @@ HashInfo g_hashes[] =
     {0x7fcc747f} /* !! */ },
 #endif
   { CityHash64_low_test,  32, 0xCC5BC861, "City64low",   "Google CityHash64WithSeed (low 32-bits)", GOOD, {} },
-#if defined(__SSE4_2__) && defined(__x86_64__)
+#if defined(HAVE_SSE42) && defined(__x86_64__)
   { CityHash128_test,    128, 0x6531F54E, "City128",     "Google CityHash128WithSeed (old)", GOOD, {} },
   { CityHashCrc128_test, 128, 0xD4389C97, "CityCrc128",  "Google CityHashCrc128WithSeed SSE4.2 (old)", GOOD, {} },
 #endif
@@ -732,10 +732,14 @@ HashInfo g_hashes[] =
   { wyhash_test,          64, 0x67031D43, "wyhash",         "wyhash v3 (64-bit)", GOOD,
     // all seeds with those lower bits
     { 0x14cc886e, 0x1bf4ed84, 0x14cc886e14cc886eULL} /* !! 2^33 bad seeds, but easy to check */ },
-  //{ wyhash_condom_test,   64, 0x7C62138D, "wyhash_condom",  "wyhash v3 condom 2 (64-bit)", GOOD, { } },
+  //{ wyhash_condom_test, 64, 0x7C62138D, "wyhash_condom",  "wyhash v3 condom 2 (64-bit)", GOOD, { } },
 #endif
   { nmhash32_test,        32, 0x12A30553, "nmhash32",       "nmhash32", GOOD, {}},
   { nmhash32x_test,       32, 0xA8580227, "nmhash32x",      "nmhash32x", GOOD, {}},
+#ifndef HAVE_BIT32
+  { khashv32_test,        32, 0xB69DF8EB, "k-hashv32",      "Vectorized K-HashV, 32-bit", GOOD, {}},
+  { khashv64_test,        64, 0xA6B7E55B, "k-hashv64",      "Vectorized K-HashV, 64-bit", GOOD, {}},
+#endif
 };
 
 HashInfo * findHash ( const char * name )
@@ -858,7 +862,7 @@ void Bad_Seed_init (pfHash hash, uint32_t &seed) {
           (hash == poly_3_mersenne && seed == 0x3d25f745))
     seed++;
 #endif
-#if defined(__SSE4_2__) && defined(__x86_64__)
+#if defined(HAVE_SSE42) && defined(__x86_64__)
   else if (hash == clhash_test && seed == 0x0)
     seed++;
 #endif
@@ -901,6 +905,8 @@ void Hash_Seed_init (pfHash hash, size_t seed) {
   else if(hash == hashx_test)
     hashx_seed_init(info, seed);
   */
+  else if(hash == khashv64_test || hash == khashv32_test)
+    khashv_seed_init(seed);
 #endif
 }
 

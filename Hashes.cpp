@@ -615,12 +615,14 @@ extern "C" {
 #ifdef HAVE_SSE2
   void		  hasshe2 (const void *input, int len, uint32_t seed, void *out);
 #endif
-#ifdef HAVE_SSE42
+#if defined(HAVE_SSE42)
 # ifndef HAVE_BROKEN_MSVC_CRC32C_HW
   uint32_t	  crc32c_hw(const void *input, int len, uint32_t seed);
   uint64_t	  crc64c_hw(const void *input, int len, uint32_t seed);
 # endif
+#if !defined(_MSC_VER)
   uint32_t	  crc32c(const void *input, size_t len, uint32_t seed);
+# endif
 #endif
 }
 
@@ -670,7 +672,7 @@ crc64c_hw_test(const void *input, int len, uint32_t seed, void *out)
 }
 # endif
 
-# if defined(__SSE4_2__) && (defined(__i686__) || defined(_M_IX86) || defined(__x86_64__))
+# if defined(__SSE4_2__) && (defined(__i686__) || defined(__x86_64__)) && !defined(_MSC_VER)
 /* Faster Adler SSE4.2 crc32 on Intel HW only. FIXME aarch64 */
 void
 crc32c_hw1_test(const void *input, int len, uint32_t seed, void *out)
@@ -737,7 +739,7 @@ halfsiphash_test(const void *input, int len, uint32_t seed, void *out)
 }
 
 /* https://github.com/gamozolabs/falkhash */
-#if defined(__SSE4_2__) && defined(__x86_64__)
+#if defined(__SSE4_2__) && defined(__x86_64__) && !defined(_WIN32)
 extern "C" {
   uint64_t falkhash_test(uint8_t *data, uint64_t len, uint32_t seed, void *out);
 }
@@ -1222,3 +1224,20 @@ void nmhash32_test ( const void * key, int len, uint32_t seed, void * out ) {
 void nmhash32x_test ( const void * key, int len, uint32_t seed, void * out ) {
   *(uint32_t*)out = NMHASH32X (key, (const size_t) len, seed);
 }
+
+#ifndef HAVE_BIT32
+#include "k-hashv/khashv.h"
+
+khashvSeed khashv_seed;
+void khashv_seed_init(size_t &seed) {
+  khashv_prep_seed64 (&khashv_seed, seed);
+}
+//objsize: 46b4a0-46b535: 149 + 426ad0-426f3a: 1130
+void khashv64_test ( const void *key, int len, uint32_t seed, void *out) {
+  *(uint64_t*)out = khashv64 (&khashv_seed, (const uint8_t*)key, (size_t)len);
+}
+//objsize: 46b540-46b5d6: 150 + 1130
+void khashv32_test ( const void *key, int len, uint32_t seed, void *out) {
+  *(uint32_t*)out = khashv32 (&khashv_seed, (const uint8_t*)key, (size_t)len);
+}
+#endif

@@ -78,7 +78,7 @@ void hasshe2_test(const void *key, int len, uint32_t seed, void *out);
 void crc32c_hw_test(const void *key, int len, uint32_t seed, void *out);
 void crc64c_hw_test(const void *key, int len, uint32_t seed, void *out);
 # endif
-# if defined(__SSE4_2__) && (defined(__i686__) || defined(_M_IX86) || defined(__x86_64__))
+# if defined(__SSE4_2__) && (defined(__i686__) || defined(__x86_64__)) && !defined(_MSC_VER)
 void crc32c_hw1_test(const void *key, int len, uint32_t seed, void *out);
 # endif
 static inline bool crc64c_bad_seeds(std::vector<uint64_t> &seeds)
@@ -87,7 +87,9 @@ static inline bool crc64c_bad_seeds(std::vector<uint64_t> &seeds)
   return true;
 }
 void CityHashCrc64_test(const void *key, int len, uint32_t seed, void *out);
+#if defined(__x86_64__)
 void CityHashCrc128_test(const void *key, int len, uint32_t seed, void *out);
+#endif
 #endif
 
 #if defined(HAVE_CLMUL) && !defined(_MSC_VER)
@@ -1337,8 +1339,13 @@ inline void khash64_test ( const void *key, int len, uint32_t seed, void *out) {
 }
 
 #endif // HAVE_ALIGNED_ACCESS_REQUIRED
-  
-}
+
+} // extern C
 #endif
 
-
+#ifndef HAVE_BIT32
+void khashv_seed_init(size_t &seed);
+// call to khashv_hash_vector not inlined.
+void khashv32_test ( const void *key, int len, uint32_t seed, void *out);
+void khashv64_test ( const void *key, int len, uint32_t seed, void *out);
+#endif

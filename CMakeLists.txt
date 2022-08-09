@@ -327,6 +327,9 @@ if(CMAKE_CROSSCOMPILING)
   if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
     set(SSE2_FOUND true)
     set(SSE42_FOUND true)
+  elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+    set(SSE2_FOUND true)
+    set(SSE42_FOUND true)
   else()
     set(SSE2_FOUND false)
     set(SSE42_FOUND false)
@@ -570,6 +573,7 @@ if(AVX512F_FOUND AND AVX512VL_FOUND)
     PROPERTIES COMPILE_FLAGS
                "-DBLAKE3_USE_SSE41 -DBLAKE3_USE_AVX2 -DBLAKE3_USE_AVX512 -mavx512f -mavx512vl")
 endif()
+
 if(SSE42_FOUND
    AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
    AND (NOT MSVC))
@@ -597,6 +601,9 @@ if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
   unset(PMPML_SRC)
 endif()
 
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(KHASHV_SRC k-hashv/khashv.h)
+endif()
 
 # IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/BeagleHashes_test.c") set(BEAGLE_SRC
 # BeagleHashes_test.c) set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}
@@ -689,7 +696,9 @@ add_library(
   pearson_hash/pearsonb.c
   # wyhash_condom.c
   ${ASCON_SRC}
-  ${UMASH_SRC})
+  ${UMASH_SRC}
+  ${KHASHV_SRC}
+  )
 
 add_executable(SMHasher main.cpp)
 
@@ -708,6 +717,7 @@ target_link_libraries(SMHasher SMHasherSupport
                       ${HIGHWAY_LIB} ${BLAKE3_LIB} ${AHASH_C_LIB}
                       ${CMAKE_THREAD_LIBS_INIT})
 
+SET(exectargets ${exectargets} SMHasher)
 # add_executable( bittest bittest.cpp )
 #
 # target_link_libraries( bittest SMHasherSupport ${CMAKE_THREAD_LIBS_INIT} )
@@ -727,3 +737,11 @@ add_custom_target(
   COMMAND etags --language=c++ *.cpp *.cc *.h
   DEPENDS ${SRCS}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+INSTALL(DIRECTORY ${PROJECT_SOURCE_DIR}/
+  DESTINATION include
+  FILES_MATCHING PATTERN "*.h")
+INSTALL(TARGETS SMHasherSupport
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
+INSTALL(TARGETS SMHasher RUNTIME DESTINATION bin)
