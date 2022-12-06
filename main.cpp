@@ -115,21 +115,21 @@ HashInfo g_hashes[] =
     { 0xb13dea7c9c324e51ULL, 0x75f17d6b3588f843ULL } },
 #endif
   { crc32,                32, 0x3719DB20, "crc32",       "CRC-32 soft", POOR, {} },
-  { md5_128,             128, 0xF263F96F, "md5-128",     "MD5", POOR, {} },
-  { md5_64,               64, 0x12F0BA8E, "md5-64",      "MD5, bits 32-95", POOR, {} },
-  { md5_32,               32, 0xF3DFF19F, "md5-32",      "MD5, bits 32-63", POOR, {} },
+  { md5_128,             128, 0xF263F96F, "md5-128",     "MD5", GOOD, {} },
+  { md5_64,               64, 0x12F0BA8E, "md5_64",      "MD5, bits 32-95", GOOD, {} },
+  { md5_32,               32, 0xF3DFF19F, "md5_32",      "MD5, bits 32-63", GOOD, {} },
 #ifdef _MSC_VER /* truncated long to 32 */
 #  define SHA1_VERIF            0xED2F35E4
 #  define SHA1_32_VERIF         0x00000000
 #  define SHA1_64_VERIF         0x00000000
  #else
 #  define SHA1_VERIF            0x6AF411D8
-#  define SHA1_32_VERIF         0x995397D5
-#  define SHA1_64_VERIF         0xB3122757
+#  define SHA1_32_VERIF         0xB3122757
+#  define SHA1_64_VERIF         0x995397D5
 #endif
   { sha1_160,            160, SHA1_VERIF, "sha1-160",     "SHA1", POOR},
-  { sha1_64,              64, SHA1_64_VERIF,"sha1-64",    "SHA1, low 64 bits", POOR},
-  { sha1_32,              32, SHA1_32_VERIF,"sha1-32",    "SHA1, low 32 bits", POOR},
+  { sha1_32,              32, SHA1_32_VERIF,"sha1_32",    "SHA1, low 32 bits", POOR},
+  { sha1_64,              64, SHA1_64_VERIF,"sha1_64",    "SHA1, low 64 bits", POOR},
   { sha2_224,            224, 0x407AA518, "sha2-224",     "SHA2-224", POOR, {} },
   { sha2_224_64,          64, 0xF3E40ECA, "sha2-224_64",  "SHA2-224, low 64 bits", POOR, {} },
   { sha2_256,            256, 0xEBDA2FB1, "sha2-256",     "SHA2-256", GOOD, {} },
@@ -249,8 +249,8 @@ HashInfo g_hashes[] =
   { fibonacci_test, __WORDSIZE, FIBONACCI_VERIF, "fibonacci",   "wordwise Fibonacci", POOR,
     {0x0, 0xffffffff00000000ULL} /* !! all keys ending with 0x0000_0000 */ },
 #ifndef HAVE_ALIGNED_ACCESS_REQUIRED
-  { khash32_test,         32, 0x99B3FFCD, "k-hash32",    "K-Hash mixer, 32-bit", POOR, {0,1,2,3,5,0x40000001} /*... !!*/},
-  { khash64_test,         64, 0xAB5518A1, "k-hash64",    "K-Hash mixer, 64-bit", POOR, {0,1,2,3,4,5} /*...!!*/},
+  { khash32_test,         32, 0x99B3FFCD, "k-hash32",    "K-Hash mixer, 32-bit", GOOD, {} },
+  { khash64_test,         64, 0xAB5518A1, "k-hash64",    "K-Hash mixer, 64-bit", GOOD, {} },
 #endif
   { FNV32a_test,          32, 0xE3CBBE91, "FNV1a",       "Fowler-Noll-Vo hash, 32-bit", POOR,
     {0x811c9dc5} /* !! */ },
@@ -636,7 +636,7 @@ HashInfo g_hashes[] =
   { CityHashCrc128_test, 128, 0xD4389C97, "CityCrc128",  "Google CityHashCrc128WithSeed SSE4.2 (old)", GOOD, {} },
 #endif
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(HAVE_ASAN)
 #  define FARM64_VERIF        0x0
 #  define FARM128_VERIF       0x0
 #else
@@ -736,8 +736,15 @@ HashInfo g_hashes[] =
   { nmhash32_test,        32, 0x12A30553, "nmhash32",       "nmhash32", GOOD, {}},
   { nmhash32x_test,       32, 0xA8580227, "nmhash32x",      "nmhash32x", GOOD, {}},
 #ifndef HAVE_BIT32
-  { khashv32_test,        32, 0xB69DF8EB, "k-hashv32",      "Vectorized K-HashV, 32-bit", GOOD, {}},
-  { khashv64_test,        64, 0xA6B7E55B, "k-hashv64",      "Vectorized K-HashV, 64-bit", GOOD, {}},
+#ifdef __clang__ // also gcc 9.4
+#define KHASHV32_VERIF  0xB69DF8EB
+#define KHASHV64_VERIF  0xA6B7E55B
+#else // new gcc-11
+#define KHASHV32_VERIF  0 /* 0x9A8F7952 */
+#define KHASHV64_VERIF  0 /* 0X90A2A4F9 */
+#endif
+  { khashv32_test,        32, KHASHV32_VERIF, "k-hashv32",      "Vectorized K-HashV, 32-bit", GOOD, {}},
+  { khashv64_test,        64, KHASHV64_VERIF, "k-hashv64",      "Vectorized K-HashV, 64-bit", GOOD, {}},
 #endif
 };
 
@@ -1653,7 +1660,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
 
     bool result = true;
 
-    result &= SeedTest<hashtype>( hash, 5000000, g_drawDiagram );
+    result &= SeedTest<hashtype>( hash, 5000000U, g_drawDiagram );
 
     if(!result) printf("*********FAIL*********\n");
     printf("\n");
