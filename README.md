@@ -77,8 +77,6 @@ SMhasher
 | [JenkinsOOAT](doc/JenkinsOOAT.txt)            |       452.48 |   142.85 | 213.93 (2) | 153 | bad seed 0, 53.5% bias, fails all tests  |
 | [JenkinsOOAT_perl](doc/JenkinsOOAT_perl.txt)  |       452.49 |   118.78 | 194.78 (1) |  65 | bad seed 0, 1.5-11.5% bias, 7.2x collisions, BIC, LongNeighbors |
 | [MicroOAAT](doc/MicroOAAT.txt)                |       977.60 |    59.61 | 185.06 (2) |  68 | 100% bias, distrib, BIC      |
-| [beamsplitter](doc/beamsplitter.txt)          |       789.22 |   682.45 |1150.33 (26)|4203 | UB, too many bad seeds       |
-| [BEBB4185](doc/BEBB4185.txt)                  |      2951.62 |   222.03 | 343.63 (4) |1294 | UB, too many bad seeds, msvc-specific |
 | [pearsonhash64](doc/pearsonhash64.txt)        |       287.95 |   174.11 | 196.50 (1) |     | Avalanche, Seed, SSSE3 only. broken MSVC     |
 | [pearsonhash128](doc/pearsonhash128.txt)      |       287.95 |   171.72 | 194.61 (1) |     | Avalanche, Seed, SSSE3 only. broken MSVC     |
 | [pearsonhash256](doc/pearsonhash256.txt)      |       264.51 |   184.87 | 218.79 (0) |     | Avalanche, Seed, SSSE3 only. broken MSVC     |
@@ -128,6 +126,8 @@ SMhasher
 | --------------------------------------        |              |          |            |     |                            |
 | [tifuhash_64](doc/tifuhash_64.txt)            |        35.60 |  1679.52 |1212.75 (15)| 276 | Cyclic low32               |
 | [floppsyhash](doc/floppsyhash.txt)            |        35.72 |  1868.92 |1411.07 (7) | 623 |                            |
+| [beamsplitter](doc/beamsplitter.txt)          |       789.22 |   682.45 |1150.33 (26)|4203 | UB       |
+| [BEBB4185](doc/BEBB4185.txt)                  |      2951.62 |   222.03 | 343.63 (4) |1294 | UB, msvc-specific |
 | [chaskey](doc/chaskey.txt)                    |       753.23 |   153.42 | 288.26 (2) |1609 | PerlinNoise                |
 | [SipHash](doc/SipHash.txt)                    |       980.88 |   127.77 | 246.19 (4) |1071 |                            |
 | [HalfSipHash](doc/HalfSipHash.txt)            |       755.78 |   114.47 | 243.72 (4) | 700 | zeroes                     |
@@ -147,13 +147,13 @@ SMhasher
 | [clhash](doc/clhash.txt)                      |      4472.31 |    82.72 | 229.73 (3) |1809 | PerlinNoise, machine-specific (x64 SSE4.2) |
 | [HighwayHash64](doc/HighwayHash64.txt)        |      6242.58 |    99.55 | 248.41 (3) |2546 |                            |
 | [Murmur3F](doc/Murmur3F.txt)                  |      5226.40 |    52.18 | 175.85 (1) | 699 | UB                         |
-| [fasthash32](doc/fasthash32.txt)              |      4737.61 |    45.32 | 181.86 (2) | 566 | UB, insecure                         |
-| [fasthash64](doc/fasthash64.txt)              |      4737.21 |    42.79 | 164.87 (2) | 509 | UB, insecure, Moment Chi2 5159 !     |
 | [MUM](doc/MUM.txt)                            |      7134.56 |    37.85 | 172.34 (1) |1912 | UB, too many bad seeds, machine-specific (32/64 differs) |
 | [MUMlow](doc/MUMlow.txt)                      |      7225.18 |    37.85 | 197.92 (3) |1912 | UB, 5 bad seeds                      |
 | [mirhash](doc/mirhash.txt)                    |      5413.73 |    39.68 | 154.47 (3) |1112 | UB, 2^36 bad seeds, LongNeighbors, machine-specific (32/64 differs) |
 | [mirhashstrict](doc/mirhashstrict.txt)        |      2217.32 |    65.53 | 182.07 (2) |1112 |                            |
 | [mirhashstrict32low](doc/mirhashstrict32low.txt)|    2218.87 |    65.48 | 190.59 (4) |1112 | 1 bad seed, MomentChi2 9   |
+| [fasthash32](doc/fasthash32.txt)              |      4737.61 |    45.32 | 181.86 (2) | 566 | UB                         |
+| [fasthash64](doc/fasthash64.txt)              |      4737.21 |    42.79 | 164.87 (2) | 509 | UB                         |
 | [mx3](doc/mx3.txt)                            |      6146.02 |    52.48 | 173.09 (3) | 734 | UB                         |
 | [pengyhash](doc/pengyhash.txt)                |      8744.48 |    85.31 | 222.45 (4) | 421 |                            |
 | [City32](doc/City32.txt)                      |      3675.04 |    57.73 | 212.04 (3) |1319 |                            |
@@ -191,8 +191,8 @@ SMhasher
 | [t1ha0_aes_avx1](doc/t1ha0_aes_avx1)          |     22714.85 |    48.12 | 226.52 (16)| 843 | LongNeighbors, machine-specific (x64 AVX.txt)|
 | [t1ha0_aes_avx2](doc/t1ha0_aes_avx2.txt)      |     22345.33 |    44.38 | 556.47 (89)| 792 | LongNeighbors, machine-specific (x64 AVX2)   |
 | [wyhash32](doc/wyhash32.txt)                  |      2532.89 |    48.40 | 484.57 (1) | 426 | 2 bad seeds, 32-bit           |
-| [wyhash32low](doc/wyhash32low.txt)            |     12911.09 |    29.59 | 205.43 (2) | 474 | 2 bad seeds                  |
-| [wyhash](doc/wyhash.txt)                      |     12879.00 |    30.35 | 196.77 (2) | 474 | 2^33 bad seeds               |
+| [wyhash32low](doc/wyhash32low.txt)            |     12911.09 |    29.59 | 205.43 (2) | 474 | 2 bad seeds, PerlinNoise AV   |
+| [wyhash](doc/wyhash.txt)                      |     12879.00 |    30.35 | 196.77 (2) | 474 | 2^33 bad seeds, PerlinNoise AV|
 | [umash32](doc/umash32.txt)                    |      4633.19 |    53.42 | 216.33 (3) |1530 |                            |
 | [umash32_hi](doc/umash32_hi.txt)              |      4662.92 |    54.22 | 214.20 (2) |1530 |                            |
 | [umash64](doc/umash64.txt)                    |      4662.09 |    53.42 | 188.09 (1) |1530 |                            |
