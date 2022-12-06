@@ -756,7 +756,24 @@ inline void md5_32(const void *key, int len, uint32_t seed, void *out) {
   md5_update( &md5_ctx, (unsigned char *)key, len );
   md5_finish( &md5_ctx, hash );
   //memset( &md5_ctx.buffer, 0, 64+64+64 ); // for buffer, ipad, opad
-  memcpy(out, hash, 4);
+
+  // The "B" state was modified last in the hash round, so return the
+  // second word of output.
+  memcpy(out, hash + 4, 4);
+}
+
+inline void md5_64(const void *key, int len, uint32_t seed, void *out) {
+  unsigned char hash[16];
+  md5_context md5_ctx;
+  md5_starts( &md5_ctx );
+  md5_ctx.state[0] ^= seed;
+  md5_update( &md5_ctx, (unsigned char *)key, len );
+  md5_finish( &md5_ctx, hash );
+  //memset( &md5_ctx.buffer, 0, 64+64+64 ); // for buffer, ipad, opad
+
+  // The "B" and "C" states were modified last in the hash rounds, so
+  // return the second and third word of output.
+  memcpy(out, hash + 4, 8);
 }
 
 #include "sha1.h"
@@ -766,38 +783,25 @@ inline void sha1_160(const void *key, int len, uint32_t seed, void *out) {
   SHA1_Init(&context);
   context.state[0] ^= seed;
   SHA1_Update(&context, (uint8_t*)key, len);
-  SHA1_Final(&context, (uint8_t*)out);
+  SHA1_Final(&context, SHA1_DIGEST_SIZE, (uint8_t*)out);
 }
 
-void SHA1_Update(SHA1_CTX *context, const uint8_t *data, const size_t len);
-inline void sha1_32a(const void *key, int len, uint32_t seed, void *out) {
+inline void sha1_32(const void *key, int len, uint32_t seed, void *out) {
   SHA1_CTX context;
-  uint8_t *digest = (uint8_t *)out;
 
   SHA1_Init(&context);
   context.state[0] ^= seed;
   SHA1_Update(&context, (uint8_t *)key, len);
-  //SHA1_Final(&context, digest); //inlined below
-  //memcpy(out, digest, 4);
+  SHA1_Final(&context, 4, (uint8_t *)out);
+}
 
-  unsigned i;
-  uint8_t finalcount[8];
-  uint8_t c;
-  for (i = 0; i < 8; i++) {
-    finalcount[i] =
-        /* Endian independent */
-        (uint8_t)(context.count[(i >= 4 ? 0 : 1)] >> ((3 - (i & 3)) * 8));
-  }
-  c = 0200;
-  SHA1_Update(&context, &c, 1);
-  while ((context.count[0] & 504) != 448) {
-    c = 0000;
-    SHA1_Update(&context, &c, 1);
-  }
-  SHA1_Update(&context, finalcount, 8); /* Should cause a SHA1_Transform() */
-  for (i = 0; i < 4; i++) { // only the needed bytes
-    digest[i] = (uint8_t)(context.state[i >> 2] >> ((3 - (i & 3)) * 8));
-  }
+inline void sha1_64(const void *key, int len, uint32_t seed, void *out) {
+  SHA1_CTX context;
+
+  SHA1_Init(&context);
+  context.state[0] ^= seed;
+  SHA1_Update(&context, (uint8_t *)key, len);
+  SHA1_Final(&context, 8, (uint8_t *)out);
 }
 
 #include "tomcrypt.h"
