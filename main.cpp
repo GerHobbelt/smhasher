@@ -803,9 +803,9 @@ void Hash_init (HashInfo* info) {
 
 // optional hash seed initializers.
 // esp. for Hashmaps, whenever the seed changes, for expensive seeding.
-void Seed_init (HashInfo* info, size_t seed) {
-  Hash_Seed_init (info->hash, seed);
+bool Seed_init (HashInfo* info, size_t seed) {
   //Bad_Seed_init (info->hash, seed);
+  return Hash_Seed_init (info->hash, seed);
 }
 
 // Needed for hashed with a few bad seeds, to reject this seed and generate a new one.
@@ -866,7 +866,7 @@ void Bad_Seed_init (pfHash hash, uint32_t &seed) {
 #endif
 }
 
-void Hash_Seed_init (pfHash hash, size_t seed) {
+bool Hash_Seed_init (pfHash hash, size_t seed) {
   uint32_t seed32 = seed;
   //if (hash == md5_128 || hash == md5_32)
   //  md5_seed_init(seed);
@@ -906,6 +906,9 @@ void Hash_Seed_init (pfHash hash, size_t seed) {
   else if(hash == khashv64_test || hash == khashv32_test)
     khashv_seed_init(seed);
 #endif
+  else
+      return false;
+  return true;
 }
 
 
@@ -1050,7 +1053,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
       trials = 5;
     bool result = true;
     if (info->quality == SKIP) {
-      result = false;
+      printf("Skipping Hashmap test; it is designed for true hashes\n");
     } else {
       std::vector<std::string> words = HashMapInit(g_drawDiagram);
       if (words.size()) {
@@ -2150,6 +2153,11 @@ static char* strndup(char const *s, size_t n)
 }
 #endif
 
+void usage( void )
+{
+    printf("Usage: SMHasher [--list][--listnames][--tests] [--verbose][--extra]\n"
+           "       [--test=Speed,...] hash\n");
+}
 
 int main ( int argc, const char ** argv )
 {
@@ -2165,8 +2173,7 @@ int main ( int argc, const char ** argv )
 
   if (argc < 2) {
     printf("No test hash given on command line, testing %s.\n", hashToTest);
-    printf("Usage: SMHasher [--list][--listnames][--tests] [--verbose][--extra]\n"
-           "       [--test=Speed,...] hash\n");
+    usage();
   }
 
   for (int argnb = 1; argnb < argc; argnb++) {
@@ -2174,8 +2181,7 @@ int main ( int argc, const char ** argv )
     if (strncmp(arg,"--", 2) == 0) {
       // This is a command
       if (strcmp(arg,"--help") == 0) {
-        printf("Usage: SMHasher [--list][--listnames][--tests] [--verbose][--extra]\n"
-               "       [--test=Speed,...] hash\n");
+        usage();
         exit(0);
       }
       if (strcmp(arg,"--list") == 0) {
@@ -2261,8 +2267,7 @@ int main ( int argc, const char ** argv )
       }
       // invalid command
       printf("Invalid command \n");
-      printf("Usage: SMHasher [--list][--listnames][--tests] [--verbose][--extra]\n"
-             "       [--test=Speed,...] hash\n");
+      usage();
       exit(1);
     }
     // Not a command ? => interpreted as hash name

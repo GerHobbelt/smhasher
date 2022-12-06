@@ -2,7 +2,7 @@
 
 #include "Platform.h"
 #include "Random.h"
-void Seed_init (HashInfo* info, size_t seed);
+bool Seed_init (HashInfo* info, size_t seed);
 
 #include <map>
 #include <set>
@@ -60,7 +60,7 @@ bool VerificationTest ( HashInfo* info, bool verbose )
       return true;
     } else {
       if (verbose)
-        printf("Verification value 0x%08X ....... FAIL! (Expected 0x%08X)\n",
+        printf("Verification value 0x%08X ....... FAIL! (Expected 0x%08x)\n",
                verification, expected);
       return false;
     }
