@@ -2155,6 +2155,9 @@ static char* strndup(char const *s, size_t n)
 
 int main ( int argc, const char ** argv )
 {
+  setbuf(stdout, NULL); // Unbuffer stdout always
+  setbuf(stderr, NULL); // Unbuffer stderr always
+
 #if defined(__x86_64__) || defined(_M_X64) || defined(_X86_64_)
   const char * defaulthash = "xxh3";
 #else
@@ -2272,11 +2275,11 @@ int main ( int argc, const char ** argv )
   //SetAffinity((1 << 2));
   //SelfTest();
 
-  int timeBegin = clock();
+  clock_t timeBegin = clock();
 
   testHash(hashToTest);
 
-  int timeEnd = clock();
+  clock_t timeEnd = clock();
 
   printf("\n");
   fflush(NULL);
