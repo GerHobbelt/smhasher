@@ -558,17 +558,13 @@ HashInfo g_hashes[] =
   { xxh128low_test,       64, 0x54D1CC70, "xxh128low",   "xxHash v3, 128-bit, low 64-bits part", GOOD,
     {0x47ebda34}},
 #ifdef HAVE_BIT32
-  { wyhash32_test,        32, 0x09DE8066, "wyhash32",       "wyhash v3 (32-bit native)", GOOD,
-    { 0x429dacdd, 0xd637dbf3 } /* !! */ },
+  { wyhash32_test,        32, 0x09DE8066, "wyhash32",    "wyhash v4 (32-bit native)", GOOD,
+    { 0x51a43a0f, 0x522235ae, 0x99ac2b20 } },
 #else
-  { wyhash32low,          32, 0x7DB3559D, "wyhash32low",    "wyhash v3 lower 32bit", GOOD,
-    { 0x429dacdd, 0xd637dbf3 } /* !! */ },
-#endif
-#ifdef HAVE_INT64
-  { wyhash_test,          64, 0x67031D43, "wyhash",         "wyhash v3 (64-bit)", GOOD,
-    // all seeds with those lower bits
-    { 0x14cc886e, 0x1bf4ed84, 0x14cc886e14cc886eULL} /* !! 2^33 bad seeds, but easy to check */ },
-  //{ wyhash_condom_test, 64, 0x7C62138D, "wyhash_condom",  "wyhash v3 condom 2 (64-bit)", GOOD, { } },
+  { wyhash32low,          32, 0x006B76C4, "wyhash32low", "wyhash v4.1 lower 32bit", GOOD,
+    { 0x138d5f9f, 0x1e4f8661, 0x29362732, 0x49a7ee03, 0x4d29ced1, 0x5ee3628c, 0x833f0eb6,
+      0x928fce63, 0x99be0ae5, 0xac470842, 0xcaf21e71, 0xfc1c4878 } },
+  { wyhash_test,          64, 0xBD5E840C, "wyhash", "wyhash v4.1 (64-bit)", GOOD, {}},
 #endif
   { nmhash32_test,        32, 0x12A30553, "nmhash32",       "nmhash32", GOOD, {}},
   { nmhash32x_test,       32, 0xA8580227, "nmhash32x",      "nmhash32x", GOOD, {}},
@@ -659,20 +655,12 @@ bool Seed_init (HashInfo* info, size_t seed) {
 // Needed for hashed with a few bad seeds, to reject this seed and generate a new one.
 // (GH #99)
 void Bad_Seed_init (pfHash hash, uint32_t &seed) {
-  if(hash ==
-#ifdef HAVE_BIT32
-          wyhash32_test
-#else
-          wyhash32low
-#endif
-          )
-    wyhash32_seed_init(seed);
   // zero-seed hashes:
-  else if (!seed && (hash == BadHash || hash == sumhash || hash == fletcher2_test ||
-                     hash == fletcher4_test || hash == Bernstein_test || hash == sdbm_test ||
-                     hash == JenkinsOOAT_test || hash == JenkinsOOAT_perl_test ||
-                     hash == SuperFastHash_test || hash == MurmurOAAT_test ||
-                     hash == o1hash_test))
+  if (!seed && (hash == BadHash || hash == sumhash || hash == fletcher2_test ||
+                hash == fletcher4_test || hash == Bernstein_test || hash == sdbm_test ||
+                hash == JenkinsOOAT_test || hash == JenkinsOOAT_perl_test ||
+                hash == SuperFastHash_test || hash == MurmurOAAT_test ||
+                hash == o1hash_test))
     seed++;
   else if (hash == Crap8_test && (seed == 0x83d2e73b || seed == 0x97e1cc59))
     seed++;
@@ -686,12 +674,16 @@ void Bad_Seed_init (pfHash hash, uint32_t &seed) {
     seed++;
   else if (hash == MurmurHash3_x86_128 && seed == 0x239b961b)
     seed++;
+#ifdef HAVE_BIT32
+  else if(hash == wyhash32_test)
+    wyhash32_seed_init(seed);
+#elif defined HAVE_INT64
+  //else if(hash == wyhash_test)
+  //  wyhash_seed_init(seed);
+  else if(hash == wyhash32low)
+    wyhash32low_seed_init(seed);
+#endif
 #ifdef HAVE_INT64
-  else if(hash == wyhash_test) {
-    size_t seedl = seed;
-    wyhash_seed_init(seedl);
-    seed = seedl;
-  }
   else if(hash == mirhash_test)
     mirhash_seed_init(seed);
   else if(hash == mirhash32low)
