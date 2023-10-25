@@ -371,8 +371,8 @@ HashInfo g_hashes[] =
   { aesnihash_test,       64, 0xA68E0D42, "aesnihash",    "majek's seeded aesnihash with aesenc, 64-bit for x64", POOR,
     {0x70736575} },
 
-  { aesni128_test,       128, 0xDBF4A092, "aesni",    "aesni 128bit", GOOD,{} },
-  { aesni64_test,         64, 0xD5E8F2D5, "aesni-low","aesni 64bit",  GOOD,{} },
+  { aesni128_test,       128, 0xF616EDFC, "aesni",    "aesni 128bit", GOOD,{} },
+  { aesni64_test,         64, 0x52ED7AD7, "aesni-low","aesni 64bit",  GOOD,{} },
 #endif
 #if defined(HAVE_SSE2) && defined(__x86_64__) && !defined(_WIN32) && !defined(_MSC_VER)
   { falkhash_test_cxx,    64, 0x2F99B071, "falkhash",    "falkhash.asm with aesenc, 64-bit for x64", POOR, {} },
@@ -419,7 +419,7 @@ HashInfo g_hashes[] =
   { prvhash64s_64test,    64, 0x891521D6, "prvhash64s_64", "prvhash64s 4.3 64bit", GOOD, {} }, // seed changes
   { prvhash64s_128test,  128, 0x0199728A, "prvhash64s_128","prvhash64s 4.3 128bit", GOOD, {} }, // seed compiler-specific
 #endif
-  { komihash_test,        64, 0x703624A4, "komihash",      "komihash 4.5", GOOD, {} },
+  { komihash_test,        64, 0x8157FF6D, "komihash",      "komihash 5.0", GOOD, {} },
   // as in rust and swift:
   { siphash13_test,       64, 0x29C010BF, "SipHash13",   "SipHash 1-3 - SSSE3 optimized", GOOD, {} },
 #ifndef _MSC_VER
