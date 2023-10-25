@@ -66,6 +66,7 @@ SMhasher
 | [FNV1a_YT](doc/FNV1a_YT.txt)                  |     13451.31 |    30.57 | 244.22 (5) | 321 | bad seed, UB, fails all tests          |
 | [FNV2](doc/FNV2.txt)                          |      6199.86 |    32.10 | 216.13 (5) | 278 | fails all tests              |
 | [FNV64](doc/FNV64.txt)                        |       762.15 |    73.38 | 204.27 (5) |  79 | fails all tests              |
+| [FNV128](doc/FNV128.txt)                      |       388.63 |   138.02 | 310.77 (11)| 171 | fails all tests              |
 | [k-hash32](doc/k-hash32.txt)                  |      2221.69 |    53.26 | 264.07 (4) | 808 | insecure, zeros, UB, bad seeds, fails all tests       |
 | [k-hash64](doc/k-hash64.txt)                  |      2418.02 |    49.37 | 247.61 (4) | 609 | insecure, zeros, UB, bad seeds, fails all tests       |
 | [fletcher2](doc/fletcher2.txt)                |     15241.81 |    21.05 | 349.08 (4) | 248 | bad seed 0, UB, fails all tests          |
@@ -119,7 +120,7 @@ SMhasher
 | [t1ha0_32be](doc/t1ha0_32be.txt)              |      6754.43 |    50.64 | 253.15 (7) | 533 | Sparse, LongNeighbors      |
 | [t1ha2_stream](doc/t1ha2_stream.txt)          |     13718.38 |    82.35 | 293.58 (5) |1665 | Sparse, Permutation, LongNeighbors |
 | [t1ha2_stream128](doc/t1ha2_stream128.txt)    |     13801.39 |    96.21 | 320.21 (6) |1665 | Sparse, Permutation, LongNeighbors |
-| [aesnihash](doc/aesnihash.txt)                |      5410.11 |    58.63 | 272.33 (5) |1209 | fails many tests, machine-specific (x64 AES-NI) |
+| [aesnihash](doc/aesnihash.txt)                |      5183.33 |    58.52 | 322.74 (36)|1209 | fails many tests, machine-specific (x64 AES-NI) |
 | [falkhash](doc/falkhash.txt)                  |     50838.94 |   123.38 | 330.16 (6) | 264 | Sparse, LongNeighbors, machine-specific (x64 AES-NI) |
 | [MeowHash](doc/MeowHash.txt)                  |     29521.98 |    65.83 | 287.28 (4) |1764 | Sparse, invertible, machine-specific (x64 AES-NI)  |
 | [MeowHash64low](doc/MeowHash64low.txt)        |     29793.14 |    65.24 | 285.78 (5) |1764 | Sparse, invertible, machine-specific (x64 AES-NI)    |
@@ -155,6 +156,8 @@ SMhasher
 | [mirhashstrict32low](doc/mirhashstrict32low.txt)|      3566.47 |    49.73 | 263.25 (4) |1112 | 1 bad seed, MomentChi2 9   |
 | [fasthash32](doc/fasthash32.txt)              |      6075.38 |    40.68 | 262.40 (6) | 566 | UB                         |
 | [fasthash64](doc/fasthash64.txt)              |      6173.22 |    38.08 | 228.68 (6) | 509 | UB                         |
+| [aesni](doc/aesni.txt)                        |      6104.04 |    31.60 | 272.99 (21)| 519 | !msvc, machine-specific (x64 AES-NI)           |
+| [aesni-low](doc/aesni-low.txt)                |      6063.23 |    31.78 | 239.88 (24)| 519 | !msvc, machine-specific (x64 AES-NI)           |
 | [mx3](doc/mx3.txt)                            |      9039.63 |    48.63 | 236.57 (5) | 734 | UB                         |
 | [pengyhash](doc/pengyhash.txt)                |     13293.76 |    75.49 | 286.41 (6) | 421 |                            |
 | [City32](doc/City32.txt)                      |      5637.89 |    53.19 | 260.99 (6) |1319 |                            |
@@ -210,9 +213,9 @@ SMhasher
 
 The sortable table variants:
 
-* **[Default Intel i5-2300 2.8GHz](https://rurban.github.io/smhasher/doc/table.html)**
+* **[Default AMD Ryzen 5 3350G 3.6GHz](https://rurban.github.io/smhasher/doc/table.html)**
+* [Intel i5-2300 2.8GHz](https://rurban.github.io/smhasher/doc/intel.html)
 * [Intel i5-2300 2.8GHz 32bit](https://rurban.github.io/smhasher/doc/i686.html)
-* [AMD Ryzen 5 3350G 3.6GHz](https://rurban.github.io/smhasher/doc/ryzen5.html)
 * [AMD Ryzen 3 3200U 3.5GHz](https://rurban.github.io/smhasher/doc/ryzen3.html)
 * [Mac Air i7-4650](https://rurban.github.io/smhasher/doc/air.html)
 * [Cortex-A53 2GHz (Sony XPeria L4)](https://rurban.github.io/smhasher/doc/phone.html)

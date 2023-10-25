@@ -263,6 +263,7 @@ HashInfo g_hashes[] =
     {0x811c9dc5, 0x23d4a49d} /* !! */ },
   { FNV64a_test,          64, 0x103455FC, "FNV64",       "Fowler-Noll-Vo hash, 64-bit", POOR,
     {0x811c9dc5, 0xcbf29ce4, 0x84222325, 0xcbf29ce484222325} /* TODO */},
+  { FNV128_test,         128, 0xBCAA1426, "FNV128",      "Go variant of FNV, 128-bit", POOR, {} },
 #endif
   { FNV2_test,    __WORDSIZE, FNV2_VERIF, "FNV2",        "wordwise FNV", POOR, {} },
   { fletcher2_test,       64, 0x890767C0, "fletcher2",   "fletcher2 ZFS", POOR, {0UL} /* !! */ },
@@ -369,6 +370,9 @@ HashInfo g_hashes[] =
 #if defined(HAVE_SSE2) && defined(HAVE_AESNI) && !defined(_MSC_VER)
   { aesnihash_test,       64, 0xA68E0D42, "aesnihash",    "majek's seeded aesnihash with aesenc, 64-bit for x64", POOR,
     {0x70736575} },
+
+  { aesni128_test,       128, 0xD82C9011, "aesni",    "aesni 128bit", GOOD,{} },
+  { aesni64_test,         64, 0x84DB5954, "aesni-low","aesni 64bit",  GOOD,{} },
 #endif
 #if defined(HAVE_SSE2) && defined(__x86_64__) && !defined(_WIN32) && !defined(_MSC_VER)
   { falkhash_test_cxx,    64, 0x2F99B071, "falkhash",    "falkhash.asm with aesenc, 64-bit for x64", POOR, {} },
