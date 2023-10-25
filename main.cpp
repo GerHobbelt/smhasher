@@ -305,7 +305,7 @@ HashInfo g_hashes[] =
   { farsh128_test,       128, 0x82B6CBEC, "farsh128",    "FARSH 128bit", POOR, {} },
   { farsh256_test,       256, 0xFEBEA0BC, "farsh256",    "FARSH 256bit", POOR, {} },
 #endif
-  { jodyhash32_test,      32, 0xA2AEFC60, "jodyhash32",  "jodyhash, 32-bit (v6)", POOR, {} },
+  { jodyhash32_test,      32, 0xA2AEFC60, "jodyhash32",  "jodyhash, 32-bit (v6)", POOR, {0x9fd368f4} /* !! */ },
 #ifdef HAVE_INT64
   { jodyhash64_test,      64, 0xC1CBFA34, "jodyhash64",  "jodyhash, 64-bit (v7.1)", POOR, {} },
 #endif
@@ -371,8 +371,8 @@ HashInfo g_hashes[] =
   { aesnihash_test,       64, 0xA68E0D42, "aesnihash",    "majek's seeded aesnihash with aesenc, 64-bit for x64", POOR,
     {0x70736575} },
 
-  { aesni128_test,       128, 0xD82C9011, "aesni",    "aesni 128bit", GOOD,{} },
-  { aesni64_test,         64, 0x84DB5954, "aesni-low","aesni 64bit",  GOOD,{} },
+  { aesni128_test,       128, 0xDBF4A092, "aesni",    "aesni 128bit", GOOD,{} },
+  { aesni64_test,         64, 0xD5E8F2D5, "aesni-low","aesni 64bit",  GOOD,{} },
 #endif
 #if defined(HAVE_SSE2) && defined(__x86_64__) && !defined(_WIN32) && !defined(_MSC_VER)
   { falkhash_test_cxx,    64, 0x2F99B071, "falkhash",    "falkhash.asm with aesenc, 64-bit for x64", POOR, {} },
