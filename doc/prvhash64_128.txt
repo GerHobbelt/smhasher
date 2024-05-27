@@ -10,48 +10,48 @@ Running AppendedZeroesTest .......... PASS
 [[[ Speed Tests ]]]
 
 Bulk speed test - 262144-byte keys
-Alignment  7 -  1.386 bytes/cycle - 3966.33 MiB/sec @ 3 ghz
-Alignment  6 -  1.393 bytes/cycle - 3985.21 MiB/sec @ 3 ghz
-Alignment  5 -  1.389 bytes/cycle - 3973.89 MiB/sec @ 3 ghz
-Alignment  4 -  1.390 bytes/cycle - 3978.01 MiB/sec @ 3 ghz
-Alignment  3 -  1.390 bytes/cycle - 3977.66 MiB/sec @ 3 ghz
-Alignment  2 -  1.387 bytes/cycle - 3969.48 MiB/sec @ 3 ghz
-Alignment  1 -  1.389 bytes/cycle - 3974.49 MiB/sec @ 3 ghz
-Alignment  0 -  1.390 bytes/cycle - 3977.12 MiB/sec @ 3 ghz
-Average      -  1.389 bytes/cycle - 3975.27 MiB/sec @ 3 ghz
+Alignment  7 -  1.172 bytes/cycle - 3353.84 MiB/sec @ 3 ghz
+Alignment  6 -  1.172 bytes/cycle - 3353.90 MiB/sec @ 3 ghz
+Alignment  5 -  1.172 bytes/cycle - 3352.55 MiB/sec @ 3 ghz
+Alignment  4 -  1.172 bytes/cycle - 3354.53 MiB/sec @ 3 ghz
+Alignment  3 -  1.172 bytes/cycle - 3353.17 MiB/sec @ 3 ghz
+Alignment  2 -  1.172 bytes/cycle - 3353.82 MiB/sec @ 3 ghz
+Alignment  1 -  1.172 bytes/cycle - 3354.15 MiB/sec @ 3 ghz
+Alignment  0 -  1.172 bytes/cycle - 3354.48 MiB/sec @ 3 ghz
+Average      -  1.172 bytes/cycle - 3353.81 MiB/sec @ 3 ghz
 
-Small key speed test -    1-byte keys -    73.73 cycles/hash
-Small key speed test -    2-byte keys -    74.24 cycles/hash
-Small key speed test -    3-byte keys -    74.83 cycles/hash
-Small key speed test -    4-byte keys -    73.53 cycles/hash
-Small key speed test -    5-byte keys -    73.43 cycles/hash
-Small key speed test -    6-byte keys -    73.30 cycles/hash
-Small key speed test -    7-byte keys -    73.31 cycles/hash
-Small key speed test -    8-byte keys -    65.91 cycles/hash
-Small key speed test -    9-byte keys -    67.26 cycles/hash
-Small key speed test -   10-byte keys -    67.44 cycles/hash
-Small key speed test -   11-byte keys -    68.11 cycles/hash
-Small key speed test -   12-byte keys -    67.65 cycles/hash
-Small key speed test -   13-byte keys -    67.83 cycles/hash
-Small key speed test -   14-byte keys -    67.77 cycles/hash
-Small key speed test -   15-byte keys -    67.80 cycles/hash
-Small key speed test -   16-byte keys -    68.20 cycles/hash
-Small key speed test -   17-byte keys -    68.30 cycles/hash
-Small key speed test -   18-byte keys -    68.53 cycles/hash
-Small key speed test -   19-byte keys -    69.43 cycles/hash
-Small key speed test -   20-byte keys -    68.96 cycles/hash
-Small key speed test -   21-byte keys -    68.96 cycles/hash
-Small key speed test -   22-byte keys -    68.97 cycles/hash
-Small key speed test -   23-byte keys -    68.94 cycles/hash
-Small key speed test -   24-byte keys -    75.52 cycles/hash
-Small key speed test -   25-byte keys -    75.79 cycles/hash
-Small key speed test -   26-byte keys -    75.71 cycles/hash
-Small key speed test -   27-byte keys -    75.79 cycles/hash
-Small key speed test -   28-byte keys -    75.54 cycles/hash
-Small key speed test -   29-byte keys -    75.48 cycles/hash
-Small key speed test -   30-byte keys -    75.51 cycles/hash
-Small key speed test -   31-byte keys -    75.44 cycles/hash
-Average                                    71.330 cycles/hash
+Small key speed test -    1-byte keys -    66.59 cycles/hash
+Small key speed test -    2-byte keys -    68.00 cycles/hash
+Small key speed test -    3-byte keys -    69.93 cycles/hash
+Small key speed test -    4-byte keys -    68.71 cycles/hash
+Small key speed test -    5-byte keys -    68.92 cycles/hash
+Small key speed test -    6-byte keys -    68.65 cycles/hash
+Small key speed test -    7-byte keys -    68.84 cycles/hash
+Small key speed test -    8-byte keys -    61.99 cycles/hash
+Small key speed test -    9-byte keys -    62.00 cycles/hash
+Small key speed test -   10-byte keys -    63.00 cycles/hash
+Small key speed test -   11-byte keys -    64.00 cycles/hash
+Small key speed test -   12-byte keys -    62.83 cycles/hash
+Small key speed test -   13-byte keys -    62.85 cycles/hash
+Small key speed test -   14-byte keys -    62.80 cycles/hash
+Small key speed test -   15-byte keys -    62.90 cycles/hash
+Small key speed test -   16-byte keys -    63.00 cycles/hash
+Small key speed test -   17-byte keys -    62.47 cycles/hash
+Small key speed test -   18-byte keys -    63.75 cycles/hash
+Small key speed test -   19-byte keys -    63.69 cycles/hash
+Small key speed test -   20-byte keys -    63.78 cycles/hash
+Small key speed test -   21-byte keys -    63.78 cycles/hash
+Small key speed test -   22-byte keys -    63.81 cycles/hash
+Small key speed test -   23-byte keys -    63.78 cycles/hash
+Small key speed test -   24-byte keys -    75.82 cycles/hash
+Small key speed test -   25-byte keys -    76.00 cycles/hash
+Small key speed test -   26-byte keys -    75.84 cycles/hash
+Small key speed test -   27-byte keys -    75.99 cycles/hash
+Small key speed test -   28-byte keys -    75.80 cycles/hash
+Small key speed test -   29-byte keys -    75.77 cycles/hash
+Small key speed test -   30-byte keys -    75.84 cycles/hash
+Small key speed test -   31-byte keys -    75.80 cycles/hash
+Average                                    67.643 cycles/hash
 
 [[[ 'Hashmap' Speed Tests ]]]
 

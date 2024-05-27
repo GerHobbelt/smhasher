@@ -106,6 +106,9 @@ HashInfo g_hashes[] =
 #define FNV2_VERIF           0x1967C625
 #endif
 
+{ xmsx32_test,          32, 0x6B54E1D4, "xmsx32", "XMSX-32", GOOD, { 0x1505929f, 0xf0a6a74a } },
+{ xmsx64_test,          64, 0x2DF7A6BD, "xmsx64", "XMSX-64", POOR, { } },
+
 #ifdef __SIZEOF_INT128__
 // M. Dietzfelbinger, T. Hagerup, J. Katajainen, and M. Penttonen. A reliable randomized
 // algorithm for the closest-pair problem. J. Algorithms, 25:19–51, 1997.
@@ -734,13 +737,12 @@ HashInfo g_hashes[] =
 { xxh128low_test,       64, 0x54D1CC70, "xxh128low",   "xxHash v3, 128-bit, low 64-bits part", GOOD,
   {0x47ebda34}},
 #ifdef HAVE_BIT32
-{ wyhash32_test,        32, 0x09DE8066, "wyhash32",    "wyhash v4 (32-bit native)", GOOD,
-  { 0x51a43a0f, 0x522235ae, 0x99ac2b20 } },
+{ wyhash32_test,        32, 0x09DE8066, "wyhash32",    "wyhash v4.2 (32-bit native)", GOOD,
+  {0x51a43a0f, 0x522235ae, 0x99ac2b20, 0x9a4f1376} },
 #else
-{ wyhash32low,          32, 0x006B76C4, "wyhash32low", "wyhash v4.1 lower 32bit", GOOD,
-  { 0x138d5f9f, 0x1e4f8661, 0x29362732, 0x49a7ee03, 0x4d29ced1, 0x5ee3628c, 0x833f0eb6,
-    0x928fce63, 0x99be0ae5, 0xac470842, 0xcaf21e71, 0xfc1c4878 } },
-{ wyhash_test,          64, 0xBD5E840C, "wyhash", "wyhash v4.1 (64-bit)", GOOD, {}},
+{ wyhash32low,          32, 0xC5DF9AA0, "wyhash32low", "wyhash v4.2 lower 32bit", GOOD,
+  {0x1443cf9a, 0x2ae375a2, 0x729973d2, 0x72d3aa79, 0xd3e475d5} },
+{ wyhash_test,          64, 0x9DAE7DD3, "wyhash", "wyhash v4.2 (64-bit)", GOOD, {}},
 #endif
 { nmhash32_test,        32, 0x12A30553, "nmhash32",       "nmhash32", GOOD, {}},
 { nmhash32x_test,       32, 0xA8580227, "nmhash32x",      "nmhash32x", GOOD, {}},
@@ -755,7 +757,7 @@ HashInfo g_hashes[] =
 { khashv32_test,        32, KHASHV32_VERIF, "k-hashv32",      "Vectorized K-HashV, 32-bit", GOOD, {}},
 { khashv64_test,        64, KHASHV64_VERIF, "k-hashv64",      "Vectorized K-HashV, 64-bit", GOOD, {}},
 #endif
-{ komihash_test,        64, 0x8157FF6D, "komihash",    "komihash 5.1", GOOD, {} },
+{ komihash_test,        64, 0x8157FF6D, "komihash",    "komihash 5.7", GOOD, {} },
 { polymur_test,         64, 0x4F894810, "polymur",     "github.com/orlp/polymur-hash v1", GOOD, {} },
 };
 

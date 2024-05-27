@@ -8,6 +8,7 @@
 #include "MurmurHash2.h"
 #include "MurmurHash3.h"
 #include "PMurHash.h"
+#include "xmsx.h"
 
 #define XXH_INLINE_ALL
 #include "xxhash.h"
@@ -311,6 +312,7 @@ inline void MurmurHash2A_test ( const void * key, int len, uint32_t seed, void *
   *(uint32_t*)out = MurmurHash2A(key,len,seed);
 }
 
+
 #if __WORDSIZE >= 64
 inline void MurmurHash64A_test ( const void * key, int len, uint32_t seed, void * out )
 {
@@ -328,6 +330,16 @@ inline void MurmurHash64B_test ( const void * key, int len, uint32_t seed, void 
   *(uint64_t*)out = MurmurHash64B(key,len,seed);
 }
 #endif
+
+inline void xmsx32_test ( const void * key, int len, uint32_t seed, void * out )
+{
+  *(uint32_t*)out = xmsx32(key, (size_t)len, seed);
+}
+
+inline void xmsx64_test ( const void * key, int len, uint32_t seed, void * out )
+{
+  *(uint64_t*)out = xmsx64(key, (size_t)len, seed);
+}
 
 inline void jodyhash32_test( const void * key, int len, uint32_t seed, void * out ) {
   *(uint32_t*)out = jody_block_hash32((const jodyhash32_t *)key, (jodyhash32_t) seed, (size_t) len);
@@ -1213,16 +1225,12 @@ inline void prvhash64_64mtest ( const void * key, int len, unsigned seed, void *
 // objsize: 411b40 - 411cc0: 384
 inline void prvhash64_64test ( const void * key, int len, unsigned seed, void * out )
 {
-  uint8_t hash[16] = {0};
-  prvhash64 ((const uint8_t *)key, len, hash, 8, (uint64_t)seed, NULL);
-  memcpy (out, hash, 8);
+  prvhash64 ((const uint8_t *)key, len, out, 8, (uint64_t)seed);
 }
 // objsize: 411870 - 411b3e: 718
 inline void prvhash64_128test ( const void * key, int len, unsigned seed, void * out )
 {
-  uint8_t hash[32] = {0};
-  prvhash64 ((const uint8_t *)key, len, hash, 16, (uint64_t)seed, NULL);
-  memcpy (out, hash, 16);
+  prvhash64 ((const uint8_t *)key, len, out, 16, (uint64_t)seed);
 }
 
 // the more secure variants
@@ -1234,18 +1242,18 @@ inline void prvhash64s_64test ( const void * key, int len, unsigned seed, void *
   // if seedless: prvhash64s_oneshot(key, len, out, 8);
   PRVHASH64S_CTX ctx;
   uint64_t SeedXOR[ PRVHASH64S_PAR ] = { (uint64_t)seed, (uint64_t)seed, (uint64_t)seed, (uint64_t)seed };
-  prvhash64s_init( &ctx, (uint8_t* const)out, 8, SeedXOR, 0 );
+  prvhash64s_init( &ctx, 8, SeedXOR );
   prvhash64s_update( &ctx, (const uint8_t*)key, (size_t)len );
-  prvhash64s_final( &ctx );
+  prvhash64s_final( &ctx, out );
 }
 // objsize: 412710 - 4131ff: 2799
 inline void prvhash64s_128test ( const void * key, int len, unsigned seed, void * out )
 {
   PRVHASH64S_CTX ctx;
   uint64_t SeedXOR[ PRVHASH64S_PAR ] = { (uint64_t)seed, (uint64_t)seed, (uint64_t)seed, (uint64_t)seed };
-  prvhash64s_init( &ctx, (uint8_t* const)out, 16, SeedXOR, 0 );
+  prvhash64s_init( &ctx, 16, SeedXOR );
   prvhash64s_update( &ctx, (const uint8_t*)key, (size_t)len );
-  prvhash64s_final( &ctx );
+  prvhash64s_final( &ctx, out );
 }
 #endif
 
