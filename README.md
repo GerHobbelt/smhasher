@@ -131,7 +131,11 @@ SMhasher
 | [tifuhash_64](doc/tifuhash_64.txt)            |        35.60 |  1679.52 |1212.75 (15)| 276 | Cyclic low32               |
 | [floppsyhash](doc/floppsyhash.txt)            |        35.72 |  1868.92 |1411.07 (7) | 623 |                            |
 | [beamsplitter](doc/beamsplitter.txt)          |       789.22 |   682.45 |1150.33 (26)|4203 | UB                         |
-| [discohash](doc/discohash.txt)                |      3959.08 |   199.92 | 413.43 (6) |1294 |                            |
+| [discohash1](doc/discohash1.txt)              |      4158.02 |   200.07 | 392.03 (3) |1294 |                            |
+| [discohash1-128](doc/discohash1-128.txt)      |      3815.35 |   236.58 | 436.62 (4) |1294 |                            |
+| [discohash2](doc/discohash2.txt)              |      4058.64 |   204.75 | 410.22 (3) |1294 |                            |
+| [discohash2-128](doc/discohash2-128.txt)      |      4147.52 |   232.69 | 427.82 (3) |1294 |                            |
+| [discoNONG](doc/discoNONG.txt)                |      3664.12 |   418.35 | 605.05 (5) |    | bad seeds                   |
 | [chaskey](doc/chaskey.txt)                    |      1150.69 |   113.09 | 308.01 (5) |1609 | PerlinNoise                |
 | [SipHash](doc/SipHash.txt)                    |       945.64 |   146.95 | 346.53 (5) |1071 |                            |
 | [HalfSipHash](doc/HalfSipHash.txt)            |      1108.77 |    82.02 | 285.78 (5) | 700 | zeroes                     |
@@ -421,7 +425,7 @@ Typical undefined behaviour (**UB**) problems:
   flag. But generally using misaligned accesses is fine.
 
   These are: mx3, Spooky, mirhash (_but not strict_), MUM, fasthash,
-  Murmur3*, Murmur2*, metrohash* (all but cmetro*), Crap8, discohash,
+  Murmur3*, Murmur2*, metrohash* (all but cmetro*), Crap8,
   beamsplitter, lookup3, fletcher4, fletcher2, all sanmayce
   FNV1a\_ variants (FNV1a\_YT, FNV1A\_Pippip\_Yurii, FNV1A\_Totenschiff,
   ...), fibonacci.
