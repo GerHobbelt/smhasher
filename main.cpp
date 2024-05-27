@@ -106,9 +106,6 @@ HashInfo g_hashes[] =
 #define FNV2_VERIF           0x1967C625
 #endif
 
-{ xmsx32_test,          32, 0x6B54E1D4, "xmsx32", "XMSX-32", GOOD, { 0x1505929f, 0xf0a6a74a } },
-{ xmsx64_test,          64, 0x2DF7A6BD, "xmsx64", "XMSX-64", POOR, { } },
-
 #ifdef __SIZEOF_INT128__
 // M. Dietzfelbinger, T. Hagerup, J. Katajainen, and M. Penttonen. A reliable randomized
 // algorithm for the closest-pair problem. J. Algorithms, 25:19–51, 1997.
@@ -245,6 +242,11 @@ HashInfo g_hashes[] =
 { crc32c_pclmul_test,   32, 0x0, "crc32_pclmul","-mpclmul crc32 in asm on HW", POOR, {0x0} /* !! */ },
 #endif
 #ifdef HAVE_INT64
+/* Implementation of CRC64 using the Jones polynomial currently used by Valkey. */
+{ crc64_jones_test1,    64, 0x7DC1B496, "crc64_jones1", "crc64, jones polynomial, standard fast software method from Mark Adler", POOR, {0xdeadbeef}},
+{ crc64_jones_test2,    64, 0x7DC1B496, "crc64_jones2", "crc64, jones polynomial, 2 pipelines in 1 thread, joined at the end", POOR, {0xdeadbeef}},
+{ crc64_jones_test3,    64, 0x7DC1B496, "crc64_jones3", "crc64, jones polynomial, 3 pipelines in 1 thread, joined at the end", POOR, {0xdeadbeef}},
+{ crc64_jones_default,  64, 0x7DC1B496, "crc64_jones",  "crc64, jones polynomial, auto 1-3 pipelines depending on length, joined at the end", POOR, {0xdeadbeef}},
 { o1hash_test,          64, 0x85051E87, "o1hash",       "o(1)hash unseeded, from wyhash", POOR, {0x0} /* !! */ },
 #endif
 #if 0 && defined(__x86_64__) && (defined(__linux__) || defined(__APPLE__))
@@ -628,6 +630,7 @@ HashInfo g_hashes[] =
   {0x0} /* !! and many more. too many */ },
 { mum_low_test,         32, MUMLOW_VERIF,"MUMlow",     "github.com/vnmakarov/mum-hash", GOOD,
   {0x11fb062a, 0x3ca9411b, 0x3edd9a7d, 0x41f18860, 0x691457ba} /* !! */ },
+{ xmsx32_test,          32, 0x6B54E1D4, "xmsx32", "XMSX-32", GOOD, { 0x1505929f, 0xf0a6a74a } },
 #if defined(__GNUC__) && UINT_MAX != ULONG_MAX
 #define MIR_VERIF            0x00A393C8
 #define MIRLOW_VERIF         0xE320CE68
@@ -757,7 +760,7 @@ HashInfo g_hashes[] =
 { khashv32_test,        32, KHASHV32_VERIF, "k-hashv32",      "Vectorized K-HashV, 32-bit", GOOD, {}},
 { khashv64_test,        64, KHASHV64_VERIF, "k-hashv64",      "Vectorized K-HashV, 64-bit", GOOD, {}},
 #endif
-{ komihash_test,        64, 0x8157FF6D, "komihash",    "komihash 5.7", GOOD, {} },
+{ komihash_test,        64, 0x8157FF6D, "komihash",    "komihash 5.10", GOOD, {} },
 { polymur_test,         64, 0x4F894810, "polymur",     "github.com/orlp/polymur-hash v1", GOOD, {} },
 };
 

@@ -156,7 +156,8 @@ SMhasher
 | [HighwayHash64](doc/HighwayHash64.txt)        |      6242.58 |    99.55 | 248.41 (3) |2546 |                            |
 | [Murmur3F](doc/Murmur3F.txt)                  |      7623.44 |    52.69 | 221.87 (3) | 699 | UB                         |
 | [MUM](doc/MUM.txt)                            |      9563.99 |    34.99 | 228.55 (5) |1912 | UB, too many bad seeds, machine-specific (32/64 differs) |
-| [MUMlow](doc/MUMlow.txt)                      |      9261.89 |    36.17 | 247.66 (4) |1912 | UB, 5 bad seeds                      |
+| [MUMlow](doc/MUMlow.txt)                      |      9261.89 |    36.17 | 247.66 (4) |1912 | UB, 5 bad seeds              |
+| [xmsx32](doc/xmsx32.txt)                      |      2039.10 |    46.39 | 249.30 (7) | 192 | 2 bad seeds                  |
 | [mirhash](doc/mirhash.txt)                    |      6139.07 |    37.02 | 209.47 (3) |1112 | UB, 2^36 bad seeds, LongNeighbors, machine-specific (32/64 differs) |
 | [mirhashstrict](doc/mirhashstrict.txt)        |      3549.01 |    49.99 | 224.91 (2) |1112 |                            |
 | [mirhashstrict32low](doc/mirhashstrict32low.txt)|      3441.35 |    50.60 | 247.19 (3) |1112 | 1 bad seed, MomentChi2 9   |
@@ -215,7 +216,7 @@ SMhasher
 | [nmhash32x](doc/nmhash32x.txt)                |     12775.08 |    42.66 | 246.05 (3) |1494 |                            |
 | [k-hashv32](doc/k-hashv32.txt)                |      9181.87 |    52.76 | 245.14 (3) |1280 |                            |
 | [k-hashv64](doc/k-hashv32.txt)                |      7850.92 |    46.94 | 193.94 (1) |1279 |                            |
-| [komihash](doc/komihash.txt)                  |     12191.22 |    33.19 | 230.67 (3) |1323 |                            |
+| [komihash](doc/komihash.txt)                  |     12242.78 |    33.02 | 236.07 (2) |1323 |                            |
 | [polymur](doc/polymur.txt)                    |      9676.33 |    42.70 | 246.53 (3) |1128 |                            |
 
 The sortable table variants:
@@ -237,6 +238,7 @@ So the fastest hash functions on x86_64 without quality problems are:
 
 * xxh3low
 * wyhash
+* umash (even universal!)
 * ahash64
 * t1ha2_atonce
 * komihash
