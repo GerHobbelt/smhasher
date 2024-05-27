@@ -34,6 +34,8 @@ SMhasher
 | [rmd128](doc/rmd128.txt)                      |       290.90 |   710.49 | 965.55 (6) |     |               |
 | [rmd160](doc/rmd160.txt)                      |       202.16 |  1045.79 |1287.74 (16)|     | Cyclic hi32   |
 | [rmd256](doc/rmd256.txt)                      |       364.81 |   584.86 | 835.02 (11)|     |               |
+| [edonr224](doc/edonr224.txt)                  |       864.69 |   303.42 | 526.94 (6) |     |               |
+| [edonr256](doc/edonr256.txt)                  |       847.85 |   305.79 | 510.01 (4) |     |               |
 | [blake2s-128](doc/blake2s-128.txt)            |       295.30 |   698.09 |1059.24 (51)|     |               |
 | [blake2s-160](doc/blake2s-160.txt)            |       215.01 |  1026.74 |1239.54 (11)|     |               |
 | [blake2s-224](doc/blake2s-224.txt)            |       207.06 |  1063.86 |1236.50 (20)|     |               |
@@ -129,7 +131,7 @@ SMhasher
 | [tifuhash_64](doc/tifuhash_64.txt)            |        35.60 |  1679.52 |1212.75 (15)| 276 | Cyclic low32               |
 | [floppsyhash](doc/floppsyhash.txt)            |        35.72 |  1868.92 |1411.07 (7) | 623 |                            |
 | [beamsplitter](doc/beamsplitter.txt)          |       789.22 |   682.45 |1150.33 (26)|4203 | UB       |
-| [BEBB4185](doc/BEBB4185.txt)                  |      3959.08 |   199.92 | 413.43 (6) |1294 | UB, msvc-specific |
+| [DISCoHAsH](doc/DISCoHAsH.txt)                  |      3959.08 |   199.92 | 413.43 (6) |1294 | UB, msvc-specific |
 | [chaskey](doc/chaskey.txt)                    |      1150.69 |   113.09 | 308.01 (5) |1609 | PerlinNoise                |
 | [SipHash](doc/SipHash.txt)                    |       945.64 |   146.95 | 346.53 (5) |1071 |                            |
 | [HalfSipHash](doc/HalfSipHash.txt)            |      1108.77 |    82.02 | 285.78 (5) | 700 | zeroes                     |
@@ -156,8 +158,8 @@ SMhasher
 | [mirhashstrict32low](doc/mirhashstrict32low.txt)|      3566.47 |    49.73 | 263.25 (4) |1112 | 1 bad seed, MomentChi2 9   |
 | [fasthash32](doc/fasthash32.txt)              |      6075.38 |    40.68 | 262.40 (6) | 566 | UB                         |
 | [fasthash64](doc/fasthash64.txt)              |      6173.22 |    38.08 | 228.68 (6) | 509 | UB                         |
-| [aesni](doc/aesni.txt)                        |     28617.28 |    29.91 | 238.03 (8) | 519 | machine-specific (x64 AES-NI)           |
-| [aesni-low](doc/aesni-low.txt)                |     29438.07 |    29.84 | 237.24 (7) | 519 | machine-specific (x64 AES-NI)           |
+| [aesni](doc/aesni.txt)                        |     31065.90 |    30.02 | 235.58 (8) | 519 | machine-specific (x64 AES-NI)           |
+| [aesni-low](doc/aesni-low.txt)                |     30410.61 |    29.75 | 236.47 (6) | 519 | machine-specific (x64 AES-NI)           |
 | [mx3](doc/mx3.txt)                            |      9039.63 |    48.63 | 236.57 (5) | 734 | UB                         |
 | [pengyhash](doc/pengyhash.txt)                |     13293.76 |    75.49 | 286.41 (6) | 421 |                            |
 | [City32](doc/City32.txt)                      |      5637.89 |    53.19 | 260.99 (6) |1319 |                            |
@@ -209,7 +211,7 @@ SMhasher
 | [nmhash32x](doc/nmhash32x.txt)                |     12702.23 |    42.94 | 261.02 (5) |1494 |                            |
 | [k-hashv32](doc/k-hashv32.txt)                |      9044.40 |    53.38 | 259.25 (5) |1280 |                            |
 | [k-hashv64](doc/k-hashv32.txt)                |      7850.92 |    46.94 | 193.94 (1) |1279 |                            |
-| [komihash](doc/komihash.txt)                  |     12343.33 |    32.64 | 225.97 (2) | 728 |                            |
+| [komihash](doc/komihash.txt)                  |     12347.34 |    32.59 | 224.76 (3) |1323 |                            |
 | [polymur](doc/polymur.txt)                    |      9515.85 |    43.20 | 247.34 (8) |1128 |                            |
 
 The sortable table variants:

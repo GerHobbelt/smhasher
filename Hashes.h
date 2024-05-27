@@ -937,6 +937,25 @@ inline void rmd256(const void *key, int len, uint32_t seed, void *out)
   rmd256_process(&ltc_state, (unsigned char *)key, len);
   rmd256_done(&ltc_state, (unsigned char *)out);
 }
+#include "edonr.h"
+inline void edonr224(const void *key, int len, uint32_t seed, void *out)
+{
+  // objsize
+  struct edonr_ctx ctx;
+  rhash_edonr224_init(&ctx);
+  ctx.u.data256.hash[0] ^= seed;
+  rhash_edonr256_update(&ctx, (unsigned char *)key, len);
+  rhash_edonr256_final(&ctx, (unsigned char *)out);
+}
+inline void edonr256(const void *key, int len, uint32_t seed, void *out)
+{
+  // objsize
+  struct edonr_ctx ctx;
+  rhash_edonr256_init(&ctx);
+  ctx.u.data256.hash[0] ^= seed;
+  rhash_edonr256_update(&ctx, (unsigned char *)key, len);
+  rhash_edonr256_final(&ctx, (unsigned char *)out);
+}
 // Keccak:
 inline void sha3_256_64(const void *key, int len, uint32_t seed, void *out)
 {
@@ -1166,7 +1185,7 @@ inline void blake3_64 ( const void * key, int len, unsigned seed, void * out )
 // objsize: 452520-45358b: 4203
 #include "beamsplitter.h"
 
-// objsize: 452010-45251e: 1294 (BEBB4185)
+// objsize: 452010-45251e: 1294 (DISCoHAsH)
 #include "discohash.h"
 
 #if defined(HAVE_SSE2) && defined(HAVE_AESNI) && !defined(_MSC_VER)
@@ -1231,7 +1250,7 @@ inline void prvhash64s_128test ( const void * key, int len, unsigned seed, void 
 #endif
 
 #include "komihash/komihash.h"
-// objsize: 188d0 - 18ba8: 728
+// objsize: 25830 - 25d5b: 1323
 inline void komihash_test ( const void * key, int len, unsigned seed, void * out )
 {
 #if 0

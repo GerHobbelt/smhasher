@@ -144,6 +144,8 @@ HashInfo g_hashes[] =
   { rmd128,              128, 0xFF576977, "rmd128",       "RIPEMD-128", GOOD, {} },
   { rmd160,              160, 0x30B37AC6, "rmd160",       "RIPEMD-160", GOOD, {} },
   { rmd256,              256, 0xEB16FAD7, "rmd256",       "RIPEMD-256", GOOD, {} },
+  { edonr224,            224, 0x83A8E7AB, "edonr224",     "EDON-R 224", GOOD, {} },
+  { edonr256,            256, 0x06DD4F96, "edonr256",     "EDON-R 256", GOOD, {} },
 #if defined(HAVE_BIT32) && !defined(_WIN32)
 #  define BLAKE3_VERIF   0x58571F56
 #else
@@ -371,8 +373,8 @@ HashInfo g_hashes[] =
   { aesnihash_test,       64, 0xA68E0D42, "aesnihash",    "majek's seeded aesnihash with aesenc, 64-bit for x64", POOR,
     {0x70736575} },
 
-  { aesni128_test,       128, 0xF616EDFC, "aesni",    "aesni 128bit", GOOD,{} },
-  { aesni64_test,         64, 0x52ED7AD7, "aesni-low","aesni 64bit",  GOOD,{} },
+  { aesni128_test,       128, 0xF06DA1B1, "aesni",    "aesni 128bit", GOOD,{} },
+  { aesni64_test,         64, 0x3AA1A480, "aesni-low","aesni 64bit",  GOOD,{} },
 #endif
 #if defined(HAVE_SSE2) && defined(__x86_64__) && !defined(_WIN32) && !defined(_MSC_VER)
   { falkhash_test_cxx,    64, 0x2F99B071, "falkhash",    "falkhash.asm with aesenc, 64-bit for x64", POOR, {} },
@@ -396,14 +398,7 @@ HashInfo g_hashes[] =
   // and now the quality hash funcs, slowest first
   { tifuhash_64,          64, TIFU_VERIF, "tifuhash_64", "Tiny Floatingpoint Unique Hash with continued egyptian fractions", GOOD, {} },
   { beamsplitter_64,      64, 0x1BDF358B, "beamsplitter","A possibly universal hash made with a 10x64 s-box.", GOOD, {} },
-#if defined(_MSC_VER) && defined(LTO)
-#  define BEBB4185_VERIF          0xB7013C8F
-#else
-#  define BEBB4185_VERIF          0xBEBB4185
-#endif
-#ifndef HAVE_ALIGNED_ACCESS_REQUIRED
-  { BEBB4185_64,          64, BEBB4185_VERIF, "BEBB4185", "BEBB4185 64", GOOD, { } },
-#endif
+  { DISCoHAsH_64,          64, 0xBEBB4185, "DISCoHAsH", "DISCoHAsH 64", GOOD, { } },
   { fasthash32_test,      32, 0xE9481AFC, "fasthash32",  "fast-hash 32bit", GOOD, {0x880355f21e6d1965ULL} },
   { fasthash64_test,      64, 0xA16231A7, "fasthash64",  "fast-hash 64bit", GOOD, {0x880355f21e6d1965ULL} },
   // different verif on gcc vs clang
@@ -582,7 +577,7 @@ HashInfo g_hashes[] =
   { khashv32_test,        32, KHASHV32_VERIF, "k-hashv32",      "Vectorized K-HashV, 32-bit", GOOD, {}},
   { khashv64_test,        64, KHASHV64_VERIF, "k-hashv64",      "Vectorized K-HashV, 64-bit", GOOD, {}},
 #endif
-  { komihash_test,        64, 0x8157FF6D, "komihash",    "komihash 5.0", GOOD, {} },
+  { komihash_test,        64, 0x8157FF6D, "komihash",    "komihash 5.1", GOOD, {} },
   { polymur_test,         64, 0x4F894810, "polymur",     "github.com/orlp/polymur-hash v1", GOOD, {} },
 };
 
