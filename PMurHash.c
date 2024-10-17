@@ -320,7 +320,7 @@ void PMurHash32_test(const void *key, int len, uint32_t seed, void *out)
 
 /*---------------------------------------------------------------------------*/
 #ifdef TEST
-int main() {
+int main(void) {
   // http://www.cprover.org/cbmc/
   // cbmc PMurHash.c --function PMurHash32 --unwind 255 --bounds-check --pointer-check
   //=> seed=308736u (00000000000001001011011000000000)

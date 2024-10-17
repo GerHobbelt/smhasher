@@ -57,7 +57,7 @@ If you are using Visual Studio, you probably want to add `phmap.natvis` to your 
 
 using phmap::flat_hash_map;
  
-int main()
+int main(void)
 {
     // Create an unordered_map of three strings (that map to strings)
     flat_hash_map<std::string, std::string> email = 
@@ -261,7 +261,7 @@ The `std::hash` specialization for `Person` combines the hash values for both fi
 #include <iostream>
 #include <parallel_hashmap/phmap.h>
 
-int main()
+int main(void)
 {
     // As we have defined a specialization of std::hash() for Person,
     // we can now create sparse_hash_set or sparse_hash_map of Persons

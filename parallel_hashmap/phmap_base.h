@@ -895,7 +895,7 @@ namespace phmap {
 //   template< class T, T... Ints >
 //   void user_function(integer_sequence<T, Ints...>);
 //
-//   int main()
+//   int main(void)
 //   {
 //     // user_function's `T` will be deduced to `int` and `Ints...`
 //     // will be deduced to `0, 1, 2, 3, 4`.
@@ -1073,7 +1073,7 @@ auto apply_helper(Functor&& functor, Tuple&& t, index_sequence<Indexes...>)
 //   void user_function2(std::unique_ptr<Foo>);
 //   auto user_lambda = [](int, int) {};
 //
-//   int main()
+//   int main(void)
 //   {
 //       std::tuple<int, std::string> tuple1(42, "bar");
 //       // Invokes the first user function on int, std::string.

@@ -319,7 +319,7 @@ Such an attack avoidance cannot be the problem of the hash
 function, but only the hash table collision resolution scheme.  You can
 attack every single hash function, even the best and most secure if
 you detect the seed, e.g. from language (mis-)features, side-channel
-attacks, collision timings and independly the sort-order, so you need
+attacks, collision timings and independently the sort-order, so you need
 to protect your collision handling scheme from the worst-case O(n),
 i.e. separate chaining with linked lists. Linked lists chaining allows
 high load factors, but is very cache-unfriendly.  The only
@@ -353,7 +353,7 @@ CRYPTO
 
 Our crypto hashes are hardened with an added size_t seed, mixed into
 the initial state, and the versions which require zero-padding are
-hardened by adding the len also, to prevent from collisions with
+hardened by adding the len also, to prevent form collisions with
 AppendedZeroes for the padding. The libtomcrypt implementations
 already provide for that, but others might not. Without, such crypto
 hash functions are unsuitable for normal tasks, as it's trivial to
@@ -396,7 +396,7 @@ PROBLEMS
 
   Hash functions are typically initialized with a random seed. But
   some seed values may lead to bad hash functions, regardless of the
-  key. In the regular case with random seeds the probablity of such
+  key. In the regular case with random seeds the probability of such
   bad seeds is very low, like 2^32 or 2^64.
   A practical application needs to know if bad seeds exist and choose another
   one. See e.g. `mirhash_seed_init()` and `mirhash_bad_seeds()` in `Hashes.h`.
@@ -442,7 +442,7 @@ Typical undefined behaviour (**UB**) problems:
   Some hash function assume a padded input buffer which can be
   accessed past its length up to the word size. This allows for faster
   loop processing, as no 2nd loop or switch table for the rest is
-  needed, but it requires a cooperative calling enviroment and is as
+  needed, but it requires a cooperative calling environment and is as
   such considered cheating.
 
 * Signed integer overflow

@@ -276,7 +276,7 @@ int test_vectors() {
   return ok;
 }
 
-int main() {
+int main(void) {
   if (test_vectors()) printf("test vectors ok\n");
 
   return 0;
