@@ -292,7 +292,7 @@ HashInfo g_hashes[] =
 { pearson256_test,     256, 0x7F8BEB21, "pearsonhash256",   "Pearson hash, 256-bit SSSE3, low 64-bit", POOR, {}},
 #endif
 #ifdef HAVE_INT64
-{ pearsonb64_test,      64, 0xB6FF2DFC, "pearsonbhash64",  "Pearson block hash, 64-bit", GOOD, {}},
+{ pearsonb64_test,      64, 0x14C3D184, "pearsonbhash64",  "Pearson block hash, 64-bit", GOOD, {}},
 { pearsonb128_test,    128, 0x6BEFE6EA, "pearsonbhash128", "Pearson block hash, 128-bit, low 64-bit", GOOD, {}},
 { pearsonb256_test,    256, 0x999B3C19, "pearsonbhash256", "Pearson block hash, 256-bit, low 64-bit", GOOD, {}},
 #endif
@@ -1025,6 +1025,10 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
   {
     double sum = 0.0;
     printf("[[[ Speed Tests ]]]\n\n");
+    if (timer_counts_ns())
+      printf("WARNING: no cycle counter, cycle == 1ns\n");
+    if (timer_start() == timer_end())
+      printf("WARNING: timer resolution is low\n");
     fflush(NULL);
 
     Seed_init (info, info->verification);
