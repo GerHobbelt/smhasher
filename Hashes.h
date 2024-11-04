@@ -87,9 +87,9 @@ static inline bool crc64c_bad_seeds(std::vector<uint64_t> &seeds)
   seeds = std::vector<uint64_t> { UINT64_C(0) };
   return true;
 }
-void CityHashCrc64_test(const void *key, int len, uint32_t seed, void *out);
 #if defined(__x86_64__)
 void CityHashCrc128_test(const void *key, int len, uint32_t seed, void *out);
+void CityHashCrc256_test(const void *key, int len, uint32_t seed, void *out);
 #endif
 #endif
 
@@ -630,10 +630,12 @@ inline void wyhash32low (const void * key, int len, uint32_t seed, void * out) {
 
 #ifdef HAVE_INT64
 #include "rapidhash.h"
+// objsize: 181e0-1841e: 574
 inline void rapidhash_test (const void * key, int len, uint32_t seed, void * out) {
   *(uint64_t*)out = rapidhash_withSeed_compact(key, (uint64_t)len, (uint64_t)seed);
 }
 
+// objsize: 18420-1872e: 782
 inline void rapidhash_unrolled_test (const void * key, int len, uint32_t seed, void * out) {
   *(uint64_t*)out = rapidhash_withSeed_unrolled(key, (uint64_t)len, (uint64_t)seed);
 }
