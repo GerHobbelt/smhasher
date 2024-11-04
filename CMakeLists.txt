@@ -70,10 +70,7 @@ endif()
 # TODO: rather parse `$CC -march=native -dM -E - <<< ''` [GH #10]
 if(NOT CMAKE_CROSSCOMPILING)
   if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-    exec_program(
-      cat ARGS
-      "/proc/cpuinfo"
-      OUTPUT_VARIABLE CPUINFO)
+    file(READ "/proc/cpuinfo" CPUINFO)
     string(REGEX REPLACE "^.*(sse2).*$" "\\1" SSE_THERE "${CPUINFO}")
     string(COMPARE EQUAL "sse2" "${SSE_THERE}" SSE2_TRUE)
     string(REGEX REPLACE "^.*(sse4_2).*$" "\\1" SSE_THERE "${CPUINFO}")
@@ -607,6 +604,7 @@ if(SSE42_FOUND
    AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
    AND (NOT MSVC))
   set(UMASH_SRC umash.c umash.hpp)
+  add_definitions(-DHAVE_UMASH)
 endif()
 
 set(ASCON_SRC asconhashv12/hash.c)

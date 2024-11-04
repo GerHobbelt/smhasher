@@ -276,7 +276,7 @@ HashInfo g_hashes[] =
   {0x811c9dc5, 0x23d4a49d} /* !! */ },
 { FNV64a_test,          64, 0x103455FC, "FNV64",       "Fowler-Noll-Vo hash, 64-bit", POOR,
   {0x811c9dc5, 0xcbf29ce4, 0x84222325, 0xcbf29ce484222325} /* TODO */},
-{ FNV128_test,         128, 0xBCAA1426, "FNV128",      "Go variant of FNV, 128-bit", POOR, {} },
+{ FNV128_test,         128, 0xC6FF4526, "FNV128",      "Go variant of FNV, 128-bit", POOR, {} },
 #endif
 { FNV2_test,    __WORDSIZE, FNV2_VERIF, "FNV2",        "wordwise FNV", POOR, {} },
 { fletcher2_test,       64, 0x890767C0, "fletcher2",   "fletcher2 ZFS", POOR, {0UL} /* !! */ },
@@ -606,7 +606,7 @@ HashInfo g_hashes[] =
 // as in rust and swift:
 { siphash13_test,       64, 0x29C010BF, "SipHash13",   "SipHash 1-3 - SSSE3 optimized", GOOD, {} },
 #ifndef _MSC_VER
-{ tsip_test,            64, 0xF47B451B, "TSip",        "Damian Gryski's Tiny SipHash variant", GOOD, {} },
+{ tsip_test,            64, 0x5C2395A5, "TSip",        "Damian Gryski's Tiny SipHash variant", GOOD, {} },
 #ifdef HAVE_INT64
 { seahash_test,         64, 0xF0374078, "seahash",     "seahash (64-bit, little-endian)", GOOD, {} },
 { seahash32low,         32, 0x712F0EE8, "seahash32low","seahash - lower 32bit", GOOD, {} },
@@ -693,7 +693,7 @@ HashInfo g_hashes[] =
 { SpookyV2_128_test,   128, 0x893CFCBE, "SpookyV2_128", "Bob Jenkins' SpookyV2, 128-bit result", GOOD, {} },
 { pengyhash_test,       64, 0x1FC2217B, "pengyhash",   "pengyhash", GOOD, {} },
 { mx3hash64_test,       64, 0x4DB51E5B, "mx3",         "mx3 64bit", GOOD, {0x10} /* !! and all & 0x10 */},
-#if defined(HAVE_SSE42) &&  (defined(__x86_64__) ||  defined(__aarch64__)) && !defined(_MSC_VER)
+#ifdef HAVE_UMASH
 { umash32,              32, 0x9451AF3B, "umash32",     "umash 32", GOOD, {0x90e37057} /* !! */},
 { umash32_hi,           32, 0x0CC4850F, "umash32_hi",  "umash 32 hi", GOOD, {} },
 { umash,                64, 0x161495C6, "umash64",     "umash 64", GOOD, {} },
@@ -761,15 +761,10 @@ HashInfo g_hashes[] =
 { nmhash32_test,        32, nmhash32_broken() ? 0U : 0x12A30553, "nmhash32",  nmhash32_desc,  GOOD, {}},
 { nmhash32x_test,       32, nmhash32_broken() ? 0U : 0xA8580227, "nmhash32x", nmhash32x_desc, GOOD, {}},
 #ifdef HAVE_KHASHV
-#ifdef __clang__ // also gcc 9.4
-#define KHASHV32_VERIF  0xB69DF8EB
-#define KHASHV64_VERIF  0xA6B7E55B
-#else // new gcc-11
-#define KHASHV32_VERIF  0 /* 0x9A8F7952 */
-#define KHASHV64_VERIF  0 /* 0X90A2A4F9 */
-#endif
-{ khashv32_test,        32, KHASHV32_VERIF, "k-hashv32",      "Vectorized K-HashV, 32-bit", GOOD, {}},
-{ khashv64_test,        64, KHASHV64_VERIF, "k-hashv64",      "Vectorized K-HashV, 64-bit", GOOD, {}},
+// There are certain GCC versions producing 0x9A8F7952 and 0X90A2A4F9 as verification values
+// for k-hashv32 and k-hashv64.  That deserves further investigation.
+{ khashv32_test,        32, 0xB69DF8EB, "k-hashv32",      khashv32_desc, GOOD, {}},
+{ khashv64_test,        64, 0xA6B7E55B, "k-hashv64",      khashv64_desc, GOOD, {}},
 #endif
 { komihash_test,        64, 0x8157FF6D, "komihash",    "komihash 5.10", GOOD, {} },
 { polymur_test,         64, 0x4F894810, "polymur",     "github.com/orlp/polymur-hash v1, __SIZEOF_INT128__:" MACRO_ITOA(__SIZEOF_INT128__), GOOD, {} },
@@ -925,13 +920,6 @@ bool Hash_Seed_init (pfHash hash, size_t seed) {
 #if defined(HAVE_SSE42) && defined(__x86_64__)
   else if (hash == clhash_test)
     clhash_seed_init(seed);
-# ifndef _MSC_VER  
-  else if (hash == umash32 ||
-          hash == umash32_hi ||
-          hash == umash ||
-          hash == umash128)
-    umash_seed_init(seed);
-# endif
   else if (hash == halftime_hash_style64_test || hash == halftime_hash_style128_test ||
            hash == halftime_hash_style256_test || hash == halftime_hash_style512_test)
     halftime_hash_seed_init(seed);
@@ -939,6 +927,10 @@ bool Hash_Seed_init (pfHash hash, size_t seed) {
   else if(hash == hashx_test)
     hashx_seed_init(info, seed);
   */
+#endif
+#ifdef HAVE_UMASH
+  else if (hash == umash32 || hash == umash32_hi || hash == umash || hash == umash128)
+    umash_seed_init(seed);
 #endif
 #ifdef HAVE_KHASHV
   else if(hash == khashv64_test || hash == khashv32_test)

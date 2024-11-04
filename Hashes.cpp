@@ -388,7 +388,7 @@ FNV128(uint64_t buf[2], const char *key, int len, uint64_t seed)
     uint64_t s0 = multhi;                 // high
     uint64_t s1 = prime128Lower * buf[1]; // low
     
-    s0 += buf[1] << (prime128Shift + prime128Lower * buf[0]);
+    s0 += (buf[1] << prime128Shift) + prime128Lower * buf[0];
 
     // Update the values
     buf[1] = s1;
@@ -1150,10 +1150,8 @@ void halftime_hash_seed_init(size_t &seed)
 static uint8_t tsip_key[16];
 void tsip_init()
 {
-  uint64_t r = rand_u64();
-  memcpy(&tsip_key[0], &r, 8);
-  r = rand_u64();
-  memcpy(&tsip_key[8], &r, 8);
+  Rand rng(UINT32_C(4044698852));
+  rng.rand_p(tsip_key, sizeof(tsip_key));
 }
 void tsip_test(const void *bytes, int len, uint32_t seed, void *out)
 {
@@ -1326,6 +1324,14 @@ void nmhash32x_test ( const void * key, int len, uint32_t seed, void * out ) {
 
 #ifdef HAVE_KHASHV
 #include "k-hashv/khashv.h"
+
+#define KHASH_VER_STR "vector:" MACRO_ITOA(KHASH_VECTOR) ", " \
+                      "scalar:" MACRO_ITOA(KHASHV_SCALAR) ", " \
+                      "__SSE3__:" MACRO_ITOA(__SSE3__) ", " \
+                      "__SSE4_1__:" MACRO_ITOA(__SSE4_1__) ", " \
+                      "__AVX512VL__:" MACRO_ITOA(__AVX512VL__)
+const char * const khashv32_desc("Vectorized K-HashV, 32-bit, " KHASH_VER_STR);
+const char * const khashv64_desc("Vectorized K-HashV, 64-bit, " KHASH_VER_STR);
 
 khashvSeed khashv_seed;
 void khashv_seed_init(size_t &seed) {
