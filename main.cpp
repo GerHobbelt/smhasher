@@ -144,8 +144,10 @@ HashInfo g_hashes[] =
 { rmd128,              128, 0xFF576977, "rmd128",       "RIPEMD-128", GOOD, {} },
 { rmd160,              160, 0x30B37AC6, "rmd160",       "RIPEMD-160", GOOD, {} },
 { rmd256,              256, 0xEB16FAD7, "rmd256",       "RIPEMD-256", GOOD, {} },
+#ifdef HAVE_EDONR
 { edonr224,            224, 0x83A8E7AB, "edonr224",     "EDON-R 224", GOOD, {} },
 { edonr256,            256, 0x06DD4F96, "edonr256",     "EDON-R 256", GOOD, {} },
+#endif
 #if defined(HAVE_BIT32) && !defined(_WIN32)
 #  define BLAKE3_VERIF   0x58571F56
 #else
@@ -1311,7 +1313,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     }
 
     {
-      printf("Combination 0x8000000 Tests:\n");
+      printf("Combination 0x80000000 Tests:\n");
       fflush(NULL);
 
       bool result = true;
@@ -1331,7 +1333,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     }
 
     {
-      printf("Combination 0x0000001 Tests:\n");
+      printf("Combination 0x00000001 Tests:\n");
 
       bool result = true;
 
@@ -1350,7 +1352,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     }
 
     {
-      printf("Combination 0x800000000000000 Tests:\n");
+      printf("Combination 0x8000000000000000 Tests:\n");
       fflush(NULL);
 
       bool result = true;
@@ -1370,7 +1372,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     }
 
     {
-      printf("Combination 0x000000000000001 Tests:\n");
+      printf("Combination 0x0000000000000001 Tests:\n");
       fflush(NULL);
 
       bool result = true;
@@ -2677,6 +2679,8 @@ int main ( int argc, const char ** argv )
 
 #if defined(__x86_64__) || defined(_M_X64) || defined(_X86_64_)
   const char * defaulthash = "xxh3";
+#elif defined(HAVE_BIT32)
+  const char * defaulthash = "wyhash32";
 #else
   const char * defaulthash = "wyhash";
 #endif
