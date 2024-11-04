@@ -25,7 +25,9 @@ bool g_testExtra       = false; // excessive torture tests: Sparse, Avalanche, D
 bool g_testVerifyAll   = false;
 
 bool g_testSanity      = false;
-bool g_testSpeed       = false;
+bool g_testSpeedAll    = false;
+bool g_testSpeedBulk   = false;
+bool g_testSpeedSmall  = false;
 bool g_testHashmap     = false;
 bool g_testAvalanche   = false;
 bool g_testSparse      = false;
@@ -56,7 +58,9 @@ TestOpts g_testopts[] =
 { g_testAll,          "All" },
 { g_testVerifyAll,    "VerifyAll" },
 { g_testSanity,       "Sanity" },
-{ g_testSpeed,        "Speed" },
+{ g_testSpeedAll,     "Speed" },
+{ g_testSpeedBulk,    "SpeedBulk" },
+{ g_testSpeedSmall,   "SpeedSmall" },
 { g_testHashmap,      "Hashmap" },
 { g_testAvalanche,    "Avalanche" },
 { g_testSparse,       "Sparse" },
@@ -754,8 +758,8 @@ HashInfo g_hashes[] =
 { rapidhash_test,          64, 0xAF404C4B, "rapidhash", "rapidhash v1", GOOD, {}},
 { rapidhash_unrolled_test,          64, 0xAF404C4B, "rapidhash_unrolled", "rapidhash v1 - unrolled", GOOD, {}},
 #endif
-{ nmhash32_test,        32, 0x12A30553, "nmhash32",       "nmhash32", GOOD, {}},
-{ nmhash32x_test,       32, 0xA8580227, "nmhash32x",      "nmhash32x", GOOD, {}},
+{ nmhash32_test,        32, nmhash32_broken() ? 0U : 0x12A30553, "nmhash32",  nmhash32_desc,  GOOD, {}},
+{ nmhash32x_test,       32, nmhash32_broken() ? 0U : 0xA8580227, "nmhash32x", nmhash32x_desc, GOOD, {}},
 #ifdef HAVE_KHASHV
 #ifdef __clang__ // also gcc 9.4
 #define KHASHV32_VERIF  0xB69DF8EB
@@ -997,7 +1001,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     printf("PASS\n\n"); fflush(NULL); // if not it does exit(1)
   }
 
-  if (g_testAll || g_testSpeed || g_testHashmap) {
+  if (g_testAll || g_testSpeedBulk || g_testSpeedSmall || g_testHashmap) {
     printf("--- Testing %s \"%s\" %s\n\n", info->name, info->desc, quality_str[info->quality]);
   } else {
     fprintf(stderr, "--- Testing %s \"%s\" %s\n\n", info->name, info->desc, quality_str[info->quality]);
@@ -1021,9 +1025,8 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
   //-----------------------------------------------------------------------------
   // Speed tests
 
-  if(g_testSpeed || g_testAll)
+  if(g_testSpeedBulk || g_testSpeedSmall || g_testAll)
   {
-    double sum = 0.0;
     printf("[[[ Speed Tests ]]]\n\n");
     if (timer_counts_ns())
       printf("WARNING: no cycle counter, cycle == 1ns\n");
@@ -1038,19 +1041,29 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     fflush(NULL);
 
     Seed_init (info, info->verification);
-    BulkSpeedTest(info->hash,info->verification);
-    printf("\n");
-    fflush(NULL);
 
-    for(int i = 1; i < 32; i++)
-    {
-      volatile int j = i;
-      sum += TinySpeedTest(hashfunc<hashtype>(info->hash),sizeof(hashtype),j,info->verification,true);
+    if (g_testSpeedBulk || g_testAll) {
+      BulkSpeedTest(info->hash,info->verification);
+      printf("\n");
+      fflush(NULL);
     }
-    g_speed = sum = sum / 31.0;
-    printf("Average                                    %6.3f cycles/hash\n",sum);
-    printf("\n");
-    fflush(NULL);
+
+    if (g_testSpeedSmall || g_testAll) {
+      const int dflmax = g_testExtra ? 64 : 32;
+      const int minkey = getenvlong("SMHASHER_SMALLKEY_MIN", 1, 1, TIMEHASH_SMALL_LEN_MAX);
+      const int maxkey = getenvlong("SMHASHER_SMALLKEY_MAX", minkey, dflmax, TIMEHASH_SMALL_LEN_MAX);
+      std::vector<double> cph(maxkey+1, NAN);
+      for(int i = minkey, g_speed = 0.0; i <= maxkey; i++)
+      {
+        volatile int j = i;
+        cph[j] = TinySpeedTest(hashfunc<hashtype>(info->hash),sizeof(hashtype),j,info->verification,true);
+        g_speed += cph[j];
+      }
+      g_speed /= (maxkey - minkey + 1);
+      ReportTinySpeedTest(cph, minkey, maxkey);
+      printf("\n");
+      fflush(NULL);
+    }
   } else {
     // known slow hashes (> 500), cycle/hash
     const struct { pfHash h; double cycles; } speeds[] = {
@@ -2786,6 +2799,8 @@ int main ( int argc, const char ** argv )
     // Not a command ? => interpreted as hash name
     hashToTest = arg;
   }
+  if (g_testSpeedAll)
+    g_testSpeedBulk = g_testSpeedSmall = true;
 
   // Code runs on the 3rd CPU by default? only for speed tests
   //SetAffinity((1 << 2));

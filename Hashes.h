@@ -1313,6 +1313,9 @@ extern "C" {
   void asconhashv12_256 ( const void * key, int len, uint32_t seed, void * out );
 }
 
+extern const char * const nmhash32_desc;
+extern const char * const nmhash32x_desc;
+bool nmhash32_broken ( void );
 void nmhash32_test ( const void * key, int len, uint32_t seed, void * out );
 void nmhash32x_test ( const void * key, int len, uint32_t seed, void * out );
 
