@@ -511,6 +511,8 @@ if(AES_FOUND AND (PROCESSOR_FAMILY STREQUAL "Intel"))
       t1ha/t1ha0_ia32aes_avx.c PROPERTIES COMPILE_FLAGS "-mno-avx2 -mavx -maes")
     set_source_files_properties(t1ha/t1ha0_ia32aes_avx2.c
                                 PROPERTIES COMPILE_FLAGS "-mavx -mavx2 -maes")
+    set_source_files_properties(gxhash.c
+                                PROPERTIES COMPILE_FLAGS "-mavx -mavx2 -maes")
   endif()
 else()
   set(T1HA_SRC t1ha/t1ha0.c t1ha/t1ha1.c t1ha/t1ha2.c)
@@ -690,6 +692,7 @@ add_library(
   beamsplitter.cpp
   discohash_512.cpp
   xxhash.c
+  gxhash.c
   metrohash/metrohash64.cpp
   metrohash/metrohash128.cpp
   cmetrohash64.c
