@@ -154,7 +154,12 @@ HashInfo g_hashes[] =
 #endif
 // There are certain 32-bit non-Windows machines producing 0x58571F56 as verification value for blake3_c.
 // That deserves further investigation.
-{ blake3c_test,        256, 0x50E4CD91, "blake3_c",   "BLAKE3 c",   GOOD, {0x6a09e667} },
+#if defined HAVE_BIT32 && !defined _WIN32 && !defined __arm__
+#define BL3_VF 0x58571F56
+#else
+#define BL3_VF 0x50E4CD91
+#endif
+{ blake3c_test,        256, BL3_VF, "blake3_c",   "BLAKE3 c",   GOOD, {0x6a09e667} },
 #if defined(HAVE_BLAKE3)
 { blake3_test,         256, 0x0, "blake3",       "BLAKE3 Rust", GOOD, {} },
 { blake3_64,            64, 0x0, "blake3_64",    "BLAKE3 Rust, low 64 bits", GOOD, {} },
@@ -676,7 +681,14 @@ HashInfo g_hashes[] =
 { farmhash64_c_test,    64, FARM64_VERIF, "farmhash64_c",  "farmhash64_with_seed (C99)", GOOD, {} },
 { farmhash128_c_test,  128, FARM128_VERIF,"farmhash128_c", "farmhash128_with_seed (C99)", GOOD, {} },
 #endif
-{ gxhash64_test,        64, 0x9189E456, "gxhash64",    "gxHash, 64-bit", GOOD, {} },
+#ifdef HAVE_AESNI
+#ifdef _MSC_VER
+#define GX_VFY 0x9189E456
+#else
+#define GX_VFY 0x87FA3129
+#endif
+{ gxhash64_test,        64, GX_VFY, "gxhash64",    "gxHash, 64-bit, AES-only, unportable", GOOD, {} },
+#endif
 { xxHash64_test,        64, 0x024B7CF4, "xxHash64",    "xxHash, 64-bit", GOOD, {} },
 #if 0
 { xxhash256_test,       64, 0x024B7CF4, "xxhash256",   "xxhash256, 64-bit unportable", GOOD, {} },
@@ -696,6 +708,7 @@ HashInfo g_hashes[] =
 { umash,                64, 0x161495C6, "umash64",     "umash 64", GOOD, {} },
 { umash128,            128, 0x36D4EC95, "umash128",    "umash 128", GOOD, {} },
 #endif
+#ifndef _MSC_VER
 { halftime_hash_style64_test,  64, 0x0, "halftime_hash64",    "NH tree hash variant", GOOD,
   {0xc61d672b, 0xcc70c4c1798e4a6f, 0xd3833e804f4c574b, 0xecfc1357d65941ae, 0xbe1927f97b8c43f1, 
    0xf4d4beb14ae042bbULL, 0x9a9b4c4e44dd48d1ULL} }, // not vulnerable
@@ -708,7 +721,7 @@ HashInfo g_hashes[] =
 { halftime_hash_style512_test, 64, 0x0, "halftime_hash512",   "NH tree hash variant", GOOD,
   {0xc61d672b, 0xcc70c4c1798e4a6f, 0xd3833e804f4c574b, 0xecfc1357d65941ae, 0xbe1927f97b8c43f1, 
    0xf4d4beb14ae042bbULL, 0x9a9b4c4e44dd48d1ULL} },
-
+#endif
 { t1ha2_atonce_test,           64, 0x8F16C948, "t1ha2_atonce",    "Fast Positive Hash (portable", GOOD, {
   } },
 { t1ha2_stream_test,           64, 0xDED9B580, "t1ha2_stream",    "Fast Positive Hash (portable)", POOR, {} },
@@ -825,11 +838,13 @@ void Hash_init (HashInfo* info) {
 #endif
   else if(info->hash == chaskey_test)
     chaskey_init();
+#ifndef _MSC_VER
   else if (info->hash == halftime_hash_style64_test ||
            info->hash == halftime_hash_style128_test ||
            info->hash == halftime_hash_style256_test ||
            info->hash == halftime_hash_style512_test)
     halftime_hash_init();
+#endif
 }
 
 // optional hash seed initializers.
@@ -918,9 +933,11 @@ bool Hash_Seed_init (pfHash hash, size_t seed) {
 #if defined(HAVE_SSE42) && defined(__x86_64__)
   else if (hash == clhash_test)
     clhash_seed_init(seed);
+#ifndef _MSC_VER
   else if (hash == halftime_hash_style64_test || hash == halftime_hash_style128_test ||
            hash == halftime_hash_style256_test || hash == halftime_hash_style512_test)
     halftime_hash_seed_init(seed);
+#endif
   /*
   else if(hash == hashx_test)
     hashx_seed_init(info, seed);
@@ -1747,12 +1764,14 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     bool result = true;
     bool dumpCollisions = g_drawDiagram; // from --verbose
     int reps = 1000;
-    if ((g_speed > 500.0 || info->hashbits > 128 ||
-         hash == o1hash_test ||
-         hash == halftime_hash_style64_test ||
-         hash == halftime_hash_style128_test ||
-         hash == halftime_hash_style256_test ||
-         hash == halftime_hash_style512_test
+    if ((g_speed > 500.0 || info->hashbits > 128
+         || hash == o1hash_test
+#ifndef _MSC_VER
+         || hash == halftime_hash_style64_test
+         || hash == halftime_hash_style128_test
+         || hash == halftime_hash_style256_test
+         || hash == halftime_hash_style512_test
+#endif
          ) && !g_testExtra)
       reps = 100; // sha1: 7m, md5: 4m53
 
