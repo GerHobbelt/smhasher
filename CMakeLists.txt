@@ -35,10 +35,15 @@ if(NOT CMAKE_BUILD_TYPE)
       CACHE STRING "Choose the type of build, options are: Debug Release
   RelWithDebInfo MinSizeRel Asan." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
-set(CMAKE_C_FLAGS_DEBUG "-DDEBUG")
-set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG")
-set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG")
+
+option(GITHUB_ACTIONS "If compiled via github actions" OFF)
+if (GITHUB_ACTIONS)
+  add_definitions(-DGITHUB_ACTIONS)
+endif()
 
 include(CheckTypeSize)
 check_type_size(__int64 __INT64)
@@ -214,12 +219,9 @@ if(CMAKE_COMPILER_IS_GNUCC
     set(CRC_PCLMUL_SRC crc32-pclmul_asm.S)
   endif()
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-  set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
-  set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG")
-  set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address,undefined -DHAVE_ASAN -DHAVE_UBSAN")
   set(CMAKE_CXX_FLAGS_DEBUG
-      "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address,undefined -DHAVE_ASAN -DHAVE_UBSAN"
+      "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -fno-omit-frame-pointer -fsanitize=address,undefined -DHAVE_ASAN -DHAVE_UBSAN"
   )
   set(CMAKE_LINKER_FLAGS_DEBUG
       "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address,undefined"
@@ -271,6 +273,7 @@ if(AES_TRUE)
   set(AES_FOUND
       true
       CACHE BOOL "AES-NI available")
+  message(STATUS "AES-NI available")
 else(AES_TRUE)
   set(AES_FOUND
       false
@@ -281,15 +284,18 @@ if(CLMUL_TRUE)
   set(CLMUL_FOUND
       true
       CACHE BOOL "CLMUL available")
+  message(STATUS "CLMUL available")
 else()
   set(CLMUL_FOUND
       false
       CACHE BOOL "CLMUL not available")
+  message(STATUS "CLMUL not available")
 endif()
 if(SHA_TRUE)
   set(SHA_FOUND
       true
       CACHE BOOL "SHA-NI available")
+  message(STATUS "SHA-NI available")
 else(SHA_TRUE)
   set(SHA_FOUND
       false
@@ -300,6 +306,7 @@ if(AVX2_TRUE)
   set(AVX2_FOUND
       true
       CACHE BOOL "AVX2 available")
+  message(STATUS "AVX2 available")
 else(AVX2_TRUE)
   set(AVX2_FOUND
       false
@@ -310,6 +317,7 @@ if(AVX512F_TRUE)
   set(AVX512F_FOUND
       true
       CACHE BOOL "AVX512F available")
+  message(STATUS "AVX512F available")
 else(AVX512F_TRUE)
   set(AVX512F_FOUND
       false
@@ -320,6 +328,7 @@ if(AVX512VL_TRUE)
   set(AVX512VL_FOUND
       true
       CACHE BOOL "AVX512VL available")
+  message(STATUS "AVX512VL available")
 else(AVX512VL_TRUE)
   set(AVX512VL_FOUND
       false
@@ -624,7 +633,7 @@ set_source_files_properties(
 
 if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug"))
   # PMP breaks Debug build
-  if(NOT (CMAKE_BUILD_TYPE STREQUAL "asan"))
+  if(NOT (CMAKE_BUILD_TYPE STREQUAL "Asan"))
     set(PMPML_SRC PMP_Multilinear.cpp PMP_Multilinear_64.cpp
                   PMP_Multilinear_test.cpp)
   endif()
@@ -700,7 +709,6 @@ add_library(
   beamsplitter.cpp
   discohash_512.cpp
   xxhash.c
-  ${GX_SRC}
   metrohash/metrohash64.cpp
   metrohash/metrohash128.cpp
   cmetrohash64.c
@@ -711,6 +719,7 @@ add_library(
   # ${FHTW_OBJ}
   ${T1HA_SRC}
   ${SHA_SRC}
+  ${GX_SRC}
   mum.cc
   jody_hash32.c
   jody_hash64.c

@@ -128,6 +128,7 @@ SMhasher
 | [t1ha2_stream](doc/t1ha2_stream.txt)          |     13673.22 |    81.12 | 263.88 (3) |1665 | Sparse, Permutation, LongNeighbors |
 | [t1ha2_stream128](doc/t1ha2_stream128.txt)    |     13913.43 |    94.60 | 296.15 (4) |1665 | Sparse, Permutation, LongNeighbors |
 | [aesnihash](doc/aesnihash.txt)                |      5365.60 |    57.21 | 255.87 (3) |1209 | fails many tests, machine-specific (x64 AES-NI) |
+| [aesni-hash-peterrk](doc/aesni-hash-peterrk.txt)|     29107.73 |    28.86 | 217.57 (1) | | machine-specific (x64 AES-NI) |
 | [falkhash](doc/falkhash.txt)                  |     52401.48 |   122.70 | 316.79 (4) | 264 | Sparse, LongNeighbors, machine-specific (x64 AES-NI) |
 | [MeowHash](doc/MeowHash.txt)                  |     29969.81 |    64.90 | 273.79 (8) |1764 | Sparse, invertible, machine-specific (x64 AES-NI)  |
 | [MeowHash64low](doc/MeowHash64low.txt)        |     29438.45 |    63.76 | 269.41 (4) |1764 | Sparse, invertible, machine-specific (x64 AES-NI)    |
@@ -227,7 +228,8 @@ SMhasher
 | [k-hashv64](doc/k-hashv64.txt)                |      9251.05 |    51.72 | 251.83 (2) |1279 |                            |
 | [komihash](doc/komihash.txt)                  |     12179.74 |    33.23 | 224.80 (2) |1323 |                            |
 | [polymur](doc/polymur.txt)                    |      9913.53 |    41.68 | 232.56 (3) |1128 |                            |
-| [gxhash64](doc/gxhash64.txt)                  |     48919.73 |    36.61 | 236.98 (3) |     | AES only                   |
+| [gxhash32](doc/gxhash32.txt)                  |     47943.08 |    37.71 | 251.38 (2) |736  | AES only                   |
+| [gxhash64](doc/gxhash64.txt)                  |     48919.73 |    36.61 | 236.98 (3) |720  | AES only                   |
 
 The sortable table variants:
 
