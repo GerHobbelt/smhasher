@@ -606,11 +606,11 @@ HashInfo g_hashes[] =
 { halfsiphash_test,     32, 0xA7A05F72, "HalfSipHash", "HalfSipHash 2-4, 32bit", GOOD, {} },
 { GoodOAAT_test,        32, 0x7B14EEE5, "GoodOAAT",    "Small non-multiplicative OAAT", GOOD, {0x3b00} },
 #ifdef HAVE_INT64
-{ prvhash64_64mtest,    64, 0xD37C7E74, "prvhash64_64m", "prvhash64m 4.3 64bit", GOOD, {} },
-{ prvhash64_64test,     64, 0xD37C7E74, "prvhash64_64",  "prvhash64 4.3 64bit", GOOD, {} },
-{ prvhash64_128test,   128, 0xB447480F, "prvhash64_128", "prvhash64 4.3 128bit", GOOD, {} },
-{ prvhash64s_64test,    64, 0x891521D6, "prvhash64s_64", "prvhash64s 4.3 64bit", GOOD, {} }, // seed changes
-{ prvhash64s_128test,  128, 0x0199728A, "prvhash64s_128","prvhash64s 4.3 128bit", GOOD, {} }, // seed compiler-specific
+{ prvhash64_64mtest,    64, 0x1A3F7B06, "prvhash64_64m", "prvhash64m 4.3.4 64bit", GOOD, {} },
+{ prvhash64_64test,     64, 0x1A3F7B06, "prvhash64_64",  "prvhash64 4.3.4 64bit", GOOD, {} },
+{ prvhash64_128test,   128, 0x316B4D9F, "prvhash64_128", "prvhash64 4.3.4 128bit", GOOD, {} },
+{ prvhash64s_64test,    64, 0x891521D6, "prvhash64s_64", "prvhash64s 4.3.4 64bit", GOOD, {} }, // seed changes
+{ prvhash64s_128test,  128, 0x0199728A, "prvhash64s_128","prvhash64s 4.3.4 128bit", GOOD, {} }, // seed compiler-specific
 #endif
 // as in rust and swift:
 { siphash13_test,       64, 0x29C010BF, "SipHash13",   "SipHash 1-3 - SSSE3 optimized", GOOD, {} },
@@ -716,7 +716,7 @@ HashInfo g_hashes[] =
 { pengyhash_test,       64, 0x1FC2217B, "pengyhash",   "pengyhash", GOOD, {} },
 { mx3hash64_test,       64, 0x4DB51E5B, "mx3",         "mx3 64bit", GOOD, {0x10} /* !! and all & 0x10 */},
 #ifdef HAVE_UMASH
-{ umash32,              32, 0x9451AF3B, "umash32",     "umash 32", GOOD, {0x90e37057} /* !! */},
+{ umash32,              32, 0x9451AF3B, "umash32",     "umash 32", GOOD, {0x36ced9cb, 0x707764c0, 0x7a1583fe, 0xf4999214, 0xf838ac4a} /* !! */},
 { umash32_hi,           32, 0x0CC4850F, "umash32_hi",  "umash 32 hi", GOOD, {} },
 { umash,                64, 0x161495C6, "umash64",     "umash 64", GOOD, {} },
 { umash128,            128, 0x36D4EC95, "umash128",    "umash 128", GOOD, {} },
@@ -790,7 +790,7 @@ HashInfo g_hashes[] =
 { khashv32_test,        32, 0xB69DF8EB, "k-hashv32",      khashv32_desc, GOOD, {}},
 { khashv64_test,        64, 0xA6B7E55B, "k-hashv64",      khashv64_desc, GOOD, {}},
 #endif
-{ komihash_test,        64, 0x8157FF6D, "komihash",    "komihash 5.10", GOOD, {} },
+{ komihash_test,        64, 0x8157FF6D, "komihash",    "komihash 5.20", GOOD, {} },
 { polymur_test,         64, 0x4F894810, "polymur",     "github.com/orlp/polymur-hash v1, __SIZEOF_INT128__:" MACRO_ITOA(__SIZEOF_INT128__), GOOD, {} },
 };
 
@@ -920,6 +920,14 @@ void Bad_Seed_init (pfHash hash, uint32_t &seed) {
 #ifdef HAVE_AESNI
   else if (hash == gxhash32_test)
     gxhash32_seed_init(seed);
+#endif
+#ifdef HAVE_UMASH
+  else if (hash == umash32) {
+    const std::vector<uint32_t> badseeds = {0x36ced9cb, 0x707764c0, 0x7a1583fe, 0xf4999214, 0xf838ac4a};
+    if (std::find(badseeds.begin(), badseeds.end(), seed) == badseeds.end()) {
+      seed++;
+    }
+  }
 #endif
 #if defined(HAVE_SSE42) && defined(__x86_64__)
   else if (hash == clhash_test && seed == 0x0)

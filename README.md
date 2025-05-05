@@ -149,9 +149,9 @@ SMhasher
 | [pearsonbhash64](doc/pearsonbhash64.txt)      |      1749.98 |    99.84 | 257.11 (2) | 683 |                            |
 | [pearsonbhash128](doc/pearsonbhash128.txt)    |      1656.68 |   106.78 | 276.92 (3) |1134 |                            |
 | [pearsonbhash256](doc/pearsonbhash256.txt)    |      1418.61 |   123.68 | 301.26 (3) | 844 |                            |
-| [prvhash64_64m](doc/prvhash64_64m.txt)        |      3107.77 |    47.31 | 236.76 (2) | 349 |                            |
-| [prvhash64_64](doc/prvhash64_64.txt)          |      3057.79 |    47.83 | 244.16 (2) | 384 |                            |
-| [prvhash64_128](doc/prvhash64_128.txt)        |      3340.87 |    67.90 | 264.44 (2) | 718  |                           |
+| [prvhash64_64m](doc/prvhash64_64m.txt)        |      3573.29 |    51.42 | 477.94 (4) | 349 |                            |
+| [prvhash64_64](doc/prvhash64_64.txt)          |      3379.95 |    51.12 | 516.80 (46)| 384 |                            |
+| [prvhash64_128](doc/prvhash64_128.txt)        |      3352.65 |    69.16 | 495.87 (5) | 718  |                           |
 | [prvhash64s_64](doc/prvhash64s_64.txt)        |      6724.41 |   266.09 | 438.90 (3) |2640 |                           |
 | [prvhash64s_128](doc/prvhash64s_128.txt)      |      6703.66 |   326.46 | 508.67 (3) |2799 |                            |
 | [SipHash13](doc/SipHash13.txt)                |      1803.96 |   107.93 | 304.05 (3) | 778 | 0.9% bias                  |
@@ -226,7 +226,7 @@ SMhasher
 | [nmhash32x](doc/nmhash32x.txt)                |     13072.64 |    42.09 | 288.12 (3) |1494 |                            |
 | [k-hashv32](doc/k-hashv32.txt)                |      8393.09 |    53.95 | 252.98 (3) |1280 |                            |
 | [k-hashv64](doc/k-hashv64.txt)                |      9251.05 |    51.72 | 251.83 (2) |1279 |                            |
-| [komihash](doc/komihash.txt)                  |     12179.74 |    33.23 | 224.80 (2) |1323 |                            |
+| [komihash](doc/komihash.txt)                  |     11318.70 |    33.78 | 467.45 (12)|1323 |                            |
 | [polymur](doc/polymur.txt)                    |      9913.53 |    41.68 | 232.56 (3) |1128 |                            |
 | [gxhash32](doc/gxhash32.txt)                  |     47943.08 |    37.71 | 251.38 (2) |736  | AES only                   |
 | [gxhash64](doc/gxhash64.txt)                  |     48919.73 |    36.61 | 236.98 (3) |720  | AES only                   |
