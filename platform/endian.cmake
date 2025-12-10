@@ -32,10 +32,15 @@ if (ENDIAN_DETECT_BUILDTIME AND (NOT DEFINED DETECTED_LITTLE_ENDIAN))
   if(DEFINED CMAKE_16BIT_TYPE)
     #message(DEBUG "Using ${CMAKE_16BIT_TYPE}")
 
+    set(TEST_ENDIANNESS_INPUT_FILE "${CMAKE_ROOT}/Modules/TestEndianess.c.in")
+    if(EXISTS "${CMAKE_ROOT}/Modules/TestEndianness.c.in")
+      set(TEST_ENDIANNESS_INPUT_FILE "${CMAKE_ROOT}/Modules/TestEndianness.c.in")
+    endif()
+
     configure_file(
-      "${CMAKE_ROOT}/Modules/TestEndianess.c.in"
-      "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/TestEndianess.c"
-      @ONLY)
+            "${TEST_ENDIANNESS_INPUT_FILE}"
+            "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/TestEndianess.c"
+            @ONLY)
 
     file(READ "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/TestEndianess.c" TEST_ENDIANESS_FILE_CONTENT)
 
