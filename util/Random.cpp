@@ -495,9 +495,9 @@ static void fill_rand( uint8_t * out, const size_t elem_sz, const uint64_t elem_
     const size_t bytes_per_fill = Rand::BUFLEN * sizeof(uint64_t);
     uint8_t      tmp[Rand::BUFLEN * sizeof(uint64_t)];
 
-    size_t nbytes        = (elem_hi - elem_lo) * elem_sz;
-    size_t offset_rounds = (elem_lo * elem_sz) / (sizeof(uint64_t) * Rand::RANDS_PER_ROUND);
-    size_t offset_bytes  = (elem_lo * elem_sz) % (sizeof(uint64_t) * Rand::RANDS_PER_ROUND);
+    size_t   nbytes        = (elem_hi - elem_lo) * elem_sz;
+    uint64_t offset_rounds = (elem_lo * elem_sz) / (sizeof(uint64_t) * Rand::RANDS_PER_ROUND);
+    size_t   offset_bytes  = (elem_lo * elem_sz) % (sizeof(uint64_t) * Rand::RANDS_PER_ROUND);
     size_t offset_size   = std::min(sizeof(tmp) - offset_bytes, nbytes) % bytes_per_fill;
 
     if (offset_size > 0) {
