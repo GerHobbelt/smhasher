@@ -46,6 +46,7 @@ set(HASH_SRC_FILES
   hashes/jodyhash.cpp
   hashes/poly_mersenne.cpp
   hashes/falkhash.cpp
+  hashes/g3-rh512-256.cpp
   hashes/fnv.cpp
   hashes/rainbow.cpp
   hashes/wyhash.cpp
