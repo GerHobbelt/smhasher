@@ -550,6 +550,12 @@ sse2+aesni|                       gxhash - Verification value NE 0x64A77B47 ....
           |               rapidhash-nano - Verification value BE 0xC082DAAD ...... PASS
           |     rapidhash-nano.protected - Verification value LE 0x7A2FA761 ...... PASS
           |     rapidhash-nano.protected - Verification value BE 0xCC879229 ...... PASS
+          |                     RH512-64 - Verification value LE 0x3C481EA3 ...... PASS
+          |                     RH512-64 - Verification value BE 0x92EEF8A0 ...... PASS
+          |                        RH512 - Verification value LE 0xD5E60849 ...... PASS
+          |                        RH512 - Verification value BE 0xD8234405 ...... PASS
+          |                       RH512h - Verification value LE 0xE42C2BF3 ...... PASS
+          |                       RH512h - Verification value BE 0x4B190F9A ...... PASS
      ssse3|                   rust-ahash - Verification value LE 0x3BF4383B ...... PASS
      ssse3|                   rust-ahash - Verification value BE 0x1B4F8057 ...... PASS
           |            rust-ahash.noshuf - Verification value LE 0x84CD29E5 ...... PASS

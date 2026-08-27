@@ -278,6 +278,9 @@ rapidhash-micro                pass ... pass ... pass ... pass ... pass ... pass
 rapidhash-micro.protected      pass ... pass ... pass ... pass ... pass ... pass
 rapidhash-nano                 pass ... pass ... pass ... pass ... pass ... pass
 rapidhash-nano.protected       pass ... pass ... pass ... pass ... pass ... pass
+RH512-64                       pass ... pass ... pass ... pass ... pass ... pass
+RH512                          pass ... pass ... pass ... pass ... pass ... pass
+RH512h                         pass ... pass ... pass ... pass ... pass ... pass
 rust-ahash                     pass ... pass ... pass ... pass ... pass ... pass
 rust-ahash.noshuf              pass ... pass ... pass ... pass ... pass ... pass
 rust-ahash-fb                  pass ... pass ... pass ... pass ... pass ... pass
