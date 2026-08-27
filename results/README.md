@@ -49,8 +49,11 @@ Hashes that currently pass all tests, sorted by average short input speed.
 | [FarmHash-128.CM.seed3](raw/FarmHash-128.CM.seed3.txt) | 128 | 250 |  70.50 |   2.61|
 | [prvhash-128](raw/prvhash-128.txt) | 128 | 238 |  71.07 |   0.92|
 | [HighwayHash-64](raw/HighwayHash-64.txt) | 64 | 238 |  73.30 |   2.90|
+| [RH512-64](raw/RH512-64.txt) | 64 | 250 |  76.05 |   2.50|
 | [poly-mersenne.deg4](raw/poly-mersenne.deg4.txt) | 32 | 238 |  78.16 |   0.50|
+| [RH512](raw/RH512.txt) | 256 | 250 |  79.73 |   2.50|
 | [HalfSipHash](raw/HalfSipHash.txt) | 32 | 238 |  81.75 |   0.34|
+| [RH512h](raw/RH512h.txt) | 256 | 250 |  82.13 |   2.50|
 | [TentHash](raw/TentHash.txt) | 160 | 250 |  84.75 |   1.73|
 | [GoodOAAT](raw/GoodOAAT.txt) | 32 | 235 |  86.50 |   0.24|
 | [GoodhartHash5](raw/GoodhartHash5.txt) | 128 | 250 |  93.26 |   1.06|
@@ -540,4 +543,4 @@ Hashes that fail Sanity tests, sorted by failing tests and then average short in
 | [donothingOAAT-32](raw/donothingOAAT-32.txt) | 32 | 249 | 250 |  39.10 |   3.41|
 | [donothingOAAT-64](raw/donothingOAAT-64.txt) | 64 | 249 | 250 |  39.22 |   3.40|
 
-All results were generated using SMHasher3 20251015-release-5035a923 or 20251112-release-15-fedf16f7
+All results were generated using SMHasher3 20251015-release-5035a923 or 20251112-release-15-fedf16f7 or 20260827-release-22-c378d845
