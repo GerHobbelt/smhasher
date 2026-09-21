@@ -11,9 +11,16 @@
 #include "Stats.h"
 #include "Random.h"   // for rand_p
 
-#include <algorithm>  // for std::swap
+#include <stdint.h>
+#include <inttypes.h>
 #include <assert.h>
+
+#include <algorithm>  // for std::swap
 #include <string>
+#if NCPU > 1 // disable with -DNCPU=0 or 1
+#include <thread>
+#include <chrono>
+#endif
 
 #undef MAX
 #define MAX(x,  y)   (((x) > (y)) ? (x) : (y))
@@ -41,7 +48,7 @@ static void printKey(const void* key, size_t len)
 template< typename hashtype >
 void Prn_gen (int nbRn, pfHash hash, std::vector<hashtype> & hashes )
 {
-  assert(nbRn < 0);
+  assert(nbRn > 0);
 
   printf("Generating %i random numbers : \n", nbRn);
 
@@ -79,6 +86,193 @@ bool PrngTest ( hashfunc<hashtype> hash,
   return result;
 }
 
+//-----------------------------------------------------------------------------
+// Find bad seeds, and test against the known secrets/bad seeds.
+
+// A more thourough test for a known secret. vary keys and key len
+template< typename hashtype >
+bool TestSecret ( const HashInfo* info, const uint64_t secret ) {
+  bool result = true;
+  static hashtype zero;
+  pfHash hash = info->hash;
+  uint8_t key[128];
+  printf("0x%" PRIx64 " ", secret);
+  Hash_Seed_init (hash, secret);
+  for (int len : std::vector<int> {1,2,4,8,12,16,32,64,128}) {
+    std::vector<hashtype> hashes;
+    for (int c : std::vector<int> {0,32,'0',127,128,255}) {
+      hashtype h;
+      memset(&key, c, len);
+      hash(key, len, secret, &h);
+      if (h == 0 && c == 0) {
+        printf("Broken seed 0x%" PRIx64 " => 0 with key[%d] of all %d bytes confirmed => hash 0\n",
+               secret, len, c);
+        hashes.push_back(h);
+        result = false;
+      }
+      else
+        hashes.push_back(h);
+    }
+    if (!TestHashList(hashes, false, true, false, false, false, false)) {
+      printf(" Bad seed 0x%" PRIx64 " for len %d confirmed ", secret, len);
+#if !defined __clang__ && !defined _MSC_VER
+      printf("=> hashes: ");
+      for (hashtype x : hashes) printf ("%lx ", x);
+#endif
+      printf ("\n");
+      TestHashList(hashes, false);
+      result = false;
+    }
+  }
+  return result;
+}
+
+// Process part of a 2^32 range, split into NCPU threads
+template< typename hashtype >
+void TestSecretRangeThread ( const HashInfo* info, const uint64_t hi,
+                             const uint32_t start, const uint32_t len, bool &result )
+{
+  pfHash hash = info->hash;
+  std::vector<hashtype> hashes;
+  int fails = 0;
+  hashes.resize(4);
+  result = true;
+  printf("at %lx ", hi | start);
+  size_t end = start + len;
+  for (size_t y=start; y < end; y++) {
+    static hashtype zero;
+    uint64_t seed = hi | y;
+    if ((seed & UINT64_C(0x1ffffff)) == UINT64_C(0x1ffffff))
+      printf ("%" PRIx64 " ", seed);
+    hashes.clear();
+    Hash_Seed_init (hash, seed);
+    for (int x : std::vector<int> {0,32,127,255}) {
+      hashtype h;
+      uint8_t key[16];
+      memset(&key, x, sizeof(key));
+      hash(key, 16, seed, &h);
+      if (h == 0 && x == 0) {
+        printf("Broken seed 0x%" PRIx64 " => 0 with key[16] of all %d bytes\n", seed, x);
+        hashes.push_back(h);
+        fails++;
+        result = false;
+      }
+      else {
+        hashes.push_back(h);
+      }
+    }
+    if (!TestHashList(hashes, false, true, false, false, false, false)) {
+      fails++;
+      printf("Bad seed 0x0x%" PRIx64 "\n", seed);
+      if (fails < 32) // don't print too many lines
+        TestHashList(hashes, false);
+      result = false;
+    }
+    if (fails > 300) {
+      fprintf(stderr, "Too many bad seeds, aborting\n");
+      exit(1);
+    }
+  }
+  //printf("\n");
+  return;
+}
+
+// Test the full 2^32 range [hi + 0, hi + 0xffffffff], the hi part
+template< typename hashtype >
+bool TestSecret32 ( const HashInfo* info, const uint64_t hi ) {
+  bool result = true;
+#if NCPU > 1
+  // split into NCPU threads
+  const uint64_t len = 0x100000000UL / NCPU;
+  const uint32_t len32 = (const uint32_t)(len & 0xffffffff);
+  static std::thread t[NCPU];
+  bool *results = (bool*)calloc (NCPU, sizeof(bool));
+  printf("%d threads starting...\n", NCPU);
+  for (int i=0; i < NCPU; i++) {
+    const uint32_t start = i * len;
+    t[i] = std::thread {TestSecretRangeThread<hashtype>, info, hi, start, len32, std::ref(results[i])};
+    // pin it? moves around a lot. but the result is fair
+  }
+  std::this_thread::sleep_for(std::chrono::seconds(30));
+  for (int i=0; i < NCPU; i++) {
+    t[i].join();
+  }
+  printf("All %d threads ended\n", NCPU);
+  for (int i=0; i < NCPU; i++) {
+    result &= results[i];
+  }
+  free(results);
+#else
+  TestSecretRangeThread<hashtype>(info, hi, 0x0, 0xffffffff, result);
+  printf("\n");
+#endif
+  return result;
+}
+
+template< typename hashtype >
+bool BadSeedsTest ( HashInfo* info, bool testAll ) {
+  bool result = true;
+  bool have_lower = false;
+#ifdef HAVE_INT64
+  const uint64_t max_seed = sizeof(hashtype) == 4 ? UINT64_C(0xffffffff) : UINT64_C(0xffffffffffffffff);
+  const std::vector<uint64_t> secrets = info->secrets;
+#else
+  const size_t max_seed = 0xffffffff;
+  const std::vector<size_t> secrets = info->secrets;
+#endif
+#if !defined __arm__ && !defined __aarch64__
+  printf("Testing %lu internal secrets:\n", (unsigned long)secrets.size());
+#endif
+  for (auto secret : secrets) {
+    result &= TestSecret<hashtype>(info, secret);
+    if (sizeof(hashtype) == 8 && secret <= 0xffffffff) { // check the upper hi mask also
+      uint64_t s = secret << 32;
+      have_lower = true;
+      result &= TestSecret<hashtype>(info, s);
+    }
+  }
+  if (!secrets.size())
+    result &= TestSecret<hashtype>(info, 0x0);
+  if (getenv("SEED")) {
+    const char *s = getenv("SEED");
+    size_t seed = strtol(s, NULL, 0);
+    printf("\nTesting SEED=0x%" PRIx64 " ", seed);
+    //if (*s && s[1] && *s == '0' && s[1] == 'x')
+    //  seed = strtol(&s[2], NULL, 16);
+    if (seed || secrets.size())
+      result &= TestSecret<hashtype>(info, seed);
+  }
+  if (result)
+    printf("PASS\n");
+  if (testAll == false || info->quality == SKIP)
+    return result;
+
+  // many days with >= 64 bit hashes
+  printf("Testing the first 0xffffffff seeds ...\n");
+  result &= TestSecret32<hashtype>(info, UINT64_C(0x0));
+#ifdef HAVE_INT64
+  if (sizeof(hashtype) > 4) { // and the upper half 32bit range
+    if (have_lower) {
+      for (auto secret : secrets) {
+        if (secret <= 0xffffffff) {
+          uint32_t s32 = (uint32_t)(secret & 0xffffffff);
+          uint64_t s = secret;
+          s = s << 32;
+          printf("Suspect the 0x%" PRIx64 " seeds ...\n", s);
+          result &= TestSecret32<hashtype>(info, s);
+        }
+      }
+    }
+    printf("And the last 0xffffffff00000000 seeds ...\n");
+    result &= TestSecret32<hashtype>(info, UINT64_C(0xffffffff00000000));
+  }
+#endif
+  if (result)
+    printf("PASS\n");
+  else
+    printf("FAIL\nEnsure to add these bad seeds to the list of secrets in main.cpp\n");
+  return result;
+}
 
 //-----------------------------------------------------------------------------
 // Keyset 'Perlin Noise' - X,Y coordinates on input & seed

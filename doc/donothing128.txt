@@ -10,15 +10,15 @@ Running AppendedZeroesTest . FAIL !!!!!
 [[[ Speed Tests ]]]
 
 Bulk speed test - 262144-byte keys
-Alignment  7 - 5383.446 bytes/cycle - 15402161.85 MiB/sec @ 3 ghz
-Alignment  6 - 5394.272 bytes/cycle - 15433136.80 MiB/sec @ 3 ghz
-Alignment  5 - 5363.496 bytes/cycle - 15345085.27 MiB/sec @ 3 ghz
-Alignment  4 - 5354.616 bytes/cycle - 15319679.50 MiB/sec @ 3 ghz
-Alignment  3 - 5393.347 bytes/cycle - 15430489.03 MiB/sec @ 3 ghz
-Alignment  2 - 5378.214 bytes/cycle - 15387194.79 MiB/sec @ 3 ghz
-Alignment  1 - 5371.818 bytes/cycle - 15368894.48 MiB/sec @ 3 ghz
-Alignment  0 - 5358.998 bytes/cycle - 15332215.04 MiB/sec @ 3 ghz
-Average      - 5374.776 bytes/cycle - 15377357.10 MiB/sec @ 3 ghz
+Alignment  7 - 5324.001 bytes/cycle - 15232088.66 MiB/sec @ 3 ghz
+Alignment  6 - 5312.054 bytes/cycle - 15197907.37 MiB/sec @ 3 ghz
+Alignment  5 - 5341.769 bytes/cycle - 15282922.68 MiB/sec @ 3 ghz
+Alignment  4 - 5344.057 bytes/cycle - 15289469.75 MiB/sec @ 3 ghz
+Alignment  3 - 5323.893 bytes/cycle - 15231779.11 MiB/sec @ 3 ghz
+Alignment  2 - 5346.893 bytes/cycle - 15297583.41 MiB/sec @ 3 ghz
+Alignment  1 - 5355.747 bytes/cycle - 15322915.89 MiB/sec @ 3 ghz
+Alignment  0 - 5374.720 bytes/cycle - 15377197.84 MiB/sec @ 3 ghz
+Average      - 5340.392 bytes/cycle - 15278983.09 MiB/sec @ 3 ghz
 
 Small key speed test -    1-byte keys -     6.00 cycles/hash
 Small key speed test -    2-byte keys -     6.00 cycles/hash
@@ -2132,3 +2132,136 @@ Max bias 3.000000 - (  0 :   0,  1)
 Input vcode 0x00000001, Output vcode 0x00000001, Result vcode 0x00000001
 Verification value is 0x00000001 - Testing took 921.928502 seconds
 -------------------------------------------------------------------------------
+[[[ BadSeeds Tests ]]]
+
+Testing 1 internal secrets:
+0x0 Broken seed 0x0 => 0 with key[1] of all 0 bytes confirmed => hash 0
+ !!!!! Bad seed 0x0 for len 1 confirmed => hashes: 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 
+Testing collisions (128-bit) - Expected    0.0, actual      5 (113427455640312814857969558651062452224.00x) (5) !!!!!
+Testing collisions (high 64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (high 32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (high  6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (high 12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (high  8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing collisions (low  64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (low  32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (low   6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (low  12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (low   8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing distribution - Worst bias is the -1-bit window at bit -1 - 0.000%
+Broken seed 0x0 => 0 with key[2] of all 0 bytes confirmed => hash 0
+ !!!!! Bad seed 0x0 for len 2 confirmed => hashes: 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 
+Testing collisions (128-bit) - Expected    0.0, actual      5 (113427455640312814857969558651062452224.00x) (5) !!!!!
+Testing collisions (high 64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (high 32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (high  6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (high 12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (high  8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing collisions (low  64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (low  32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (low   6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (low  12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (low   8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing distribution - Worst bias is the -1-bit window at bit -1 - 0.000%
+Broken seed 0x0 => 0 with key[4] of all 0 bytes confirmed => hash 0
+ !!!!! Bad seed 0x0 for len 4 confirmed => hashes: 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 
+Testing collisions (128-bit) - Expected    0.0, actual      5 (113427455640312814857969558651062452224.00x) (5) !!!!!
+Testing collisions (high 64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (high 32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (high  6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (high 12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (high  8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing collisions (low  64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (low  32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (low   6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (low  12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (low   8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing distribution - Worst bias is the -1-bit window at bit -1 - 0.000%
+Broken seed 0x0 => 0 with key[8] of all 0 bytes confirmed => hash 0
+ !!!!! Bad seed 0x0 for len 8 confirmed => hashes: 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 
+Testing collisions (128-bit) - Expected    0.0, actual      5 (113427455640312814857969558651062452224.00x) (5) !!!!!
+Testing collisions (high 64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (high 32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (high  6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (high 12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (high  8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing collisions (low  64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (low  32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (low   6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (low  12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (low   8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing distribution - Worst bias is the -1-bit window at bit -1 - 0.000%
+Broken seed 0x0 => 0 with key[12] of all 0 bytes confirmed => hash 0
+ !!!!! Bad seed 0x0 for len 12 confirmed => hashes: 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 
+Testing collisions (128-bit) - Expected    0.0, actual      5 (113427455640312814857969558651062452224.00x) (5) !!!!!
+Testing collisions (high 64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (high 32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (high  6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (high 12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (high  8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing collisions (low  64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (low  32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (low   6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (low  12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (low   8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing distribution - Worst bias is the -1-bit window at bit -1 - 0.000%
+Broken seed 0x0 => 0 with key[16] of all 0 bytes confirmed => hash 0
+ !!!!! Bad seed 0x0 for len 16 confirmed => hashes: 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 
+Testing collisions (128-bit) - Expected    0.0, actual      5 (113427455640312814857969558651062452224.00x) (5) !!!!!
+Testing collisions (high 64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (high 32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (high  6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (high 12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (high  8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing collisions (low  64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (low  32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (low   6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (low  12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (low   8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing distribution - Worst bias is the -1-bit window at bit -1 - 0.000%
+Broken seed 0x0 => 0 with key[32] of all 0 bytes confirmed => hash 0
+ !!!!! Bad seed 0x0 for len 32 confirmed => hashes: 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 
+Testing collisions (128-bit) - Expected    0.0, actual      5 (113427455640312814857969558651062452224.00x) (5) !!!!!
+Testing collisions (high 64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (high 32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (high  6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (high 12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (high  8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing collisions (low  64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (low  32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (low   6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (low  12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (low   8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing distribution - Worst bias is the -1-bit window at bit -1 - 0.000%
+Broken seed 0x0 => 0 with key[64] of all 0 bytes confirmed => hash 0
+ !!!!! Bad seed 0x0 for len 64 confirmed => hashes: 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 
+Testing collisions (128-bit) - Expected    0.0, actual      5 (113427455640312814857969558651062452224.00x) (5) !!!!!
+Testing collisions (high 64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (high 32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (high  6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (high 12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (high  8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing collisions (low  64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (low  32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (low   6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (low  12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (low   8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing distribution - Worst bias is the -1-bit window at bit -1 - 0.000%
+Broken seed 0x0 => 0 with key[128] of all 0 bytes confirmed => hash 0
+ !!!!! Bad seed 0x0 for len 128 confirmed => hashes: 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 7ffdfc11ace0 
+Testing collisions (128-bit) - Expected    0.0, actual      5 (113427455640312814857969558651062452224.00x) (5) !!!!!
+Testing collisions (high 64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (high 32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (high  6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (high 12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (high  8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing collisions (low  64-bit) - Expected          0.0, actual      5 (6148914691236516864.00x) (5) !!!!!
+Testing collisions (low  32-bit) - Expected          0.0, actual      5 (1431655765.33x) (5) !!!!!
+Testing collisions (low   6- 2 bits) - Worst is  0 bits:  0/ 1 (0.00x)
+Testing collisions (low  12-bit) - Expected          0.0, actual      5 (1365.33x) (5) !!!!!
+Testing collisions (low   8-bit) - Expected          0.1, actual      5 (85.33x) (5) !!!!!
+Testing distribution - Worst bias is the -1-bit window at bit -1 - 0.000%
+
+*********FAIL*********
+
+

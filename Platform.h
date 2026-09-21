@@ -3,6 +3,21 @@
 
 #pragma once
 
+#if defined(__aarch64__) && defined(HAVE_INT64)
+// fixme: bad system call with threads (8 cpu octocore)
+# define NCPU 0
+#elif !defined NCPU
+# define NCPU 4
+#endif
+
+#if NCPU > 1
+#include <thread>
+void SetThreadAffinity ( std::thread &t, int cpu );
+# if __APPLE__
+#  include <mach/mach.h>
+#  include <mach/thread_act.h>
+# endif
+#endif
 void SetAffinity ( int cpu );
 
 #ifndef __x86_64__
@@ -62,6 +77,9 @@ void SetAffinity ( int cpu );
 #include <stdlib.h>
 #include <stdint.h>
 #include <sys/time.h>
+#if NCPU > 1
+#include <pthread.h>
+#endif
 
 #define	FORCE_INLINE inline __attribute__((always_inline))
 #define	NEVER_INLINE __attribute__((noinline))

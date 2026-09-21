@@ -3,65 +3,65 @@
 
 [[[ Sanity Tests ]]]
 
-Verification value 0x170AB674 ....... PASS
+Verification value 0x50E4CD91 ....... PASS
 Running sanity check 1     .......... PASS
 Running AppendedZeroesTest .......... PASS
 
 [[[ Speed Tests ]]]
 
 Bulk speed test - 262144-byte keys
-Alignment  7 -  0.447 bytes/cycle - 1279.15 MiB/sec @ 3 ghz
-Alignment  6 -  0.447 bytes/cycle - 1279.07 MiB/sec @ 3 ghz
-Alignment  5 -  0.447 bytes/cycle - 1279.15 MiB/sec @ 3 ghz
-Alignment  4 -  0.447 bytes/cycle - 1279.68 MiB/sec @ 3 ghz
-Alignment  3 -  0.447 bytes/cycle - 1279.15 MiB/sec @ 3 ghz
-Alignment  2 -  0.447 bytes/cycle - 1279.15 MiB/sec @ 3 ghz
-Alignment  1 -  0.447 bytes/cycle - 1279.17 MiB/sec @ 3 ghz
-Alignment  0 -  0.455 bytes/cycle - 1301.45 MiB/sec @ 3 ghz
-Average      -  0.448 bytes/cycle - 1282.00 MiB/sec @ 3 ghz
+Alignment  7 -  0.449 bytes/cycle - 1283.43 MiB/sec @ 3 ghz
+Alignment  6 -  0.449 bytes/cycle - 1283.44 MiB/sec @ 3 ghz
+Alignment  5 -  0.449 bytes/cycle - 1283.45 MiB/sec @ 3 ghz
+Alignment  4 -  0.449 bytes/cycle - 1284.02 MiB/sec @ 3 ghz
+Alignment  3 -  0.449 bytes/cycle - 1283.43 MiB/sec @ 3 ghz
+Alignment  2 -  0.449 bytes/cycle - 1283.46 MiB/sec @ 3 ghz
+Alignment  1 -  0.449 bytes/cycle - 1283.45 MiB/sec @ 3 ghz
+Alignment  0 -  0.455 bytes/cycle - 1302.57 MiB/sec @ 3 ghz
+Average      -  0.449 bytes/cycle - 1285.91 MiB/sec @ 3 ghz
 
-Small key speed test -    1-byte keys -   334.00 cycles/hash
-Small key speed test -    2-byte keys -   336.44 cycles/hash
-Small key speed test -    3-byte keys -   336.45 cycles/hash
-Small key speed test -    4-byte keys -   336.55 cycles/hash
-Small key speed test -    5-byte keys -   336.68 cycles/hash
-Small key speed test -    6-byte keys -   336.53 cycles/hash
-Small key speed test -    7-byte keys -   336.53 cycles/hash
-Small key speed test -    8-byte keys -   354.00 cycles/hash
-Small key speed test -    9-byte keys -   354.00 cycles/hash
-Small key speed test -   10-byte keys -   354.00 cycles/hash
-Small key speed test -   11-byte keys -   354.00 cycles/hash
-Small key speed test -   12-byte keys -   354.00 cycles/hash
-Small key speed test -   13-byte keys -   354.00 cycles/hash
-Small key speed test -   14-byte keys -   354.00 cycles/hash
-Small key speed test -   15-byte keys -   354.00 cycles/hash
-Small key speed test -   16-byte keys -   354.00 cycles/hash
-Small key speed test -   17-byte keys -   354.00 cycles/hash
-Small key speed test -   18-byte keys -   354.00 cycles/hash
-Small key speed test -   19-byte keys -   354.00 cycles/hash
-Small key speed test -   20-byte keys -   354.00 cycles/hash
-Small key speed test -   21-byte keys -   354.00 cycles/hash
-Small key speed test -   22-byte keys -   354.00 cycles/hash
-Small key speed test -   23-byte keys -   354.00 cycles/hash
-Small key speed test -   24-byte keys -   354.00 cycles/hash
-Small key speed test -   25-byte keys -   354.00 cycles/hash
-Small key speed test -   26-byte keys -   354.00 cycles/hash
-Small key speed test -   27-byte keys -   354.00 cycles/hash
-Small key speed test -   28-byte keys -   354.00 cycles/hash
-Small key speed test -   29-byte keys -   354.00 cycles/hash
-Small key speed test -   30-byte keys -   354.00 cycles/hash
-Small key speed test -   31-byte keys -   354.00 cycles/hash
-Average                                    349.974 cycles/hash
+Small key speed test -    1-byte keys -   331.00 cycles/hash
+Small key speed test -    2-byte keys -   332.00 cycles/hash
+Small key speed test -    3-byte keys -   332.00 cycles/hash
+Small key speed test -    4-byte keys -   332.84 cycles/hash
+Small key speed test -    5-byte keys -   332.84 cycles/hash
+Small key speed test -    6-byte keys -   332.84 cycles/hash
+Small key speed test -    7-byte keys -   332.86 cycles/hash
+Small key speed test -    8-byte keys -   341.29 cycles/hash
+Small key speed test -    9-byte keys -   341.50 cycles/hash
+Small key speed test -   10-byte keys -   341.50 cycles/hash
+Small key speed test -   11-byte keys -   341.50 cycles/hash
+Small key speed test -   12-byte keys -   340.00 cycles/hash
+Small key speed test -   13-byte keys -   341.50 cycles/hash
+Small key speed test -   14-byte keys -   341.50 cycles/hash
+Small key speed test -   15-byte keys -   341.50 cycles/hash
+Small key speed test -   16-byte keys -   340.00 cycles/hash
+Small key speed test -   17-byte keys -   341.50 cycles/hash
+Small key speed test -   18-byte keys -   353.17 cycles/hash
+Small key speed test -   19-byte keys -   343.43 cycles/hash
+Small key speed test -   20-byte keys -   340.00 cycles/hash
+Small key speed test -   21-byte keys -   341.50 cycles/hash
+Small key speed test -   22-byte keys -   341.50 cycles/hash
+Small key speed test -   23-byte keys -   341.50 cycles/hash
+Small key speed test -   24-byte keys -   340.00 cycles/hash
+Small key speed test -   25-byte keys -   342.00 cycles/hash
+Small key speed test -   26-byte keys -   342.00 cycles/hash
+Small key speed test -   27-byte keys -   342.00 cycles/hash
+Small key speed test -   28-byte keys -   341.00 cycles/hash
+Small key speed test -   29-byte keys -   342.00 cycles/hash
+Small key speed test -   30-byte keys -   342.00 cycles/hash
+Small key speed test -   31-byte keys -   350.00 cycles/hash
+Average                                    340.009 cycles/hash
 
 [[[ 'Hashmap' Speed Tests ]]]
 
 std::unordered_map
-Init std HashMapTest:     1407.291 cycles/op (479826 inserts, 1% deletions)
-Running std HashMapTest:  1102.025 cycles/op (4.0 stdv)
+Init std HashMapTest:     840.386 cycles/op (102774 inserts, 1% deletions)
+Running std HashMapTest:  710.574 cycles/op (4.6 stdv)
 
 greg7mdp/parallel-hashmap
-Init fast HashMapTest:    1720.226 cycles/op (479826 inserts, 1% deletions)
-Running fast HashMapTest: 983.966 cycles/op (4.4 stdv)  ....... PASS
+Init fast HashMapTest:    603.349 cycles/op (102774 inserts, 1% deletions)
+Running fast HashMapTest: 552.634 cycles/op (2.6 stdv)  ....... PASS
 
 [[[ Avalanche Tests ]]]
 
@@ -958,25 +958,25 @@ Testing collisions (low  12-bit) - Expected    3995904.0, actual 3995904 (1.00x)
 Testing collisions (low   8-bit) - Expected    3999744.0, actual 3999744 (1.00x)
 Testing distribution - Worst bias is the 19-bit window at bit 148 - 0.059%
 
-Keyset 'Words' - 479826 dict words
+Keyset 'Words' - 102774 dict words
 Testing collisions (256-bit) - Expected    0.0, actual      0 (0.00x)
 Testing collisions (high 224-bit) - Expected          0.0, actual      0 (0.00x)
 Testing collisions (high 160-bit) - Expected          0.0, actual      0 (0.00x)
 Testing collisions (high 128-bit) - Expected          0.0, actual      0 (0.00x)
 Testing collisions (high 64-bit) - Expected          0.0, actual      0 (0.00x)
-Testing collisions (high 32-bit) - Expected         26.8, actual     31 (1.16x) (5)
-Testing collisions (high 22-32 bits) - Worst is 31 bits: 63/53 (1.18x)
-Testing collisions (high 12-bit) - Expected     475730.0, actual 475730 (1.00x)
-Testing collisions (high  8-bit) - Expected     479570.0, actual 479570 (1.00x)
+Testing collisions (high 32-bit) - Expected          1.2, actual      1 (0.81x)
+Testing collisions (high 20-27 bits) - Worst is 25 bits: 161/157 (1.02x)
+Testing collisions (high 12-bit) - Expected      98678.0, actual  98678 (1.00x)
+Testing collisions (high  8-bit) - Expected     102518.0, actual 102518 (1.00x)
 Testing collisions (low  224-bit) - Expected          0.0, actual      0 (0.00x)
 Testing collisions (low  160-bit) - Expected          0.0, actual      0 (0.00x)
 Testing collisions (low  128-bit) - Expected          0.0, actual      0 (0.00x)
 Testing collisions (low  64-bit) - Expected          0.0, actual      0 (0.00x)
-Testing collisions (low  32-bit) - Expected         26.8, actual     20 (0.75x)
-Testing collisions (low  22-32 bits) - Worst is 26 bits: 1748/1715 (1.02x)
-Testing collisions (low  12-bit) - Expected     475730.0, actual 475730 (1.00x)
-Testing collisions (low   8-bit) - Expected     479570.0, actual 479570 (1.00x)
-Testing distribution - Worst bias is the 16-bit window at bit 231 - 0.239%
+Testing collisions (low  32-bit) - Expected          1.2, actual      0 (0.00x)
+Testing collisions (low  20-27 bits) - Worst is 27 bits: 40/39 (1.02x)
+Testing collisions (low  12-bit) - Expected      98678.0, actual  98678 (1.00x)
+Testing collisions (low   8-bit) - Expected     102518.0, actual 102518 (1.00x)
+Testing distribution - Worst bias is the 14-bit window at bit 232 - 0.655%
 
 
 [[[ Keyset 'Zeroes' Tests ]]]
@@ -1005,49 +1005,47 @@ Testing distribution - Worst bias is the 15-bit window at bit 186 - 0.309%
 [[[ Keyset 'Seed' Tests ]]]
 
 Keyset 'Seed' - 5000000 keys
-Testing collisions (256-bit) - Expected    0.0, actual 4999999 (46316835694926476073504124557862456096537905457216409279206550696624128.00x) (4999999) !!!!!
-Testing collisions (high 224-bit) - Expected          0.0, actual 4999999 (10783978666860255429871409330019367881244492125049328729325568.00x) (4999999) !!!!!
-Testing collisions (high 160-bit) - Expected          0.0, actual 4999999 (584600654932361140827190469573650885378048.00x) (4999999) !!!!!
-Testing collisions (high 128-bit) - Expected          0.0, actual 4999999 (136112946768375379225981996761088.00x) (4999999) !!!!!
-Testing collisions (high 64-bit) - Expected          0.0, actual 4999999 (7378697629483.82x) (4999999) !!!!!
-Testing collisions (high 32-bit) - Expected       2910.4, actual 4999999 (1717.99x) (4997089) !!!!!
-Testing collisions (high 26-39 bits) - Worst is 39 bits: 4999999/22 (219902.33x) !!!!!
-Testing collisions (high 12-bit) - Expected    4995904.0, actual 4999999 (1.00x) (4095)
-Testing collisions (high  8-bit) - Expected    4999744.0, actual 4999999 (1.00x) (255)
-Testing collisions (low  224-bit) - Expected          0.0, actual 4999999 (10783978666860255429871409330019367881244492125049328729325568.00x) (4999999) !!!!!
-Testing collisions (low  160-bit) - Expected          0.0, actual 4999999 (584600654932361140827190469573650885378048.00x) (4999999) !!!!!
-Testing collisions (low  128-bit) - Expected          0.0, actual 4999999 (136112946768375379225981996761088.00x) (4999999) !!!!!
-Testing collisions (low  64-bit) - Expected          0.0, actual 4999999 (7378697629483.82x) (4999999) !!!!!
-Testing collisions (low  32-bit) - Expected       2910.4, actual 4999999 (1717.99x) (4997089) !!!!!
-Testing collisions (low  26-39 bits) - Worst is 39 bits: 4999999/22 (219902.33x) !!!!!
-Testing collisions (low  12-bit) - Expected    4995904.0, actual 4999999 (1.00x) (4095)
-Testing collisions (low   8-bit) - Expected    4999744.0, actual 4999999 (1.00x) (255)
-Testing distribution - Worst bias is the 19-bit window at bit  0 - 100.000% !!!!!
+Testing collisions (256-bit) - Expected    0.0, actual      0 (0.00x)
+Testing collisions (high 224-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (high 160-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (high 128-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (high 64-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (high 32-bit) - Expected       2910.4, actual   2908 (1.00x) (-2)
+Testing collisions (high 26-39 bits) - Worst is 38 bits: 53/45 (1.17x)
+Testing collisions (high 12-bit) - Expected    4995904.0, actual 4995904 (1.00x)
+Testing collisions (high  8-bit) - Expected    4999744.0, actual 4999744 (1.00x)
+Testing collisions (low  224-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (low  160-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (low  128-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (low  64-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (low  32-bit) - Expected       2910.4, actual   2876 (0.99x) (-34)
+Testing collisions (low  26-39 bits) - Worst is 39 bits: 33/22 (1.45x)
+Testing collisions (low  12-bit) - Expected    4995904.0, actual 4995904 (1.00x)
+Testing collisions (low   8-bit) - Expected    4999744.0, actual 4999744 (1.00x)
+Testing distribution - Worst bias is the 19-bit window at bit 95 - 0.056%
 
-*********FAIL*********
 
 [[[ Keyset 'PerlinNoise' Tests ]]]
 
 Testing 16777216 coordinates (L2) : 
-Testing collisions (256-bit) - Expected    0.0, actual 16773120 (13800123522799194189823133349153486935305489277234488780983902941478912.00x) (16773120) !!!!!
-Testing collisions (high 224-bit) - Expected          0.0, actual 16773120 (3213091642316243189811504760094333192171875684809519159836672.00x) (16773120) !!!!!
-Testing collisions (high 160-bit) - Expected          0.0, actual 16773120 (174182046949714410824533318127273054830592.00x) (16773120) !!!!!
-Testing collisions (high 128-bit) - Expected          0.0, actual 16773120 (40554918104250545339783029194752.00x) (16773120) !!!!!
-Testing collisions (high 64-bit) - Expected          0.0, actual 16773120 (2198486515680.01x) (16773120) !!!!!
-Testing collisions (high 32-bit) - Expected      32768.0, actual 16773120 (511.88x) (16740353) !!!!!
-Testing collisions (high 27-42 bits) - Worst is 42 bits: 16773120/31 (524160.03x) !!!!!
-Testing collisions (high 12-bit) - Expected   16773120.0, actual 16774646 (1.00x) (1526)
+Testing collisions (256-bit) - Expected    0.0, actual      0 (0.00x)
+Testing collisions (high 224-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (high 160-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (high 128-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (high 64-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (high 32-bit) - Expected      32768.0, actual  32861 (1.00x) (94)
+Testing collisions (high 27-42 bits) - Worst is 33 bits: 16446/16383 (1.00x)
+Testing collisions (high 12-bit) - Expected   16773120.0, actual 16773120 (1.00x)
 Testing collisions (high  8-bit) - Expected   16776960.0, actual 16776960 (1.00x)
-Testing collisions (low  224-bit) - Expected          0.0, actual 16773120 (3213091642316243189811504760094333192171875684809519159836672.00x) (16773120) !!!!!
-Testing collisions (low  160-bit) - Expected          0.0, actual 16773120 (174182046949714410824533318127273054830592.00x) (16773120) !!!!!
-Testing collisions (low  128-bit) - Expected          0.0, actual 16773120 (40554918104250545339783029194752.00x) (16773120) !!!!!
-Testing collisions (low  64-bit) - Expected          0.0, actual 16773120 (2198486515680.01x) (16773120) !!!!!
-Testing collisions (low  32-bit) - Expected      32768.0, actual 16773120 (511.88x) (16740353) !!!!!
-Testing collisions (low  27-42 bits) - Worst is 42 bits: 16773120/31 (524160.03x) !!!!!
-Testing collisions (low  12-bit) - Expected   16773120.0, actual 16774622 (1.00x) (1502)
+Testing collisions (low  224-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (low  160-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (low  128-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (low  64-bit) - Expected          0.0, actual      0 (0.00x)
+Testing collisions (low  32-bit) - Expected      32768.0, actual  32498 (0.99x) (-269)
+Testing collisions (low  27-42 bits) - Worst is 39 bits: 286/255 (1.12x)
+Testing collisions (low  12-bit) - Expected   16773120.0, actual 16773120 (1.00x)
 Testing collisions (low   8-bit) - Expected   16776960.0, actual 16776960 (1.00x)
 
-*********FAIL*********
 
 [[[ Diff 'Differential' Tests ]]]
 
@@ -2283,7 +2281,6 @@ Testing collisions (low  12-bit) - Expected    2093056.0, actual 2093056 (1.00x)
 Testing collisions (low   8-bit) - Expected    2096896.0, actual 2096896 (1.00x)
 
 
-
 [[[ MomentChi2 Tests ]]]
 
 Analyze hashes produced from a serie of linearly increasing numbers of 32-bit, using a step of 6 ... 
@@ -2310,19 +2307,33 @@ Testing collisions (high 224-bit) - Expected          0.0, actual      0 (0.00x)
 Testing collisions (high 160-bit) - Expected          0.0, actual      0 (0.00x)
 Testing collisions (high 128-bit) - Expected          0.0, actual      0 (0.00x)
 Testing collisions (high 64-bit) - Expected          0.0, actual      0 (0.00x)
-Testing collisions (high 32-bit) - Expected     262144.0, actual 130125 (0.50x)
-Testing collisions (high 29-45 bits) - Worst is 45 bits: 22/31 (0.69x)
+Testing collisions (high 32-bit) - Expected     131072.0, actual 130125 (0.99x) (-946)
+Testing collisions (high 28-44 bits) - Worst is 43 bits: 79/63 (1.23x)
+Testing collisions (high 12-bit) - Expected   33550336.0, actual 33550336 (1.00x)
+Testing collisions (high  8-bit) - Expected   33554176.0, actual 33554176 (1.00x)
 Testing collisions (low  224-bit) - Expected          0.0, actual      0 (0.00x)
 Testing collisions (low  160-bit) - Expected          0.0, actual      0 (0.00x)
 Testing collisions (low  128-bit) - Expected          0.0, actual      0 (0.00x)
 Testing collisions (low  64-bit) - Expected          0.0, actual      0 (0.00x)
-Testing collisions (low  32-bit) - Expected     262144.0, actual 131118 (0.50x)
-Testing collisions (low  29-45 bits) - Worst is 43 bits: 69/127 (0.54x)
+Testing collisions (low  32-bit) - Expected     131072.0, actual 131118 (1.00x) (47)
+Testing collisions (low  28-44 bits) - Worst is 43 bits: 69/63 (1.08x)
+Testing collisions (low  12-bit) - Expected   33550336.0, actual 33550336 (1.00x)
+Testing collisions (low   8-bit) - Expected   33554176.0, actual 33554176 (1.00x)
 
 
-[[[ BIC 'Bit Independence Criteria' Tests ]]]
+Input vcode 0x00000001, Output vcode 0x00000001, Result vcode 0x00000001
+Verification value is 0x00000001 - Testing took -1981.495872 seconds
+-------------------------------------------------------------------------------
+[[[ BadSeeds Tests ]]]
 
-...........
-Max bias 0.028680 - (126 :   4,219)
+Testing 1 internal secrets:
+0x6a09e667 PASS
+Testing the first 0xffffffff seeds ...
+4 threads starting...
+at 80000000 at 40000000 at 0 at c0000000 41ffffff 1ffffff 81ffffff 43ffffff 83ffffff 3ffffff 5ffffff 45ffffff 85ffffff 7ffffff 47ffffff 87ffffff 9ffffff 49ffffff 89ffffff bffffff 4bffffff 8bffffff 8dffffff dffffff 4dffffff 8fffffff fffffff 4fffffff 91ffffff 11ffffff 51ffffff 53ffffff 93ffffff 13ffffff 55ffffff 95ffffff 15ffffff 57ffffff 97ffffff 17ffffff 59ffffff 99ffffff 19ffffff 5bffffff 9bffffff 1bffffff 5dffffff 9dffffff 1dffffff 5fffffff 9fffffff 1fffffff 61ffffff a1ffffff 21ffffff 63ffffff a3ffffff 23ffffff 65ffffff a5ffffff 25ffffff 67ffffff a7ffffff 27ffffff 69ffffff a9ffffff 29ffffff 6bffffff abffffff 2bffffff 6dffffff adffffff 2dffffff 6fffffff afffffff 2fffffff b1ffffff 71ffffff 31ffffff b3ffffff 73ffffff 33ffffff b5ffffff 75ffffff 35ffffff b7ffffff 77ffffff 37ffffff b9ffffff 79ffffff 39ffffff bbffffff 7bffffff 3bffffff bdffffff 7dffffff 3dffffff bfffffff 7fffffff 3fffffff All 4 threads ended
+And the last 0xffffffff00000000 seeds ...
+4 threads starting...
+at ffffffff00000000 at ffffffff40000000 at ffffffff80000000 at ffffffffc0000000 ffffffff41ffffff ffffffff81ffffff ffffffff01ffffff ffffffff43ffffff ffffffff83ffffff ffffffff03ffffff ffffffff85ffffff ffffffff45ffffff ffffffff05ffffff ffffffff47ffffff ffffffff87ffffff ffffffff07ffffff ffffffff49ffffff ffffffff89ffffff ffffffff09ffffff ffffffff4bffffff ffffffff8bffffff ffffffff0bffffff ffffffff4dffffff ffffffff8dffffff ffffffff0dffffff ffffffff4fffffff ffffffff8fffffff ffffffff0fffffff ffffffff51ffffff ffffffff91ffffff ffffffff11ffffff ffffffff53ffffff ffffffff93ffffff ffffffff13ffffff ffffffff55ffffff ffffffff95ffffff ffffffff15ffffff ffffffff57ffffff ffffffff97ffffff ffffffff17ffffff ffffffff59ffffff ffffffff99ffffff ffffffff19ffffff ffffffff5bffffff ffffffff9bffffff ffffffff1bffffff ffffffff5dffffff ffffffff9dffffff ffffffff1dffffff ffffffff5fffffff ffffffff9fffffff ffffffff1fffffff ffffffff61ffffff ffffffffa1ffffff ffffffff21ffffff ffffffff63ffffff ffffffffa3ffffff ffffffff23ffffff ffffffff65ffffff ffffffffa5ffffff ffffffff25ffffff ffffffff67ffffff ffffffffa7ffffff ffffffff27ffffff ffffffff69ffffff ffffffffa9ffffff ffffffff29ffffff ffffffff6bffffff ffffffffabffffff ffffffff2bffffff ffffffff6dffffff ffffffffadffffff ffffffff2dffffff ffffffff6fffffff ffffffffafffffff ffffffff2fffffff ffffffff71ffffff ffffffffb1ffffff ffffffff31ffffff ffffffff73ffffff ffffffffb3ffffff ffffffff33ffffff ffffffff75ffffff ffffffffb5ffffff ffffffff35ffffff ffffffff77ffffff ffffffffb7ffffff ffffffff37ffffff ffffffff79ffffff ffffffffb9ffffff ffffffff39ffffff ffffffff7bffffff ffffffffbbffffff ffffffff3bffffff ffffffff7dffffff ffffffffbdffffff ffffffff3dffffff ffffffff7fffffff ffffffffbfffffff ffffffff3fffffff All 4 threads ended
+PASS
 
 

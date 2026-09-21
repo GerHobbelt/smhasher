@@ -16,7 +16,7 @@
 
 bool g_drawDiagram     = false;
 bool g_testAll         = true;
-bool g_testExtra       = false; // excessive torture tests: Sparse, Avalanche, DiffDist
+bool g_testExtra       = false; // excessive torture tests: Sparse, Avalanche, DiffDist, scan all seeds
 bool g_testVerifyAll   = false;
 
 bool g_testSanity      = false;
@@ -37,6 +37,7 @@ bool g_testDiffDist    = false;
 bool g_testMomentChi2  = false;
 bool g_testPrng        = false;
 bool g_testBIC         = false;
+bool g_testBadSeeds    = false;
 //bool g_testLongNeighbors = false;
 
 double g_speed = 0.0;
@@ -67,6 +68,7 @@ TestOpts g_testopts[] =
   { g_testBIC, 	        "BIC" },
   { g_testMomentChi2,   "MomentChi2" },
   { g_testPrng,         "Prng" },
+  { g_testBadSeeds,     "BadSeeds" },
   //{ g_testLongNeighbors,"LongNeighbors" }
 };
 
@@ -77,17 +79,17 @@ bool MomentChi2Test ( struct HashInfo *info, int inputSize );
 
 const char* quality_str[3] = { "SKIP", "POOR", "GOOD" };
 
-// sorted by quality and speed
+// sorted by quality and speed. the last is the list of internal secrets to be tested against bad seeds.
 HashInfo g_hashes[] =
 {
   // first the bad hash funcs, failing tests:
-  { DoNothingHash,        32, 0x00000000, "donothing32", "Do-Nothing function (measure call overhead)", SKIP },
-  { DoNothingHash,        64, 0x00000000, "donothing64", "Do-Nothing function (measure call overhead)", SKIP },
-  { DoNothingHash,       128, 0x00000000, "donothing128", "Do-Nothing function (measure call overhead)", SKIP },
-  { NoopOAATReadHash,     64, 0x00000000, "NOP_OAAT_read64", "Noop function (measure call + OAAT reading overhead)", SKIP },
-  { BadHash,     	  32, 0xAB432E23, "BadHash", 	 "very simple XOR shift", SKIP },
-  { sumhash,     	  32, 0x0000A9AC, "sumhash", 	 "sum all bytes", SKIP },
-  { sumhash32,     	  32, 0x3D6DC280, "sumhash32",   "sum all 32bit words", SKIP },
+  { DoNothingHash,        32, 0x0, "donothing32", "Do-Nothing function (measure call overhead)", SKIP, {0UL} /* !! */ },
+  { DoNothingHash,        64, 0x0, "donothing64", "Do-Nothing function (measure call overhead)", SKIP, {0ULL} /* !! */ },
+  { DoNothingHash,       128, 0x0, "donothing128", "Do-Nothing function (measure call overhead)", SKIP, {0UL} /* !! */ },
+  { NoopOAATReadHash,     64, 0x0, "NOP_OAAT_read64", "Noop function (measure call + OAAT reading overhead)", SKIP, {} },
+  { BadHash,     	  32, 0xAB432E23, "BadHash", 	 "very simple XOR shift", SKIP, {0UL} /* !! */ },
+  { sumhash,     	  32, 0x0000A9AC, "sumhash", 	 "sum all bytes", SKIP, {0UL} /* !! */ },
+  { sumhash32,     	  32, 0x3D6DC280, "sumhash32",   "sum all 32bit words", SKIP, {0x9e3779b97f4a7c15} },
 
  // here start the real hashes. first the problematic ones:
 #ifdef HAVE_BIT32
@@ -101,12 +103,14 @@ HashInfo g_hashes[] =
 #ifdef __SIZEOF_INT128__
   // M. Dietzfelbinger, T. Hagerup, J. Katajainen, and M. Penttonen. A reliable randomized
   // algorithm for the closest-pair problem. J. Algorithms, 25:19–51, 1997.
-  { multiply_shift,       64, 0, "multiply_shift", "Dietzfelbinger Multiply-shift on strings", POOR },
-  { pair_multiply_shift,  64, 0, "pair_multiply_shift", "Pair-multiply-shift", POOR },
+  { multiply_shift,       64, 0xFCE355A6, "multiply_shift", "Dietzfelbinger Multiply-shift on strings", POOR,
+    { 0xfffffff0, 0x1fffffff0, 0xb13dea7c9c324e51ULL, 0x75f17d6b3588f843ULL } /* !! all & 0xfffffff0 (2^32 bad seeds) */ },
+  { pair_multiply_shift,  64, 0xD4B20347, "pair_multiply_shift", "Pair-multiply-shift", POOR,
+    { 0xb13dea7c9c324e51ULL, 0x75f17d6b3588f843ULL } },
 #endif
-  { crc32,                32, 0x3719DB20, "crc32",       "CRC-32 soft", POOR },
-  { md5_128,             128, 0xF263F96F, "md5-128",     "MD5", GOOD },
-  { md5_32,               32, 0x634E5AEC, "md5_32a",     "MD5, low 32 bits", POOR },
+  { crc32,                32, 0x3719DB20, "crc32",       "CRC-32 soft", POOR, {} },
+  { md5_128,             128, 0xF263F96F, "md5-128",     "MD5", GOOD, {} },
+  { md5_32,               32, 0x634E5AEC, "md5_32a",     "MD5, low 32 bits", POOR, {0x265cab52} /* !! */},
 #ifdef _MSC_VER /* truncated long to 32 */
 #  define SHA1_VERIF          0xED2F35E4
 #  define SHA1a_VERIF         0x480A2B09
@@ -116,166 +120,239 @@ HashInfo g_hashes[] =
 #endif
   { sha1_160,            160, SHA1_VERIF, "sha1-160",     "SHA1", POOR},
   { sha1_32a,             32, SHA1a_VERIF,"sha1_32a",     "SHA1, low 32 bits", POOR},
-  { sha2_224,            224, 0x60424E90, "sha2-224",     "SHA2-224", GOOD },
-  { sha2_224_64,          64, 0x7EF6BB61, "sha2-224_64",  "SHA2-224, low 64 bits", GOOD },
-  { sha2_256,            256, 0xACFA0A78, "sha2-256",     "SHA2-256", POOR },
-  { sha2_256_64,          64, 0xA6C2C1D4, "sha2-256_64",  "SHA2-256, low 64 bits", POOR },
+  // totally broken seed mixin
+  { sha2_224,            224, 0x407AA518, "sha2-224",     "SHA2-224", GOOD, {0xc1059ed8} /* >100 bad seeds */ },
+  { sha2_224_64,          64, 0xF3E40ECA, "sha2-224_64",  "SHA2-224, low 64 bits", GOOD, {0xc1059ed8} },
+  { sha2_256,            256, 0xEBDA2FB1, "sha2-256",     "SHA2-256", POOR, {0x6a09e667} },
+  { sha2_256_64,          64, 0xC1C4FA72, "sha2-256_64",  "SHA2-256, low 64 bits", POOR, {0x6a09e667} },
 #if defined(HAVE_SHANI) && defined(__x86_64__)
-  { sha1ni,              160, 0x0B01A4A1, "sha1ni",       "SHA1_NI (amd64 HW SHA ext)", POOR },
-  { sha1ni_32,            32, 0xE70686CC, "sha1ni_32",    "hardened SHA1_NI (amd64 HW SHA ext), low 32 bits", GOOD },
-  { sha2ni_256,          256, 0xAA94D6CD, "sha2ni-256",   "SHA2_NI-256 (amd64 HW SHA ext)", POOR },
-  { sha2ni_256_64,        64, 0xF938E80E, "sha2ni-256_64","hardened SHA2_NI-256 (amd64 HW SHA ext), low 64 bits", POOR },
+  { sha1ni,              160, 0x375755A4, "sha1ni",       "SHA1_NI (amd64 HW SHA ext)", POOR, {0x67452301} },
+  { sha1ni_32,            32, 0xE70686CC, "sha1ni_32",    "hardened SHA1_NI (amd64 HW SHA ext), low 32 bits", GOOD,
+    {0x67452301} },
+  { sha2ni_256,          256, 0x4E3BB25E, "sha2ni-256",   "SHA2_NI-256 (amd64 HW SHA ext)", POOR, {0x6a09e667} },
+  { sha2ni_256_64,        64, 0xF938E80E, "sha2ni-256_64","hardened SHA2_NI-256 (amd64 HW SHA ext), low 64 bits", POOR, {0x6a09e667} },
 #endif
-  { rmd128,              128, 0xFF576977, "rmd128",       "RIPEMD-128", GOOD },
-  { rmd160,              160, 0x30B37AC6, "rmd160",       "RIPEMD-160", GOOD },
-  { rmd256,              256, 0xEB16FAD7, "rmd256",       "RIPEMD-256", GOOD },
+  { rmd128,              128, 0xFF576977, "rmd128",       "RIPEMD-128", GOOD, {0x67452301} },
+  { rmd160,              160, 0x30B37AC6, "rmd160",       "RIPEMD-160", GOOD, {0x67452301} },
+  { rmd256,              256, 0xEB16FAD7, "rmd256",       "RIPEMD-256", GOOD, {0x67452301} },
 #if defined(HAVE_BIT32) && !defined(_WIN32)
-#  define BLAKE3_VERIF   0x5A11C03C
+#  define BLAKE3_VERIF   0x58571F56
 #else
-#  define BLAKE3_VERIF   0x170AB674
+#  define BLAKE3_VERIF   0x50E4CD91
 #endif
-  { blake3c_test,        256, BLAKE3_VERIF, "blake3_c",   "BLAKE3 c",    GOOD },
+  { blake3c_test,        256, BLAKE3_VERIF, "blake3_c",   "BLAKE3 c",   GOOD, {0x6a09e667} },
 #if defined(HAVE_BLAKE3)
-  { blake3_test,         256, 0x00000000, "blake3",       "BLAKE3 Rust", GOOD },
-  { blake3_64,            64, 0x00000000, "blake3_64",    "BLAKE3 Rust, low 64 bits", GOOD },
+  { blake3_test,         256, 0x0, "blake3",       "BLAKE3 Rust", GOOD, {} },
+  { blake3_64,            64, 0x0, "blake3_64",    "BLAKE3 Rust, low 64 bits", GOOD, {} },
 #endif
-  { blake2s128_test,     128, 0xC0EF86D1, "blake2s-128",  "blake2s-128", GOOD },
-  { blake2s160_test,     160, 0xE56D3359, "blake2s-160",  "blake2s-160", GOOD },
-  { blake2s224_test,     224, 0x1C56E1A2, "blake2s-224",  "blake2s-224", GOOD },
-  { blake2s256_test,     256, 0x846611DB, "blake2s-256",  "blake2s-256", GOOD },
-  { blake2s256_64,        64, 0x2521E50B, "blake2s-256_64","blake2s-256, low 64 bits", GOOD },
-  { blake2b160_test,     160, 0xA5F72E2D, "blake2b-160",  "blake2b-160", GOOD },
-  { blake2b224_test,     224, 0x0D95F0AE, "blake2b-224",  "blake2b-224", GOOD },
-  { blake2b256_test,     256, 0xC0B0AD0C, "blake2b-256",  "blake2b-256", POOR },
-  { blake2b256_64,        64, 0x3C59D62D, "blake2b-256_64","blake2b-256, low 64 bits", GOOD },
-  { sha3_256,            256, 0xB85F6DD9, "sha3-256",     "SHA3-256 (Keccak)", GOOD },
-  { sha3_256_64,          64, 0x86EC71EF, "sha3-256_64",  "SHA3-256 (Keccak), low 64 bits", GOOD },
+  { blake2s128_test,     128, 0xE8D8FCDF, "blake2s-128",  "blake2s-128", GOOD, {0x6a09e667} },
+  { blake2s160_test,     160, 0xD50FF144, "blake2s-160",  "blake2s-160", GOOD, {0x6a09e667} },
+  { blake2s224_test,     224, 0x19B36D2C, "blake2s-224",  "blake2s-224", GOOD, {0x6a09e667} },
+  { blake2s256_test,     256, 0x841D6354, "blake2s-256",  "blake2s-256", GOOD,
+    {0x31, 0x32, 0x15e, 0x432, 0x447, 0x8000001e, 0x80000021 } /* !! and >1000 more */ },
+  { blake2s256_64,        64, 0x53000BB2, "blake2s-256_64","blake2s-256, low 64 bits", GOOD,
+    {0xa, 0xe, 0x2d, 0x2f, 0x53, 0x40000003, 0x40000005, 0x40000006 } /* !! and >1000 more */ },
+  { blake2b160_test,     160, 0x28ADDA30, "blake2b-160",  "blake2b-160", GOOD,
+    {0x4a, 0x5a, 0x5e, 0x74, 0x7f, 0x81} /* !! and >1000 more */ },
+  { blake2b224_test,     224, 0x101A62A4, "blake2b-224",  "blake2b-224", GOOD,
+    {0x12, 0x2e, 0x32, 0x99a, 0xc80, 0xc98, 0xc9c} /* !! and >1000 more */ },
+  { blake2b256_test,     256, 0xC9D8D995, "blake2b-256",  "blake2b-256", POOR, {} },
+  { blake2b256_64,        64, 0xCF4F7EC3, "blake2b-256_64","blake2b-256, low 64 bits", GOOD, {} },
+  { asconhashv12_256,    256, 0xA969C160, "asconhashv12", "asconhashv12 256bit", GOOD,
+    { 0xee9398aadb67f03dULL } },
+  { asconhashv12_64,      64, 0xE7DEF300, "asconhashv12_64", "asconhashv12, low 64 bits", GOOD,
+    { 0xee9398aadb67f03dULL } },
+  { sha3_256,            256, 0x21048CE3, "sha3-256",     "SHA3-256 (Keccak)", GOOD, {0x1UL} },
+  { sha3_256_64,          64, 0xE62E5CC0, "sha3-256_64",  "SHA3-256 (Keccak), low 64 bits", GOOD, {0x1UL} },
 
 #ifdef __SSE2__
-  { hasshe2_test,        256, 0xF5D39DFE, "hasshe2",     "SSE2 hasshe2, 256-bit", POOR },
+  { hasshe2_test,        256, 0xF5D39DFE, "hasshe2",     "SSE2 hasshe2, 256-bit", POOR, {} },
 #endif
+// too fragile
 #ifdef __SIZEOF_INT128__
-  // Thomas Dybdahl Ahle, Jakob Tejs Bæk Knudsen, and Mikkel Thorup2
-  // "The Power of Hashing with Mersenne Primes".
-  // Similar insecurity as with CRC, hashes cancel itself out.
-  { poly_1_mersenne,      32, 0, "poly_1_mersenne", "Degree 1 Hashing mod 2^61-1", POOR },
-  { poly_2_mersenne,      32, 0, "poly_2_mersenne", "Degree 2 Hashing mod 2^61-1", GOOD },
-  { poly_3_mersenne,      32, 0, "poly_3_mersenne", "Degree 3 Hashing mod 2^61-1", GOOD },
-  { poly_4_mersenne,      32, 0, "poly_4_mersenne", "Degree 4 Hashing mod 2^61-1", GOOD },
-  // Similar insecurity as with CRC, hashes cancel itself out.
-  { tabulation_test,      64, 0, "tabulation",      "64-bit Tabulation with Multiply-Shift Mixer", GOOD },
+#ifdef __FreeBSD__
+#  define POLY1_VERIF   0xFECCC371
+#  define POLY2_VERIF   0xA31DD921
+#  define POLY3_VERIF   0x26F7EDA0
+#  define POLY4_VERIF   0x8EE270BD
+#  define TABUL_VERIF   0x0534C36E
+#elif defined __apple_build_version__ && defined __clang__
+#  define POLY1_VERIF   0xE389931F
+#  define POLY2_VERIF   0x458D056D
+#  define POLY3_VERIF   0x208145CC
+#  define POLY4_VERIF   0xE798712E
+#  define TABUL_VERIF   0x91618263
+#elif defined DEBUG
+#  define POLY1_VERIF   0x9E4BA93D
+#  define POLY2_VERIF   0x5CB4CB25
+#  define POLY3_VERIF   0x3C87C852
+#  define POLY4_VERIF   0xFF88BAF6
+#  define TABUL_VERIF   0xB49C607C
+#else
+#  define POLY1_VERIF   0x64706572
+#  define POLY2_VERIF   0xE8906EDF
+#  define POLY3_VERIF   0xF2A7E178
+#  define POLY4_VERIF   0xD4E89421
+#  define TABUL_VERIF   0xB49C607C
 #endif
-  { tabulation_32_test,   32, 0, "tabulation32",    "32-bit Tabulation with Multiply-Shift Mixer", POOR },
+  // Thomas Dybdahl Ahle, Jakob Tejs Bæk Knudsen, and Mikkel Thorup
+  // "The Power of Hashing with Mersenne Primes".
+  { poly_1_mersenne,      32, 0, "poly_1_mersenne", "Degree 1 Hashing mod 2^61-1", POOR, {} },
+  { poly_2_mersenne,      32, 0, "poly_2_mersenne", "Degree 2 Hashing mod 2^61-1", GOOD, {0x60e8512c} /* !! */},
+  { poly_3_mersenne,      32, 0, "poly_3_mersenne", "Degree 3 Hashing mod 2^61-1", GOOD, {0x3d25f745} /* !! */},
+  { poly_4_mersenne,      32, 0, "poly_4_mersenne", "Degree 4 Hashing mod 2^61-1", GOOD, {} },
+  { tabulation_test,      64, TABUL_VERIF, "tabulation",      "64-bit Tabulation with Multiply-Shift Mixer", GOOD, {} },
+#endif
+#if defined(_MSC_VER) /* truncated long to 32 */
+#  define TABUL32_VERIF   0x3C3B7BDD
+#elif defined __FreeBSD__
+#  define TABUL32_VERIF   0x4D28A619
+#elif defined __apple_build_version__ && defined __clang__
+#  define TABUL32_VERIF   0x2C8EDFFE
+#else
+#  define TABUL32_VERIF   0x335F64EA
+#endif
+  { tabulation_32_test,   32, TABUL32_VERIF, "tabulation32",    "32-bit Tabulation with Multiply-Shift Mixer", POOR, {} },
 #if defined(__SSE4_2__) && defined(__x86_64__)
+  // all CRC's are insecure by default due to its polynomial nature.
   /* Even 32 uses crc32q, quad only */
-  { crc32c_hw_test,       32, 0x0C7346F0, "crc32_hw",    "SSE4.2 crc32 in HW", POOR },
-  { crc32c_hw1_test,      32, 0x0C7346F0, "crc32_hw1",   "Faster Adler SSE4.2 crc32 in HW", POOR },
-  { crc64c_hw_test,       64, 0xE7C3FD0E, "crc64_hw",    "SSE4.2 crc64 in HW", POOR },
+  { crc32c_hw_test,       32, 0x0C7346F0, "crc32_hw",    "SSE4.2 crc32 in HW", POOR, {} },
+  { crc32c_hw1_test,      32, 0x0C7346F0, "crc32_hw1",   "Faster Adler SSE4.2 crc32 in HW", POOR, {} },
+  { crc64c_hw_test,       64, 0xE7C3FD0E, "crc64_hw",    "SSE4.2 crc64 in HW", POOR, {0x0} /* !! */ },
 #endif
   // 32bit crashes
 #if defined(HAVE_CLMUL) && !defined(_MSC_VER) && defined(__x86_64__)
-  { crc32c_pclmul_test,   32, 0x00000000, "crc32_pclmul","-mpclmul crc32 in asm on HW", POOR },
+  { crc32c_pclmul_test,   32, 0x0, "crc32_pclmul","-mpclmul crc32 in asm on HW", POOR, {0x0} /* !! */ },
 #endif
 #ifdef HAVE_INT64
-  { o1hash_test,          64, 0x85051E87, "o1hash",       "o(1)hash unseeded, from wyhash", POOR },
+  { o1hash_test,          64, 0x85051E87, "o1hash",       "o(1)hash unseeded, from wyhash", POOR, {0x0} /* !! */ },
 #endif
 #if 0 && defined(__x86_64__) && (defined(__linux__) || defined(__APPLE__))
   // elf64 or macho64 only
-  { fhtw_test,            64, 0x0,        "fhtw",        "fhtw asm", POOR },
+  { fhtw_test,            64, 0x0,        "fhtw",        "fhtw asm", POOR, {} },
 #endif
-  { fibonacci_test, __WORDSIZE, FIBONACCI_VERIF, "fibonacci",   "wordwise Fibonacci", POOR },
-  { FNV32a_test,          32, 0xE3CBBE91, "FNV1a",       "Fowler-Noll-Vo hash, 32-bit", POOR },
+  { fibonacci_test, __WORDSIZE, FIBONACCI_VERIF, "fibonacci",   "wordwise Fibonacci", POOR,
+    {0x9e3779b97f4a7c15} },
+  { FNV32a_test,          32, 0xE3CBBE91, "FNV1a",       "Fowler-Noll-Vo hash, 32-bit", POOR,
+    {0x811c9dc5} /* !! */ },
 #ifdef HAVE_INT64
-  { FNV1A_Totenschiff_test,32,0x95D95ACF, "FNV1A_Totenschiff",  "FNV1A_Totenschiff_v1 64-bit sanmayce", POOR },
-  { FNV1A_PY_test,        32, 0xE79AE3E4, "FNV1A_Pippip_Yurii", "FNV1A-Pippip_Yurii 32-bit sanmayce", POOR },
-  { FNV32a_YT_test,       32, 0xD8AFFD71, "FNV1a_YT",    "FNV1a-YoshimitsuTRIAD 32-bit sanmayce", POOR },
-  { FNV64a_test,          64, 0x103455FC, "FNV64",       "Fowler-Noll-Vo hash, 64-bit", POOR },
+  { FNV1A_Totenschiff_test,32,0x95D95ACF, "FNV1A_Totenschiff",  "FNV1A_Totenschiff_v1 64-bit sanmayce", POOR,
+    {0x811c9dc5} },
+  { FNV1A_PY_test,        32, 0xE79AE3E4, "FNV1A_Pippip_Yurii", "FNV1A-Pippip_Yurii 32-bit sanmayce", POOR,
+    {0x811c9dc5} },
+  { FNV32a_YT_test,       32, 0xD8AFFD71, "FNV1a_YT",    "FNV1a-YoshimitsuTRIAD 32-bit sanmayce", POOR,
+    {0x811c9dc5} /* !! */ },
+  { FNV64a_test,          64, 0x103455FC, "FNV64",       "Fowler-Noll-Vo hash, 64-bit", POOR,
+    {0xcbf29ce484222325} },
 #endif
-  { FNV2_test,    __WORDSIZE, FNV2_VERIF, "FNV2",        "wordwise FNV", POOR },
-  { fletcher2_test,       64, 0x890767C0, "fletcher2",   "fletcher2 ZFS", POOR},
-  { fletcher4_test,       64, 0x890767C0, "fletcher4",   "fletcher4 ZFS", POOR},
-  { Bernstein_test,       32, 0xBDB4B640, "bernstein",   "Bernstein, 32-bit", POOR },
-  { sdbm_test,            32, 0x582AF769, "sdbm",        "sdbm as in perl5", POOR },
-  { x17_test,             32, 0x8128E14C, "x17",         "x17", POOR },
+  { FNV2_test,    __WORDSIZE, FNV2_VERIF, "FNV2",        "wordwise FNV", POOR,
+    {0x811c9dc5, 0xcbf29ce484222325} },
+  { fletcher2_test,       64, 0x890767C0, "fletcher2",   "fletcher2 ZFS", POOR, {0UL} /* !! */ },
+  { fletcher4_test,       64, 0x890767C0, "fletcher4",   "fletcher4 ZFS", POOR, {0UL} /* !! */ },
+  { Bernstein_test,       32, 0xBDB4B640, "bernstein",   "Bernstein, 32-bit", POOR, {0UL} /* !! */ },
+  { sdbm_test,            32, 0x582AF769, "sdbm",        "sdbm as in perl5", POOR, {0UL} /* !! */ },
+  { x17_test,             32, 0x8128E14C, "x17",         "x17", POOR, {} },
   // also called jhash:
-  { JenkinsOOAT_test,     32, 0x83E133DA, "JenkinsOOAT", "Bob Jenkins' OOAT as in perl 5.18", POOR },
-  { JenkinsOOAT_perl_test,32, 0xEE05869B, "JenkinsOOAT_perl", "Bob Jenkins' OOAT as in old perl5", POOR },
+  { JenkinsOOAT_test,     32, 0x83E133DA, "JenkinsOOAT", "Bob Jenkins' OOAT as in perl 5.18", POOR, {0UL} /* !! */ },
+  { JenkinsOOAT_perl_test,32, 0xEE05869B, "JenkinsOOAT_perl", "Bob Jenkins' OOAT as in old perl5", POOR, {0UL} /* !! */},
   // FIXME: seed
-  { VHASH_32,             32, 0xF0077651, "VHASH_32",    "VHASH_32 by Ted Krovetz and Wei Dai", POOR },
-  { VHASH_64,             64, 0xF97D84FE, "VHASH_64",    "VHASH_64 by Ted Krovetz and Wei Dai", POOR },
-  { MicroOAAT_test,       32, 0x16F1BA97, "MicroOAAT",   "Small non-multiplicative OAAT (by funny-falcon)", POOR },
+#ifdef __aarch64__
+  #define VHASH32_VERIF 0x0F02AEFD
+  #define VHASH64_VERIF 0xFAAEE597
+#else
+  #define VHASH32_VERIF 0xF0077651
+  #define VHASH64_VERIF 0xF97D84FE
+#endif
+  { VHASH_32,             32, VHASH32_VERIF, "VHASH_32",    "VHASH_32 by Ted Krovetz and Wei Dai", POOR, {} },
+  { VHASH_64,             64, VHASH64_VERIF, "VHASH_64",    "VHASH_64 by Ted Krovetz and Wei Dai", POOR, {} },
+  { MicroOAAT_test,       32, 0x16F1BA97, "MicroOAAT",   "Small non-multiplicative OAAT (by funny-falcon)", POOR,
+    {0x3b00} },
 #ifdef HAVE_SSE2
-  { farsh32_test,         32, 0xBCDE332C, "farsh32",     "FARSH 32bit", POOR }, // insecure
-  { farsh64_test,         64, 0xDE2FDAEE, "farsh64",     "FARSH 64bit", POOR }, // insecure
-  //{ farsh128_test,     128, 0x82B6CBEC, "farsh128",    "FARSH 128bit", POOR },
-  //{ farsh256_test,     256, 0xFEBEA0BC, "farsh256",    "FARSH 256bit", POOR },
+  { farsh32_test,         32, 0xBCDE332C, "farsh32",     "FARSH 32bit", POOR, {} }, // insecure
+  { farsh64_test,         64, 0xDE2FDAEE, "farsh64",     "FARSH 64bit", POOR, {} }, // insecure
+  //{ farsh128_test,     128, 0x82B6CBEC, "farsh128",    "FARSH 128bit", POOR, {} },
+  //{ farsh256_test,     256, 0xFEBEA0BC, "farsh256",    "FARSH 256bit", POOR, {} },
 #endif
-  { jodyhash32_test,      32, 0xFB47D60D, "jodyhash32",  "jodyhash, 32-bit (v5)", POOR },
+  { jodyhash32_test,      32, 0xFB47D60D, "jodyhash32",  "jodyhash, 32-bit (v5)", POOR, {} },
 #ifdef HAVE_INT64
-  { jodyhash64_test,      64, 0x9F09E57F, "jodyhash64",  "jodyhash, 64-bit (v5)", POOR },
+  { jodyhash64_test,      64, 0x9F09E57F, "jodyhash64",  "jodyhash, 64-bit (v5)", POOR, {} },
 #endif
-  { lookup3_test,         32, 0x3D83917A, "lookup3",     "Bob Jenkins' lookup3", POOR },
-  { SuperFastHash_test,   32, 0xC4CB7C07, "superfast",   "Paul Hsieh's SuperFastHash", POOR },
-  { MurmurOAAT_test,      32, 0x5363BD98, "MurmurOAAT",  "Murmur one-at-a-time", POOR },
-  { Crap8_test,           32, 0x743E97A1, "Crap8",       "Crap8", POOR },
-  { xxHash32_test,        32, 0xBA88B743, "xxHash32",    "xxHash, 32-bit for x86", POOR },
-  { MurmurHash2_test,     32, 0x27864C1E, "Murmur2",     "MurmurHash2 for x86, 32-bit", POOR },
-  { MurmurHash2A_test,    32, 0x7FBD4396, "Murmur2A",    "MurmurHash2A for x86, 32-bit", POOR },
+  { lookup3_test,         32, 0x3D83917A, "lookup3",     "Bob Jenkins' lookup3", POOR, {} },
+#ifdef __aarch64__
+  #define SFAST_VERIF 0xB2623D87
+#else
+  #define SFAST_VERIF 0xC4CB7C07
+#endif
+  { SuperFastHash_test,   32, SFAST_VERIF,"superfast",   "Paul Hsieh's SuperFastHash", POOR, {0x0} /* !! */},
+  { MurmurOAAT_test,      32, 0x5363BD98, "MurmurOAAT",  "Murmur one-at-a-time", POOR,
+    {0x0, 0x5bd1e995} /* !! the 1st */ },
+  { Crap8_test,           32, 0x743E97A1, "Crap8",       "Crap8", POOR, {0x83d2e73b, 0x97e1cc59} },
+  { xxHash32_test,        32, 0xBA88B743, "xxHash32",    "xxHash, 32-bit for x86", POOR, {} },
+  { MurmurHash1_test,     32, 0x9EA7D056, "Murmur1",     "MurmurHash1", POOR, {0xc6a4a793} /* !! */ },
+  { MurmurHash2_test,     32, 0x27864C1E, "Murmur2",     "MurmurHash2 for x86, 32-bit", POOR,
+    {0x10} /* !! */ },
+  { MurmurHash2A_test,    32, 0x7FBD4396, "Murmur2A",    "MurmurHash2A for x86, 32-bit", POOR,
+    {0x2fc301c9} /* !! */ },
 #if __WORDSIZE >= 64
-  { MurmurHash64A_test,   64, 0x1F0D3804, "Murmur2B",    "MurmurHash64A for x64, 64-bit", POOR },
+  { MurmurHash64A_test,   64, 0x1F0D3804, "Murmur2B",    "MurmurHash64A for x64, 64-bit", POOR,
+    {0xc6a4a7935bd1e995ULL} },
 #endif
 #ifdef HAVE_INT64
-  { MurmurHash64B_test,   64, 0xDD537C05, "Murmur2C",    "MurmurHash64B for x86, 64-bit", POOR },
+  { MurmurHash64B_test,   64, 0xDD537C05, "Murmur2C",    "MurmurHash64B for x86, 64-bit", POOR,
+    {0x10, 0xffffffff00000010 } /* !! *00000010 */ },
 #endif
-  { MurmurHash3_x86_32,   32, 0xB0F57EE3, "Murmur3A",    "MurmurHash3 for x86, 32-bit", POOR },
-  { PMurHash32_test,      32, 0xB0F57EE3, "PMurHash32",  "Shane Day's portable-ized MurmurHash3 for x86, 32-bit", POOR },
-  { MurmurHash3_x86_128, 128, 0xB3ECE62A, "Murmur3C",    "MurmurHash3 for x86, 128-bit", POOR },
-#if !defined(DEBUG) && !defined(CROSSCOMPILING)
+  { MurmurHash3_x86_32,   32, 0xB0F57EE3, "Murmur3A",    "MurmurHash3 for x86, 32-bit", POOR,
+    {0xfca58b2d} /* !! */},
+  { PMurHash32_test,      32, 0xB0F57EE3, "PMurHash32",  "Shane Day's portable-ized MurmurHash3 for x86, 32-bit", POOR,
+    {0xfca58b2d} /* !! */ }, // 0x4b600, 0xcc9e2d51
+  { MurmurHash3_x86_128, 128, 0xB3ECE62A, "Murmur3C",    "MurmurHash3 for x86, 128-bit", POOR, {0x239b961b} },
+#if !defined(DEBUG) && !defined(CROSSCOMPILING) && !defined(__aarch64__)
 # ifndef HAVE_ASAN
   // TODO seeded
-  { PMPML_32_CPP,         32, 0xEAE2E3CC, "PMPML_32",    "PMP_Multilinear 32-bit unseeded", POOR },
+  { PMPML_32_CPP,         32, 0xEAE2E3CC, "PMPML_32",    "PMP_Multilinear 32-bit unseeded", POOR, {} },
 #  if defined(_WIN64) || defined(__x86_64__)
-  { PMPML_64_CPP,         64, 0x584CC9DF, "PMPML_64",    "PMP_Multilinear 64-bit unseeded", POOR },
+  { PMPML_64_CPP,         64, 0x584CC9DF, "PMPML_64",    "PMP_Multilinear 64-bit unseeded", POOR, {} },
 #  endif
 # endif
 #endif
-  { fasthash64_test,      64, 0xA16231A7, "fasthash64",  "fast-hash 64bit", POOR },
-  { CityHash32_test,      32, 0x5C28AD62, "City32",      "Google CityHash32WithSeed (old)", POOR },
+  { fasthash32_test,      32, 0xE9481AFC, "fasthash32",  "fast-hash 32bit", POOR, {0x880355f21e6d1965ULL} },
+  { fasthash64_test,      64, 0xA16231A7, "fasthash64",  "fast-hash 64bit", POOR, {0x880355f21e6d1965ULL} },
+  { CityHash32_test,      32, 0x5C28AD62, "City32",      "Google CityHash32WithSeed (old)", POOR, {} },
 #ifdef HAVE_INT64
-  { metrohash64_test,      64, 0x6FA828C9, "metrohash64",    "MetroHash64, 64-bit", POOR },
-  { metrohash64_1_test,    64, 0xEE88F7D2, "metrohash64_1",  "MetroHash64_1, 64-bit (legacy)", POOR },
-  { metrohash64_2_test,    64, 0xE1FC7C6E, "metrohash64_2",  "MetroHash64_2, 64-bit (legacy)", GOOD },
-  { metrohash128_test,    128, 0x4A6673E7, "metrohash128",   "MetroHash128, 128-bit", GOOD },
-  { metrohash128_1_test,  128, 0x20E8A1D7, "metrohash128_1", "MetroHash128_1, 128-bit (legacy)", GOOD },
-  { metrohash128_2_test,  128, 0x5437C684, "metrohash128_2", "MetroHash128_2, 128-bit (legacy)", GOOD },
+  { metrohash64_test,      64, 0x6FA828C9, "metrohash64",    "MetroHash64, 64-bit", POOR, {} },
+  { metrohash64_1_test,    64, 0xEE88F7D2, "metrohash64_1",  "MetroHash64_1, 64-bit (legacy)", POOR, {} },
+  { metrohash64_2_test,    64, 0xE1FC7C6E, "metrohash64_2",  "MetroHash64_2, 64-bit (legacy)", GOOD, {} },
+  { metrohash128_test,    128, 0x4A6673E7, "metrohash128",   "MetroHash128, 128-bit", GOOD, {} },
+  { metrohash128_1_test,  128, 0x20E8A1D7, "metrohash128_1", "MetroHash128_1, 128-bit (legacy)", GOOD, {} },
+  { metrohash128_2_test,  128, 0x5437C684, "metrohash128_2", "MetroHash128_2, 128-bit (legacy)", GOOD, {} },
 #endif
 #if defined(__SSE4_2__) && defined(__x86_64__)
-  { metrohash64crc_1_test, 64, 0x29C68A50, "metrohash64crc_1", "MetroHash64crc_1 for x64 (legacy)", POOR },
-  { metrohash64crc_2_test, 64, 0x2C00BD9F, "metrohash64crc_2", "MetroHash64crc_2 for x64 (legacy)", POOR },
-  { cmetrohash64_1_optshort_test,64, 0xEE88F7D2, "cmetrohash64_1o", "cmetrohash64_1 (shorter key optimized), 64-bit for x64", POOR },
-  { cmetrohash64_1_test,   64, 0xEE88F7D2, "cmetrohash64_1",  "cmetrohash64_1, 64-bit for x64", POOR },
-  { cmetrohash64_2_test,   64, 0xE1FC7C6E, "cmetrohash64_2",  "cmetrohash64_2, 64-bit for x64", GOOD },
-  { metrohash128crc_1_test,128, 0x5E75144E, "metrohash128crc_1", "MetroHash128crc_1 for x64 (legacy)", GOOD },
-  { metrohash128crc_2_test,128, 0x1ACF3E77, "metrohash128crc_2", "MetroHash128crc_2 for x64 (legacy)", GOOD },
+  { metrohash64crc_1_test, 64, 0x29C68A50, "metrohash64crc_1", "MetroHash64crc_1 for x64 (legacy)", POOR, {} },
+  { metrohash64crc_2_test, 64, 0x2C00BD9F, "metrohash64crc_2", "MetroHash64crc_2 for x64 (legacy)", POOR, {} },
+  { cmetrohash64_1_optshort_test,64, 0xEE88F7D2, "cmetrohash64_1o", "cmetrohash64_1 (shorter key optimized), 64-bit for x64", POOR, {} },
+  { cmetrohash64_1_test,   64, 0xEE88F7D2, "cmetrohash64_1",  "cmetrohash64_1, 64-bit for x64", POOR, {} },
+  { cmetrohash64_2_test,   64, 0xE1FC7C6E, "cmetrohash64_2",  "cmetrohash64_2, 64-bit for x64", GOOD, {} },
+  { metrohash128crc_1_test,128, 0x5E75144E, "metrohash128crc_1", "MetroHash128crc_1 for x64 (legacy)", GOOD, {} },
+  { metrohash128crc_2_test,128, 0x1ACF3E77, "metrohash128crc_2", "MetroHash128crc_2 for x64 (legacy)", GOOD, {} },
 #endif
-  { CityHash64noSeed_test, 64, 0x63FC6063, "City64noSeed","Google CityHash64 without seed (default version, misses one final avalanche)", POOR },
-  { CityHash64_test,      64, 0x25A20825, "City64",       "Google CityHash64WithSeed (old)", POOR },
+  { CityHash64noSeed_test, 64, 0x63FC6063, "City64noSeed","Google CityHash64 without seed (default version, misses one final avalanche)", POOR, {} },
+  { CityHash64_test,      64, 0x25A20825, "City64",       "Google CityHash64WithSeed (old)", POOR, {} },
 #if defined(HAVE_SSE2) && defined(HAVE_AESNI) && !defined(_MSC_VER)
-  { aesnihash_test,       64, 0x0,        "aesnihash",    "majek's unseeded aesnihash with aesenc, 64-bit for x64", POOR },
+  { aesnihash_test,       64, 0x0,        "aesnihash",    "majek's unseeded aesnihash with aesenc, 64-bit for x64", POOR,
+    {0x736f6d6570736575ULL, 0x646f72616e646f6dULL, 0x1231236570743245ULL, 0x126f12321321456dULL} },
 #endif
-#if defined(__SSE4_2__) && defined(__x86_64__)
-  { falkhash_test_cxx,    64, 0x2F99B071, "falkhash",    "falkhash.asm with aesenc, 64-bit for x64", POOR },
+#if defined(__SSE4_2__) && defined(__x86_64__) && !defined(_WIN32)
+  { falkhash_test_cxx,    64, 0x2F99B071, "falkhash",    "falkhash.asm with aesenc, 64-bit for x64", POOR, {} },
 #endif
-#if defined(HAVE_AESNI) && defined(__SIZEOF_INT128__)
-  { MeowHash32_test,      32, 0x8872DE1A, "MeowHash32low","MeowHash (requires x64 AES-NI)", POOR },
-  { MeowHash64_test,      64, 0xB04AC842, "MeowHash64low","MeowHash (requires x64 AES-NI)", POOR },
-  { MeowHash128_test,    128, 0xA0D29861, "MeowHash",     "MeowHash (requires x64 AES-NI)", POOR },
+#ifdef HAVE_MEOW_HASH
+  { MeowHash32_test,      32, 0x8872DE1A, "MeowHash32low","MeowHash (requires x64 AES-NI)", POOR, {} },
+  { MeowHash64_test,      64, 0xB04AC842, "MeowHash64low","MeowHash (requires x64 AES-NI)", POOR, {} },
+  { MeowHash128_test,    128, 0xA0D29861, "MeowHash",     "MeowHash (requires x64 AES-NI)", POOR, {} },
 #endif
-  { t1ha1_64le_test,      64, 0xD6836381, "t1ha1_64le",  "Fast Positive Hash (portable, aims 64-bit, little-endian)", POOR },
-  { t1ha1_64be_test,      64, 0x93F864DE, "t1ha1_64be",  "Fast Positive Hash (portable, aims 64-bit, big-engian)", POOR },
-  { t1ha0_32le_test,      64, 0x7F7D7B29, "t1ha0_32le",  "Fast Positive Hash (portable, aims 32-bit, little-endian)", POOR },
-  { t1ha0_32be_test,      64, 0xDA6A4061, "t1ha0_32be",  "Fast Positive Hash (portable, aims 32-bit, big-endian)", POOR },
-
+  { t1ha1_64le_test,      64, 0xD6836381, "t1ha1_64le",  "Fast Positive Hash (portable, aims 64-bit, little-endian)", POOR, {} },
+  { t1ha1_64be_test,      64, 0x93F864DE, "t1ha1_64be",  "Fast Positive Hash (portable, aims 64-bit, big-engian)", POOR, {} },
+  { t1ha0_32le_test,      64, 0x7F7D7B29, "t1ha0_32le",  "Fast Positive Hash (portable, aims 32-bit, little-endian)", POOR, {} },
+  { t1ha0_32be_test,      64, 0xDA6A4061, "t1ha0_32be",  "Fast Positive Hash (portable, aims 32-bit, big-endian)", POOR, {} },
 #if __WORDSIZE >= 64
 # define TIFU_VERIF       0x644236D4
 #else
@@ -283,56 +360,65 @@ HashInfo g_hashes[] =
 # define TIFU_VERIF       0x0
 #endif
   // and now the quality hash funcs, slowest first
-  { tifuhash_64,          64, TIFU_VERIF, "tifuhash_64", "Tiny Floatingpoint Unique Hash with continued egyptian fractions", POOR },
-  { beamsplitter_64,      64, 0x1BDF358B, "beamsplitter","A possibly universal hash made with a 10x64 s-box.", GOOD },
+  { tifuhash_64,          64, TIFU_VERIF, "tifuhash_64", "Tiny Floatingpoint Unique Hash with continued egyptian fractions", POOR, {} },
+  { beamsplitter_64,      64, 0x1BDF358B, "beamsplitter","A possibly universal hash made with a 10x64 s-box.", GOOD, {} },
   // different verif on gcc vs clang
-  { floppsyhash_64,       64, 0x0,        "floppsyhash", "slow hash designed for floating point hardware", GOOD },
-  { chaskey_test,         64, 0x81A90131, "chaskey",     "mouha.be/chaskey/ with added seed support", GOOD },
-  { siphash_test,         64, 0xC58D7F9C, "SipHash",     "SipHash 2-4 - SSSE3 optimized", GOOD },
-  { halfsiphash_test,     32, 0xA7A05F72, "HalfSipHash", "HalfSipHash 2-4, 32bit", GOOD },
-  { GoodOAAT_test,        32, 0x7B14EEE5, "GoodOAAT",    "Small non-multiplicative OAAT", GOOD },
+  { floppsyhash_64,       64, 0x0,        "floppsyhash", "slow hash designed for floating point hardware", GOOD, {} },
+  { chaskey_test,         64, 0x81A90131, "chaskey",     "mouha.be/chaskey/ with added seed support", GOOD, {} },
+  { siphash_test,         64, 0xC58D7F9C, "SipHash",     "SipHash 2-4 - SSSE3 optimized", GOOD, {} },
+  { halfsiphash_test,     32, 0xA7A05F72, "HalfSipHash", "HalfSipHash 2-4, 32bit", GOOD, {} },
+  { GoodOAAT_test,        32, 0x7B14EEE5, "GoodOAAT",    "Small non-multiplicative OAAT", GOOD, {0x3b00} },
 #ifdef HAVE_INT64
-  { prvhash42_32test,     32, 0x306E660B, "prvhash42_32", "prvhash42 32bit", GOOD },
-  { prvhash42_64test,     64, 0x828B1D67, "prvhash42_64", "prvhash42 64bit", GOOD },
-  { prvhash42_128test,   128, 0xCA2E25C1, "prvhash42_128","prvhash42 128bit", GOOD },
-  { prvhash42s_32test,    32, 0x0A19FAFC, "prvhash42s_32","prvhash42s 32bit", GOOD },
-  { prvhash42s_64test,    64, 0x4E1925F3, "prvhash42s_64","prvhash42s 64bit", GOOD },
-  { prvhash42s_128test,  128, 0xAD6FE7FE, "prvhash42s_128","prvhash42s 128bit", GOOD },
+  { prvhash64_64mtest,    64, 0xDB5E9857, "prvhash64_64m", "prvhash64m 64bit", GOOD,
+    {12905183526369792234ULL} },
+  { prvhash64_64test,     64, 0xDB5E9857, "prvhash64_64",  "prvhash64 64bit", GOOD,
+    {12905183526369792234ULL} },
+  { prvhash64_128test,   128, 0xDE1D7A0C, "prvhash64_128", "prvhash64 128bit", GOOD,
+    {12905183526369792234ULL} },
+  { prvhash64s_64test,    64, 0x14E1A788, "prvhash64s_64", "prvhash64s 64bit", GOOD,
+    {12905183526369792234ULL} },
+  { prvhash64s_128test,  128, 0xDE4B217A, "prvhash64s_128","prvhash64s 128bit", GOOD,
+    {12905183526369792234ULL} },
 #endif
   // as in rust and swift:
-  { siphash13_test,       64, 0x29C010BF, "SipHash13",   "SipHash 1-3 - SSSE3 optimized", GOOD },
+  { siphash13_test,       64, 0x29C010BF, "SipHash13",   "SipHash 1-3 - SSSE3 optimized", GOOD, {} },
 #if defined(_MSC_VER) && defined(LTO)
 #  define BEBB4185_VERIF          0xB7013C8F
 #else
 #  define BEBB4185_VERIF          0xBEBB4185
 #endif
-  { BEBB4185_64,          64, BEBB4185_VERIF, "BEBB4185", "BEBB4185 64", GOOD },
+#ifndef HAVE_ALIGNED_ACCESS_REQUIRED
+  { BEBB4185_64,          64, BEBB4185_VERIF, "BEBB4185", "BEBB4185 64", GOOD, {} },
+#endif
 #ifndef _MSC_VER
-  { tsip_test,            64, 0x8E48155B, "TSip",        "Damian Gryski's Tiny SipHash variant", GOOD },
+  { tsip_test,            64, 0x8E48155B, "TSip",        "Damian Gryski's Tiny SipHash variant", GOOD, {} },
 #ifdef HAVE_INT64
-  { seahash_test,         64, 0xF0374078, "seahash",     "seahash (64-bit, little-endian)", GOOD },
-  { seahash32low,         32, 0x712F0EE8, "seahash32low","seahash - lower 32bit", GOOD },
+  { seahash_test,         64, 0xF0374078, "seahash",     "seahash (64-bit, little-endian)", GOOD, {} },
+  { seahash32low,         32, 0x712F0EE8, "seahash32low","seahash - lower 32bit", GOOD, {} },
 #endif /* HAVE_INT64 */
 #endif /* !MSVC */
 #if defined(__SSE4_2__) && defined(__x86_64__)
-  { clhash_test,          64, 0x00000000, "clhash",      "carry-less mult. hash -DBITMIX (64-bit for x64, SSE4.2)", GOOD },
+  { clhash_test,          64, 0x0, "clhash",      "carry-less mult. hash -DBITMIX (64-bit for x64, SSE4.2)", GOOD,
+    {0xb3816f6a2c68e530, 711} },
 #endif
 #ifdef HAVE_HIGHWAYHASH
-  { HighwayHash64_test,   64, 0x00000000,        "HighwayHash64", "Google HighwayHash (portable with dylib overhead)", GOOD },
+  { HighwayHash64_test,   64, 0x0,        "HighwayHash64", "Google HighwayHash (portable with dylib overhead)", GOOD, {} },
 #endif
 #if __WORDSIZE >= 64
-  { MurmurHash3_x64_128, 128, 0x6384BA69, "Murmur3F",    "MurmurHash3 for x64, 128-bit", GOOD },
+  { MurmurHash3_x64_128, 128, 0x6384BA69, "Murmur3F",    "MurmurHash3 for x64, 128-bit", GOOD, {0x87c37b91114253d5ULL} },
 #endif
-  { fasthash32_test,      32, 0xE9481AFC, "fasthash32",  "fast-hash 32bit", GOOD },
-#if defined(__GNUC__) && UINT_MAX != ULONG_MAX
+#if defined __aarch64__
+ #define MUM_VERIF            0x280B2CC6
+ #define MUMLOW_VERIF         0xB13E0239
+#elif defined(__GNUC__) && UINT_MAX != ULONG_MAX
  #define MUM_VERIF            0x3EEAE2D4
  #define MUMLOW_VERIF         0x520263F5
 #else
  #define MUM_VERIF            0xA973C6C0
  #define MUMLOW_VERIF         0x7F898826
 #endif
-  { mum_hash_test,        64, MUM_VERIF,  "MUM",         "github.com/vnmakarov/mum-hash", GOOD },
-  { mum_low_test,         32, MUMLOW_VERIF,"MUMlow",     "github.com/vnmakarov/mum-hash", GOOD },
+  { mum_hash_test,        64, MUM_VERIF,  "MUM",         "github.com/vnmakarov/mum-hash", GOOD, {0x0} /* !! */ },
+  { mum_low_test,         32, MUMLOW_VERIF,"MUMlow",     "github.com/vnmakarov/mum-hash", GOOD, {} },
 #if defined(__GNUC__) && UINT_MAX != ULONG_MAX
  #define MIR_VERIF            0x00A393C8
  #define MIRLOW_VERIF         0xE320CE68
@@ -342,15 +428,19 @@ HashInfo g_hashes[] =
 #endif
 #ifdef HAVE_INT64
   // improved MUM:
-  { mirhash_test,         64, MIR_VERIF,    "mirhash",            "mirhash", GOOD },
-  { mirhash32low,         32, MIRLOW_VERIF, "mirhash32low",       "mirhash - lower 32bit", GOOD },
-  { mirhashstrict_test,   64, 0x422A66FC,   "mirhashstrict",      "mirhashstrict (portable, 64-bit, little-endian)", GOOD },
-  { mirhashstrict32low,   32, 0xD50D1F09,   "mirhashstrict32low", "mirhashstrict - lower 32bit", POOR },
+  { mirhash_test,         64, MIR_VERIF,    "mirhash",            "mirhash", GOOD,
+    {0x0, 0x5e74c778, 0xa521f17b, 0xe0ab70e3} /* 2^36 !! (plus all hi ranges) */ },
+  { mirhash32low,         32, MIRLOW_VERIF, "mirhash32low",       "mirhash - lower 32bit", POOR,
+    {0x0, 0x5e74c778, 0xa521f17b, 0xe0ab70e3 } /* !! */ },
+  { mirhashstrict_test,   64, 0x422A66FC,   "mirhashstrict",      "mirhashstrict (portable, 64-bit, little-endian)", GOOD,
+    {0x7fcc747f} /* tested ok */ },
+  { mirhashstrict32low,   32, 0xD50D1F09,   "mirhashstrict32low", "mirhashstrict - lower 32bit", POOR,
+    {0x7fcc747f} /* !! */ },
 #endif
-  { CityHash64_low_test,  32, 0xCC5BC861, "City64low",   "Google CityHash64WithSeed (low 32-bits)", GOOD },
+  { CityHash64_low_test,  32, 0xCC5BC861, "City64low",   "Google CityHash64WithSeed (low 32-bits)", GOOD, {} },
 #if defined(__SSE4_2__) && defined(__x86_64__)
-  { CityHash128_test,    128, 0x6531F54E, "City128",     "Google CityHash128WithSeed (old)", GOOD },
-  { CityHashCrc128_test, 128, 0xD4389C97, "CityCrc128",  "Google CityHashCrc128WithSeed SSE4.2 (old)", GOOD },
+  { CityHash128_test,    128, 0x6531F54E, "City128",     "Google CityHash128WithSeed (old)", GOOD, {} },
+  { CityHashCrc128_test, 128, 0xD4389C97, "CityCrc128",  "Google CityHashCrc128WithSeed SSE4.2 (old)", GOOD, {} },
 #endif
 
 #if defined(__FreeBSD__)
@@ -360,58 +450,90 @@ HashInfo g_hashes[] =
 #  define FARM64_VERIF        0xEBC4A679
 #  define FARM128_VERIF       0x305C0D9A
 #endif
-  { FarmHash32_test,      32, 0/*0x2E226C14*/,   "FarmHash32",  "Google FarmHash32WithSeed", GOOD },
-  { FarmHash64_test,      64, FARM64_VERIF, "FarmHash64",  "Google FarmHash64WithSeed", GOOD },
- //{ FarmHash64noSeed_test,64, 0xA5B9146C,  "Farm64noSeed","Google FarmHash64 without seed (default, misses on final avalanche)", POOR },
-  { FarmHash128_test,    128, FARM128_VERIF,"FarmHash128", "Google FarmHash128WithSeed", GOOD },
+  { FarmHash32_test,      32, 0/*0x2E226C14*/,   "FarmHash32",  "Google FarmHash32WithSeed", GOOD, {} },
+  { FarmHash64_test,      64, FARM64_VERIF, "FarmHash64",  "Google FarmHash64WithSeed", GOOD, {} },
+ //{ FarmHash64noSeed_test,64, 0xA5B9146C,  "Farm64noSeed","Google FarmHash64 without seed (default, misses on final avalanche)", POOR, {} },
+  { FarmHash128_test,    128, FARM128_VERIF,"FarmHash128", "Google FarmHash128WithSeed", GOOD, {} },
 #if defined(__SSE4_2__) && defined(__x86_64__)
-  { farmhash32_c_test,    32, 0/*0xA2E45238*/,   "farmhash32_c", "farmhash32_with_seed (C99)", GOOD },
-  { farmhash64_c_test,    64, FARM64_VERIF, "farmhash64_c",  "farmhash64_with_seed (C99)", GOOD },
-  { farmhash128_c_test,  128, FARM128_VERIF,"farmhash128_c", "farmhash128_with_seed (C99)", GOOD },
+  { farmhash32_c_test,    32, 0/*0xA2E45238*/,   "farmhash32_c", "farmhash32_with_seed (C99)", GOOD,
+    {0x2b091701} /* !! */},
+  { farmhash64_c_test,    64, FARM64_VERIF, "farmhash64_c",  "farmhash64_with_seed (C99)", GOOD, {} },
+  { farmhash128_c_test,  128, FARM128_VERIF,"farmhash128_c", "farmhash128_with_seed (C99)", GOOD, {} },
 #endif
 
-  { xxHash64_test,        64, 0x024B7CF4, "xxHash64",    "xxHash, 64-bit", GOOD },
+  { xxHash64_test,        64, 0x024B7CF4, "xxHash64",    "xxHash, 64-bit", GOOD, {} },
 #if 0
-  { xxhash256_test,       64, 0x024B7CF4, "xxhash256",   "xxhash256, 64-bit unportable", GOOD },
+  { xxhash256_test,       64, 0x024B7CF4, "xxhash256",   "xxhash256, 64-bit unportable", GOOD, {} },
 #endif
-  { SpookyHash32_test,    32, 0x3F798BBB, "Spooky32",    "Bob Jenkins' SpookyHash, 32-bit result", GOOD },
-  { SpookyHash64_test,    64, 0xA7F955F1, "Spooky64",    "Bob Jenkins' SpookyHash, 64-bit result", GOOD },
-  { SpookyHash128_test,  128, 0x8D263080, "Spooky128",   "Bob Jenkins' SpookyHash, 128-bit result", GOOD },
-  { pengyhash_test,       64, 0x1FC2217B, "pengyhash",   "pengyhash", GOOD },
-  { mx3hash64_test,       64, 0x4DB51E5B, "mx3",         "mx3 64bit", GOOD },
+  { SpookyHash32_test,    32, 0x3F798BBB, "Spooky32",    "Bob Jenkins' SpookyHash, 32-bit result", GOOD,
+    {0x26bb3cda} /* !! */},
+  { SpookyHash64_test,    64, 0xA7F955F1, "Spooky64",    "Bob Jenkins' SpookyHash, 64-bit result", GOOD, {} },
+  { SpookyHash128_test,  128, 0x8D263080, "Spooky128",   "Bob Jenkins' SpookyHash, 128-bit result", GOOD, {} },
+  { pengyhash_test,       64, 0x1FC2217B, "pengyhash",   "pengyhash", GOOD, {} },
+  { mx3hash64_test,       64, 0x4DB51E5B, "mx3",         "mx3 64bit", GOOD, {} },
 #if defined(__SSE4_2__) && defined(__x86_64__) && !defined(_MSC_VER)
-  { umash32,              32, 0x2F0C2CC6, "umash32",     "umash 32", GOOD },
-  { umash32_hi,           32, 0xD323A67D, "umash32_hi",  "umash 32 hi", GOOD },
-  { umash,                64, 0x7518A050, "umash64",     "umash 64", GOOD },
-  { umash128,            128, 0x1ED02AAA, "umash128",    "umash 128", GOOD },
+  { umash32,              32, 0x03E16CA1, "umash32",     "umash 32", GOOD, {} },
+  { umash32_hi,           32, 0xE29D613C, "umash32_hi",  "umash 32 hi", GOOD, {} },
+  { umash,                64, 0x4542288C, "umash64",     "umash 64", GOOD, {} },
+  { umash128,            128, 0xDA4E82B6, "umash128",    "umash 128", GOOD, {} },
 #endif
-  
-  { t1ha2_atonce_test,           64, 0x8F16C948, "t1ha2_atonce",    "Fast Positive Hash (portable, aims 64-bit, little-endian)", GOOD },
-  { t1ha2_stream_test,           64, 0xDED9B580, "t1ha2_stream",    "Fast Positive Hash (portable, aims 64-bit, little-endian)", POOR },
-  { t1ha2_atonce128_test,       128, 0xB44C43A1, "t1ha2_atonce128", "Fast Positive Hash (portable, aims 64-bit, little-endian)", GOOD },
-  { t1ha2_stream128_test,       128, 0xE929E756, "t1ha2_stream128", "Fast Positive Hash (portable, aims 64-bit, little-endian)", POOR },
+  { halftime_hash_style64_test,  64, 0x0, "halftime_hash64",    "NH tree hash variant", GOOD,
+    {0xc61d672b, 0xcc70c4c1798e4a6f, 0xd3833e804f4c574b, 0xecfc1357d65941ae, 0xbe1927f97b8c43f1, 
+     0xf4d4beb14ae042bbULL, 0x9a9b4c4e44dd48d1ULL} }, // not vulnerable
+  { halftime_hash_style128_test, 64, 0x0, "halftime_hash128",   "NH tree hash variant", GOOD,
+    {0xc61d672b, 0xcc70c4c1798e4a6f, 0xd3833e804f4c574b, 0xecfc1357d65941ae, 0xbe1927f97b8c43f1, 
+     0xf4d4beb14ae042bbULL, 0x9a9b4c4e44dd48d1ULL} },
+  { halftime_hash_style256_test, 64, 0x0, "halftime_hash256",   "NH tree hash variant", GOOD,
+    {0xc61d672b, 0xcc70c4c1798e4a6f, 0xd3833e804f4c574b, 0xecfc1357d65941ae, 0xbe1927f97b8c43f1, 
+     0xf4d4beb14ae042bbULL, 0x9a9b4c4e44dd48d1ULL} },
+  { halftime_hash_style512_test, 64, 0x0, "halftime_hash512",   "NH tree hash variant", GOOD,
+    {0xc61d672b, 0xcc70c4c1798e4a6f, 0xd3833e804f4c574b, 0xecfc1357d65941ae, 0xbe1927f97b8c43f1, 
+     0xf4d4beb14ae042bbULL, 0x9a9b4c4e44dd48d1ULL} },
+
+  { t1ha2_atonce_test,           64, 0x8F16C948, "t1ha2_atonce",    "Fast Positive Hash (portable", GOOD, {
+    } },
+  { t1ha2_stream_test,           64, 0xDED9B580, "t1ha2_stream",    "Fast Positive Hash (portable)", POOR, {} },
+  { t1ha2_atonce128_test,       128, 0xB44C43A1, "t1ha2_atonce128", "Fast Positive Hash (portable)", GOOD, {} },
+  { t1ha2_stream128_test,       128, 0xE929E756, "t1ha2_stream128", "Fast Positive Hash (portable)", POOR, {} },
 #if T1HA0_AESNI_AVAILABLE
 #  ifndef _MSC_VER
-  { t1ha0_ia32aes_noavx_test,  64, 0xF07C4DA5, "t1ha0_aes_noavx", "Fast Positive Hash (machine-specific, requires AES-NI)", GOOD },
+  { t1ha0_ia32aes_noavx_test,  64, 0xF07C4DA5, "t1ha0_aes_noavx", "Fast Positive Hash (AES-NI)", GOOD, {} },
 #  endif
 #  if defined(__AVX__)
-  { t1ha0_ia32aes_avx1_test,   64, 0xF07C4DA5, "t1ha0_aes_avx1",  "Fast Positive Hash (machine-specific, requires AES-NI & AVX)", GOOD },
+  { t1ha0_ia32aes_avx1_test,   64, 0xF07C4DA5, "t1ha0_aes_avx1",  "Fast Positive Hash (AES-NI & AVX)", GOOD, {} },
 #  endif /* __AVX__ */
 #  if defined(__AVX2__)
-  { t1ha0_ia32aes_avx2_test,   64, 0x8B38C599, "t1ha0_aes_avx2",  "Fast Positive Hash (machine-specific, requires AES-NI & AVX2)", GOOD },
+  { t1ha0_ia32aes_avx2_test,   64, 0x8B38C599, "t1ha0_aes_avx2",  "Fast Positive Hash (AES-NI & AVX2)", GOOD, {} },
 #  endif /* __AVX2__ */
 #endif /* T1HA0_AESNI_AVAILABLE */
-  { xxh3_test,            64, 0x39CD9E4A, "xxh3",        "xxHash v3, 64-bit", GOOD },
-  { xxh3low_test,         32, 0xFAE8467B, "xxh3low",     "xxHash v3, 64-bit, low 32-bits part", GOOD },
-  { xxh128_test,         128, 0xEB61B3A0, "xxh128",      "xxHash v3, 128-bit", GOOD },
-  { xxh128low_test,       64, 0x54D1CC70, "xxh128low",   "xxHash v3, 128-bit, low 64-bits part", GOOD },
+#ifdef HAVE_AHASH_C
+  // aHash does not adhere to a fixed output
+  { ahash64_test,         64, 0x00000000, "ahash64",     "ahash 64bit", GOOD, {} },
+#endif
+  { xxh3_test,            64, 0x39CD9E4A, "xxh3",        "xxHash v3, 64-bit", GOOD, // no known bad seeds
+    {0xbe4ba423396cfeb8,     // kSecret
+     0x396cfeb8, 0xbe4ba423, // kSecret
+     0x6782737bea4239b9,     // bitflip1 ^ input
+     0xaf56bc3b0996523a,     // bitflip2 ^ input[last 8]
+    }},
+  { xxh3low_test,         32, 0xFAE8467B, "xxh3low",     "xxHash v3, 64-bit, low 32-bits part", GOOD,
+    {0xbe4ba423396cfeb8, 0x396cfeb8, 0xbe4ba423, 0x6782737bea4239b9ULL, 0xaf56bc3b0996523aULL }},
+  { xxh128_test,         128, 0xEB61B3A0, "xxh128",      "xxHash v3, 128-bit", GOOD,
+    {0xbe4ba423396cfeb8, 0x396cfeb8, 0xbe4ba423, 0x6782737bea4239b9ULL, 0xaf56bc3b0996523aULL }},
+  { xxh128low_test,       64, 0x54D1CC70, "xxh128low",   "xxHash v3, 128-bit, low 64-bits part", GOOD,
+    {0xbe4ba423396cfeb8, 0x396cfeb8, 0xbe4ba423, 0x6782737bea4239b9ULL, 0xaf56bc3b0996523aULL }},
 #ifdef HAVE_BIT32
-  { wyhash32_test,         32, 0x09DE8066, "wyhash32",       "wyhash (32-bit)", GOOD },
+  { wyhash32_test,        32, 0x09DE8066, "wyhash32",       "wyhash v3 (32-bit native)", GOOD,
+    { /*0x1bc1d52e, 0x1cbc261d, 0x33a0d1d9,*/ 0x429dacdd, 0xd637dbf3 } /* !! last 2 */ },
 #else
-  { wyhash32low,           32, 0xDCFB4E8F, "wyhash32low",    "wyhash lower 32bit", GOOD },
+  { wyhash32low,          32, 0x7DB3559D, "wyhash32low",    "wyhash v3 lower 32bit", GOOD,
+    { 0x429dacdd, 0xd637dbf3 } /* !! */ },
 #endif
 #ifdef HAVE_INT64
-  { wyhash_test,           64, 0x8323EB7E, "wyhash",         "wyhash (64-bit)", GOOD },
+  { wyhash_test,          64, 0x67031D43, "wyhash",         "wyhash v3 (64-bit)", GOOD,
+    // all seeds with those lower bits
+    { 0x14cc886e, 0x1bf4ed84, 0x14cc886e14cc886eULL} /* !! */ },
+  //{ wyhash_condom_test,   64, 0x7C62138D, "wyhash_condom",  "wyhash v3 condom 2 (64-bit)", GOOD, { } },
 #endif
 
 };
@@ -435,6 +557,8 @@ void Hash_init (HashInfo* info) {
   //  md5_init();
   else if (info->hash == rmd128)
     rmd128_init(&ltc_state);
+  else if(info->hash == tabulation_32_test)
+    tabulation_32_init();
 #ifdef __SIZEOF_INT128__
   else if(info->hash == multiply_shift || info->hash == pair_multiply_shift)
     multiply_shift_init();
@@ -443,8 +567,6 @@ void Hash_init (HashInfo* info) {
   else if(info->hash == tabulation_test)
     tabulation_init();
 #endif
-  else if(info->hash == tabulation_32_test)
-    tabulation_32_init();
 #if defined(__SSE4_2__) && defined(__x86_64__)
   else if(info->hash == clhash_test)
     clhash_init();
@@ -466,12 +588,20 @@ void Hash_init (HashInfo* info) {
 #endif
   else if(info->hash == chaskey_test)
     chaskey_init();
+  else if (info->hash == halftime_hash_style64_test ||
+           info->hash == halftime_hash_style128_test ||
+           info->hash == halftime_hash_style256_test ||
+           info->hash == halftime_hash_style512_test)
+    halftime_hash_init();
 }
 
 // optional hash seed initializers.
 // esp. for Hashmaps, whenever the seed changes, for expensive seeding.
+// Also needed for hashed with a few bad seeds, to reject this seed and generate a new one.
+// (GH #99)
 void Seed_init (HashInfo* info, size_t seed) {
   Hash_Seed_init (info->hash, seed);
+  //bad_seed_init (info->hash, seed);
 }
 
 void Hash_Seed_init (pfHash hash, size_t seed) {
@@ -479,8 +609,8 @@ void Hash_Seed_init (pfHash hash, size_t seed) {
   //  md5_seed_init(seed);
   //if (hash == VHASH_32 || hash == VHASH_64)
   //  VHASH_seed_init(seed);
-  if (true)
-     ;
+  if(hash == tabulation_32_test)
+    tabulation_32_seed_init(seed);
 #ifdef __SIZEOF_INT128__
   else if(hash == multiply_shift || hash == pair_multiply_shift)
     multiply_shift_seed_init(seed);
@@ -489,8 +619,6 @@ void Hash_Seed_init (pfHash hash, size_t seed) {
   else if(hash == tabulation_test)
     tabulation_seed_init(seed);
 #endif
-  else if(hash == tabulation_32_test)
-    tabulation_32_seed_init(seed);
 #if defined(__SSE4_2__) && defined(__x86_64__)
   else if (hash == clhash_test)
     clhash_seed_init(seed);
@@ -499,6 +627,9 @@ void Hash_Seed_init (pfHash hash, size_t seed) {
           hash == umash ||
           hash == umash128)
     umash_seed_init(seed);
+  else if (hash == halftime_hash_style64_test || hash == halftime_hash_style128_test ||
+           hash == halftime_hash_style256_test || hash == halftime_hash_style512_test)
+    halftime_hash_seed_init(seed);
   /*
   else if(hash == hashx_test)
     hashx_seed_init(info, seed);
@@ -666,12 +797,20 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
   // Avalanche tests
   // 1m30 for xxh3
   // 13m  for xxh3 with --extra
+  // 3m24 for xxh3 with --extra on 1 thread
+  // 6m41 for xxh3 with --extra on 4 threads over bins without lock
+  // 6m41 for xxh3 with --extra on 4 pinned threads
   // 3m   for farmhash128_c (was 7m with 512,1024)
 
   if(g_testAvalanche || g_testAll)
   {
     printf("[[[ Avalanche Tests ]]]\n\n");
     fflush(NULL);
+#if NCPU_not >= 4 // 2x slower
+    const bool extra = true;
+#else
+    const bool extra = g_testExtra;
+#endif
 
     bool result = true;
     bool verbose = g_drawDiagram; //.......... progress dots
@@ -691,7 +830,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     result &= AvalancheTest< Blob<128>, hashtype > (hash,300000,verbose);
     result &= AvalancheTest< Blob<160>, hashtype > (hash,300000,verbose);
 
-    if(g_testExtra) {
+    if(extra) {
       result &= AvalancheTest< Blob<192>, hashtype > (hash,300000,verbose);
       result &= AvalancheTest< Blob<224>, hashtype > (hash,300000,verbose);
       result &= AvalancheTest< Blob<256>, hashtype > (hash,300000,verbose);
@@ -700,18 +839,18 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
       result &= AvalancheTest< Blob<384>, hashtype > (hash,300000,verbose);
       result &= AvalancheTest< Blob<448>, hashtype > (hash,300000,verbose);
     }
-    if (g_testExtra || info->hashbits <= 64) {
+    if (extra || info->hashbits <= 64) {
       result &= AvalancheTest< Blob<512>, hashtype > (hash,300000,verbose);
     }
-    if(g_testExtra) {
+    if(extra) {
       result &= AvalancheTest< Blob<640>, hashtype > (hash,300000,verbose);
       result &= AvalancheTest< Blob<768>, hashtype > (hash,300000,verbose);
       result &= AvalancheTest< Blob<896>, hashtype > (hash,300000,verbose);
     }
-    if (g_testExtra || info->hashbits <= 64) {
+    if (extra || info->hashbits <= 64) {
       result &= AvalancheTest< Blob<1024>,hashtype > (hash,300000,verbose);
     }
-    if(g_testExtra) {
+    if(extra) {
       result &= AvalancheTest< Blob<1280>,hashtype > (hash,300000,verbose);
       result &= AvalancheTest< Blob<1536>,hashtype > (hash,300000,verbose);
     }
@@ -1272,6 +1411,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
   // 5m30 with xxh3
   // less reps with slow or very bad hashes
   // md5: 1h38m with 1000 reps!
+  // halftime* > 40m
 
   if(g_testDiff || g_testAll)
   {
@@ -1282,7 +1422,12 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     bool dumpCollisions = g_drawDiagram; // from --verbose
     int reps = 1000;
     if ((g_speed > 500.0 || info->hashbits > 128 ||
-         hash == o1hash_test) && !g_testExtra)
+         hash == o1hash_test ||
+         hash == halftime_hash_style64_test ||
+         hash == halftime_hash_style128_test ||
+         hash == halftime_hash_style256_test ||
+         hash == halftime_hash_style512_test
+         ) && !g_testExtra)
       reps = 100; // sha1: 7m, md5: 4m53
 
     result &= DiffTest< Blob<64>,  hashtype >(hash,5,reps,dumpCollisions);
@@ -1339,7 +1484,6 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     printf("\n");
     fflush(NULL);
   }
-
 
   if (g_testPrng || g_testAll)
   {
@@ -1408,6 +1552,18 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     fflush(NULL);
   }
 
+  if (g_testBadSeeds || g_testAll)
+  {
+    printf("[[[ BadSeeds Tests ]]]\n\n");
+    // g_testExtra: test all seeds. if not just some known secrets/bad seeds
+
+    Seed_init (info, 0);
+    bool result = BadSeedsTest<hashtype>( info, g_testExtra );
+    if(!result) printf("\n*********FAIL*********\n");
+    printf("\n");
+    fflush(NULL);
+  }
+  
 }
 
 //-----------------------------------------------------------------------------
@@ -1626,7 +1782,7 @@ void testHash ( const char * name )
 }
 //-----------------------------------------------------------------------------
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 static char* strndup(char const *s, size_t n)
 {
   size_t const len = strnlen(s, n);
@@ -1712,12 +1868,15 @@ int main ( int argc, const char ** argv )
         char *rest = opt;
         char *p;
         bool found = false;
+        bool need_opt_free = false;
         g_testAll = false;
         do {
           if ((p = strchr(rest, ','))) {
             opt = strndup(rest, p-rest);
+            need_opt_free = true;
             rest = p+1;
           } else {
+            need_opt_free = false;
             opt = rest;
           }
           for (size_t i = 0; i < sizeof(g_testopts) / sizeof(TestOpts); i++) {
@@ -1732,8 +1891,12 @@ int main ( int argc, const char ** argv )
               printf(",%s", g_testopts[i].name);
             }
             printf(" \n");
+            if (need_opt_free)
+              free(opt);
             exit(1);
           }
+          if (need_opt_free)
+            free(opt);
         } while (p);
         continue;
       }

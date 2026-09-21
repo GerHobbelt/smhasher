@@ -8,30 +8,41 @@
 
 #pragma once
 
+#include "Platform.h"
 #include "Types.h"
 #include "Random.h"
 
 #include <vector>
+
 #include <stdio.h>
 #include <math.h>
 
 // Avalanche fails if a bit is biased by more than 1%
-
 #define AVALANCHE_FAIL 0.01
 
 double maxBias ( std::vector<int> & counts, int reps );
 
 //-----------------------------------------------------------------------------
 
+// threaded: loop over bins
 template < typename keytype, typename hashtype >
-void calcBias ( pfHash hash, std::vector<int> & counts, int reps, Rand & r, bool verbose )
+void calcBiasRange ( const pfHash hash, std::vector<int> &bins, Rand r,
+                     const int i, const int reps, const bool verbose )
 {
   const int keybytes = sizeof(keytype);
   const int hashbytes = sizeof(hashtype);
 
   const int keybits = keybytes * 8;
   const int hashbits = hashbytes * 8;
-
+  // i 0-NCPU
+#if NCPU_not > 1
+  const int len = keybits / NCPU;
+  const int keystart = i * len;
+  const int keyend = keystart + len;
+#else
+  const int keystart = 0;
+  const int keyend = keybits;
+#endif
   keytype K;
   hashtype A,B;
 
@@ -42,12 +53,11 @@ void calcBias ( pfHash hash, std::vector<int> & counts, int reps, Rand & r, bool
     }
 
     r.rand_p(&K,keybytes);
-
     hash(&K,keybytes,0,&A);
 
-    int * cursor = &counts[0];
+    int * cursor = &bins[keystart * hashbits]; // 0 .. 1536
 
-    for(int iBit = 0; iBit < keybits; iBit++)
+    for(int iBit = keystart; iBit < keyend; iBit++)
     {
       flipbit(&K,keybytes,iBit);
       hash(&K,keybytes,0,&B);
@@ -57,7 +67,6 @@ void calcBias ( pfHash hash, std::vector<int> & counts, int reps, Rand & r, bool
       {
         int bitA = getbit(&A,hashbytes,iOut);
         int bitB = getbit(&B,hashbytes,iOut);
-
         (*cursor++) += (bitA ^ bitB);
       }
     }
@@ -79,12 +88,25 @@ bool AvalancheTest ( pfHash hash, const int reps, bool verbose )
 
   printf("Testing %4d-bit keys -> %3d-bit hashes, %6d reps",
          keybits, hashbits, reps);
-
   //----------
-
   std::vector<int> bins(keybits*hashbits,0);
 
-  calcBias<keytype,hashtype>(hash,bins,reps,r,verbose);
+#if NCPU_not > 1
+  const int lenreps = reps / NCPU;
+  const int lenbins = keybits*hashbits / NCPU;
+  static std::thread t[NCPU];
+  //printf("%d threads starting...\n", NCPU);
+  for (int i=0; i < NCPU; i++) {
+    t[i] = std::thread {calcBiasRange<keytype,hashtype>,hash,std::ref(bins),r,i,reps,verbose};
+    SetThreadAffinity (t[i], i); // no effect measured
+  }
+  for (int i=0; i < NCPU; i++) {
+    t[i].join();
+  }
+  //printf("All %d threads ended\n", NCPU);
+#else
+  calcBiasRange<keytype,hashtype>(hash,bins,r,0,reps,verbose);
+#endif
   
   //----------
 

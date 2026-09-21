@@ -2,6 +2,7 @@
 
 #include "Platform.h"
 #include "Types.h"
+#include <algorithm>
 
 #include "MurmurHash1.h"
 #include "MurmurHash2.h"
@@ -21,6 +22,9 @@
 #include "metrohash/metrohash128crc.h"
 #endif
 
+#ifdef HAVE_AHASH_C
+#include "ahash.h"
+#endif
 #include "fasthash.h"
 #include "jody_hash32.h"
 #include "jody_hash64.h"
@@ -37,7 +41,17 @@
 //----------
 // These are _not_ hash functions (even though people tend to use crc32 as one...)
 
+static inline bool BadHash_bad_seeds(std::vector<uint32_t> &seeds)
+{
+  seeds = std::vector<uint32_t> { UINT32_C(0) };
+  return true;
+}
 void BadHash(const void *key, int len, uint32_t seed, void *out);
+static inline bool sumhash_bad_seeds(std::vector<uint32_t> &seeds)
+{
+  seeds = std::vector<uint32_t> { UINT32_C(0) };
+  return true;
+}
 void sumhash(const void *key, int len, uint32_t seed, void *out);
 void sumhash32(const void *key, int len, uint32_t seed, void *out);
 
@@ -54,7 +68,14 @@ void hasshe2_test(const void *key, int len, uint32_t seed, void *out);
 #if defined(__SSE4_2__) && defined(__x86_64__)
 void crc32c_hw_test(const void *key, int len, uint32_t seed, void *out);
 void crc32c_hw1_test(const void *key, int len, uint32_t seed, void *out);
+static inline bool crc64c_hw_bad_seeds(std::vector<uint64_t> &seeds)
+{
+  seeds = std::vector<uint64_t> { UINT64_C(0) };
+  return true;
+}
 void crc64c_hw_test(const void *key, int len, uint32_t seed, void *out);
+void CityHashCrc64_test(const void *key, int len, uint32_t seed, void *out);
+void CityHashCrc128_test(const void *key, int len, uint32_t seed, void *out);
 #endif
 #if defined(HAVE_CLMUL) && !defined(_MSC_VER)
 /* Function from linux kernel 3.14. It computes the CRC over the given
@@ -62,6 +83,11 @@ void crc64c_hw_test(const void *key, int len, uint32_t seed, void *out);
  * and must be 16-byte aligned. */
 extern "C" uint32_t crc32_pclmul_le_16(unsigned char const *buffer, size_t len,
                                        uint32_t crc32);
+static inline bool crc32c_pclmul_bad_seeds(std::vector<uint32_t> &seeds)
+{
+  seeds = std::vector<uint32_t> { UINT32_C(0) };
+  return true;
+}
 inline void crc32c_pclmul_test(const void *key, int len, uint32_t seed, void *out)
 {
   if (!len) {
@@ -91,8 +117,6 @@ inline void crc32c_pclmul_test(const void *key, int len, uint32_t seed, void *ou
   *(uint32_t *) out = crc32_pclmul_le_16((unsigned char const *)key, (size_t)len, seed);
 #endif
 }
-void CityHashCrc64_test(const void *key, int len, uint32_t seed, void *out);
-void CityHashCrc128_test(const void *key, int len, uint32_t seed, void *out);
 void falkhash_test_cxx(const void *key, int len, uint32_t seed, void *out);
 #endif
 size_t fibonacci(const char *key, int len, uint32_t seed);
@@ -104,10 +128,20 @@ inline void FNV2_test(const void *key, int len, uint32_t seed, void *out) {
   *(size_t *)out = FNV2((const char *)key, len, (size_t)seed);
 }
 uint32_t FNV32a(const void *key, int len, uint32_t seed);
+static inline bool FNV32a_bad_seeds(std::vector<uint32_t> &seeds)
+{
+  seeds = std::vector<uint32_t> { UINT32_C(0x811c9dc5) };
+  return true;
+}
 inline void FNV32a_test(const void *key, int len, uint32_t seed, void *out) {
   *(uint32_t *)out = FNV32a((const char *)key, len, seed);
 }
 uint32_t FNV32a_YoshimitsuTRIAD(const char *key, int len, uint32_t seed);
+static inline bool FNV32a_YT_bad_seeds(std::vector<uint32_t> &seeds)
+{
+  seeds = std::vector<uint32_t> { UINT32_C(0x811c9dc5) };
+  return true;
+}
 inline void FNV32a_YT_test(const void *key, int len, uint32_t seed, void *out) {
   *(uint32_t *)out = FNV32a_YoshimitsuTRIAD((const char *)key, len, seed);
 }
@@ -126,6 +160,11 @@ uint64_t FNV64a(const char *key, int len, uint64_t seed);
 inline void FNV64a_test(const void *key, int len, uint32_t seed, void *out) {
   *(uint64_t *)out = FNV64a((const char *)key, len, (uint64_t)seed);
 }
+static inline bool fletcher_bad_seeds(std::vector<uint64_t> &seeds)
+{
+  seeds = std::vector<uint64_t> { UINT64_C(0) };
+  return true;
+}
 uint64_t fletcher2(const char *key, int len, uint64_t seed);
 inline void fletcher2_test(const void *key, int len, uint32_t seed, void *out) {
   *(uint64_t *) out = fletcher2((const char *)key, len, (uint64_t)seed);
@@ -135,10 +174,20 @@ inline void fletcher4_test(const void *key, int len, uint32_t seed, void *out) {
   *(uint64_t *) out = fletcher2((const char *)key, len, (uint64_t)seed);
 }
 uint32_t Bernstein(const char *key, int len, uint32_t seed);
+static inline bool Bernstein_bad_seeds(std::vector<uint32_t> &seeds)
+{
+  seeds = std::vector<uint32_t> { UINT32_C(0) };
+  return true;
+}
 inline void Bernstein_test(const void *key, int len, uint32_t seed, void *out) {
   *(uint32_t *) out = Bernstein((const char *)key, len, seed);
 }
 uint32_t sdbm(const char *key, int len, uint32_t hash);
+static inline bool sdbm_bad_seeds(std::vector<uint32_t> &seeds)
+{
+  seeds = std::vector<uint32_t> { UINT32_C(0) };
+  return true;
+}
 inline void sdbm_test(const void *key, int len, uint32_t seed, void *out) {
   *(uint32_t *) out = sdbm((const char *)key, len, seed);
 }
@@ -163,6 +212,11 @@ inline void MicroOAAT_test(const void *key, int len, uint32_t seed, void *out) {
   *(uint32_t *) out = MicroOAAT((const char *)key, len, seed);
 }
 uint32_t SuperFastHash (const char * data, int len, int32_t hash);
+static inline bool SuperFastHash_bad_seeds(std::vector<uint32_t> &seeds)
+{
+  seeds = std::vector<uint32_t> { UINT32_C(0) };
+  return true;
+}
 inline void SuperFastHash_test(const void *key, int len, uint32_t seed, void *out) {
   *(uint32_t*)out = SuperFastHash((const char*)key, len, seed);
 }
@@ -253,6 +307,11 @@ inline void MurmurHash64A_test ( const void * key, int len, uint32_t seed, void 
 }
 #endif
 #ifdef HAVE_INT64
+// 2^32 bad seeds for Murmur2C
+static void MurmurHash64B_seed_init(size_t &seed) {
+  if ((seed & UINT64_C(0x00000010)) == UINT64_C(0x00000010))
+    seed++;
+}
 inline void MurmurHash64B_test ( const void * key, int len, uint32_t seed, void * out )
 {
   *(uint64_t*)out = MurmurHash64B(key,len,seed);
@@ -283,6 +342,9 @@ inline void xxHash64_test( const void * key, int len, uint32_t seed, void * out 
 #include "xxh3.h"
 
 #ifdef HAVE_INT64
+static inline bool xxh3_bad_seeds(std::vector<uint64_t> &seeds) {
+  return false;
+}
 inline void xxh3_test( const void * key, int len, uint32_t seed, void * out ) {
   // objsize 12d0-15b8: 744
   *(uint64_t*)out = (uint64_t) XXH3_64bits_withSeed(key, (size_t) len, seed);
@@ -290,7 +352,6 @@ inline void xxh3_test( const void * key, int len, uint32_t seed, void * out ) {
 #endif
 
 inline void xxh3low_test( const void * key, int len, uint32_t seed, void * out ) {
-  (void)seed;
   // objsize 12d0-15b8: 744 + 1f50-1f5c: 756
   *(uint32_t*)out = (uint32_t) XXH3_64bits_withSeed(key, (size_t) len, seed);
 }
@@ -360,10 +421,22 @@ inline void fasthash32_test ( const void * key, int len, uint32_t seed, void * o
 inline void fasthash64_test ( const void * key, int len, uint32_t seed, void * out ) {
   *(uint64_t*)out = fasthash64(key, (size_t) len, (uint64_t)seed);
 }
+#ifdef HAVE_AHASH_C
+// objsize: 4c48a0-4c4a3c: 412
+inline void ahash64_test ( const void * key, int len, uint32_t seed, void * out ) {
+  *(uint64_t*)out = ahash64(key, (size_t) len, (uint64_t)seed);
+}
+#endif
+
 #endif
 
 // objsize 0-778: 1912
 void mum_hash_test(const void * key, int len, uint32_t seed, void * out);
+static inline bool mum_hash_bad_seeds(std::vector<uint64_t> &seeds)
+{
+  seeds = std::vector<uint64_t> { UINT64_C(0) };
+  return true;
+}
 
 inline void mum_low_test ( const void * key, int len, uint32_t seed, void * out ) {
   uint64_t result;
@@ -463,18 +536,29 @@ inline void t1ha0_ia32aes_avx2_test(const void * key, int len, uint32_t seed, vo
 #if defined(__SSE4_2__) && defined(__x86_64__)
 #include "clhash.h"
 void clhash_init();
-void clhash_seed_init(size_t seed);
+void clhash_seed_init(size_t &seed);
 void clhash_test (const void * key, int len, uint32_t seed, void * out);
 #endif
 
+// objsize 454880-4554f3: 2911
+void halftime_hash_style64_test(const void *key, int len, uint32_t seed, void *out);
+// 455e90 - 45682e: 2462
+void halftime_hash_style128_test(const void *key, int len, uint32_t seed, void *out);
+// 458840 - 45927e: 2622
+void halftime_hash_style256_test(const void *key, int len, uint32_t seed, void *out);
+// 457a60 - 45883e: 3550 (without AVX512 on Ryzen3)
+void halftime_hash_style512_test(const void *key, int len, uint32_t seed, void *out);
+void halftime_hash_init();
+void halftime_hash_seed_init(size_t &seed);
 
 #ifdef __SIZEOF_INT128__
    void multiply_shift_init();
-   void multiply_shift_seed_init(size_t seed);
+   void multiply_shift_seed_init(size_t &seed);
+   bool multiply_shift_bad_seeds(std::vector<uint64_t> &seeds);
    void multiply_shift (const void * key, int len, uint32_t seed, void * out);
    void pair_multiply_shift (const void *key, int len, uint32_t seed, void *out);
    void poly_mersenne_init();
-   void poly_mersenne_seed_init(size_t seed);
+   void poly_mersenne_seed_init(size_t &seed);
    // insecure: hashes cancel itself out, as with CRC
    void poly_0_mersenne (const void* key, int len, uint32_t seed, void* out);
    void poly_1_mersenne (const void* key, int len, uint32_t seed, void* out);
@@ -485,7 +569,8 @@ void clhash_test (const void * key, int len, uint32_t seed, void * out);
 
 #ifdef __SIZEOF_INT128__
    inline void tabulation_init() {
-      tabulation_seed_init(2);
+     size_t seed = 2;
+     tabulation_seed_init(seed);
    }
    // insecure: hashes cancel itself out, as with poly_X and CRC
    // objsize: 40b780 - 40b9aa: 554
@@ -495,7 +580,8 @@ void clhash_test (const void * key, int len, uint32_t seed, void * out);
 #endif
 
 inline void tabulation_32_init() {
-   tabulation_32_seed_init(0);
+  size_t seed = 0;
+   tabulation_32_seed_init(seed);
 }
 // objsize: 40b9b0 - 40bd00: 848
 inline void tabulation_32_test (const void * key, int len, uint32_t seed, void * out) {
@@ -506,8 +592,50 @@ void HighwayHash_init();
 // objsize 20-a12: 2546
 void HighwayHash64_test (const void * key, int len, uint32_t seed, void * out);
 
+#ifdef HAVE_INT64
+#include "wyhash.h"
+static inline bool wyhash_bad_seeds(std::vector<uint64_t> &seeds)
+{
+  // and all seeds with those at at its low 32bits. see below
+  seeds = std::vector<uint64_t> { 0x14cc886e, 0x1bf4ed84 };
+  return true;
+}
+//static void wyhash_seed_init(size_t &seed) {
+//  if ((seed & 0x14cc886e) || (seed & 0x1bf4ed84))
+//    seed++;
+//}
+// objsize 40dbe0-40ddba: 474
+inline void wyhash_test (const void * key, int len, uint32_t seed, void * out) {
+  *(uint64_t*)out = wyhash(key, (uint64_t)len, (uint64_t)seed, _wyp);
+}
+// objsize: 40da00-40dbda: 474
+inline void wyhash32low (const void * key, int len, uint32_t seed, void * out) {
+  *(uint32_t*)out = 0xFFFFFFFF & wyhash(key, (uint64_t)len, (uint64_t)seed, _wyp);
+}
+// extra in wyhash_condom.c
+//void wyhash_condom_test (const void * key, int len, uint32_t seed, void * out);
+#endif // HAVE_INT64
+
+// https://github.com/wangyi-fudan/wyhash
+//static void wyhash32_seed_init(size_t &seed)
+//{
+//  // reject bad seeds
+//  const std::vector<uint32_t> bad_seeds = {
+//    UINT32_C(0x429dacdd), UINT32_C(0xd637dbf3)
+//  };
+//  while (std::find(bad_seeds.begin(), bad_seeds.end(), (uint32_t)seed) != bad_seeds.end())
+//    seed++;
+//}
+static inline bool wyhash32_bad_seeds(std::vector<uint32_t> &seeds)
+{
+  seeds = std::vector<uint32_t> {
+    UINT32_C(0x429dacdd), UINT32_C(0xd637dbf3),
+  };
+  return true;
+}
+
 #ifdef HAVE_BIT32
-// native 32bit. objsize: 0x80f6a30-0x80f6bca: 410
+// native 32bit. objsize: 8055230 - 80553da: 426
 #include "wyhash32.h"
 inline void wyhash32_test (const void * key, int len, uint32_t seed, void * out) {
   *(uint32_t*)out = wyhash32(key, (uint64_t)len, (unsigned)seed);
@@ -515,29 +643,30 @@ inline void wyhash32_test (const void * key, int len, uint32_t seed, void * out)
 #endif
 
 #ifdef HAVE_INT64
-//https://github.com/wangyi-fudan/wyhash
-#include "wyhash.h"
-// objsize 40c8f0-40cc9a: 938
-inline void wyhash_test (const void * key, int len, uint32_t seed, void * out) {
-  *(uint64_t*)out = wyhash(key, (uint64_t)len, (uint64_t)seed, _wyp);
-}
-#ifndef HAVE_BIT32
-inline void wyhash32low (const void * key, int len, uint32_t seed, void * out) {
-  *(uint32_t*)out = 0xFFFFFFFF & wyhash(key, (uint64_t)len, (uint64_t)seed, _wyp);
-}
-#endif
 
 #include "o1hash.h"
 // unseeded. objsize: 101
+// This is vulnerable to keys len>4 and key[len/2 -2]..[len/2 +2] being 0 (binary keys).
 inline void o1hash_test (const void * key, int len, uint32_t seed, void * out) {
   *(uint64_t*)out = o1hash(key, (uint64_t)len);
 }
 
 //https://github.com/vnmakarov/mir/blob/master/mir-hash.h
 #include "mir-hash.h"
+static inline bool mirhash_bad_seeds(std::vector<uint64_t> &seeds)
+{
+  seeds = std::vector<uint64_t> { 0x0, 0x5e74c778, 0xa521f17b, 0xe0ab70e3 };
+  // plus all 64bit variants << 32 !!
+  return true;
+}
 inline void mirhash_test (const void * key, int len, uint32_t seed, void * out) {
   // objsize 2950-2da8: 1112
   *(uint64_t*)out = mir_hash(key, (uint64_t)len, (uint64_t)seed);
+}
+static inline bool mirhash32_bad_seeds(std::vector<uint32_t> &seeds)
+{
+  seeds = std::vector<uint32_t> { 0x0, 0x5e74c778, 0xa521f17b, 0xe0ab70e3 };
+  return true;
 }
 inline void mirhash32low (const void * key, int len, uint32_t seed, void * out) {
   *(uint32_t*)out = 0xFFFFFFFF & mir_hash(key, (uint64_t)len, (uint64_t)seed);
@@ -546,9 +675,38 @@ inline void mirhashstrict_test (const void * key, int len, uint32_t seed, void *
   // objsize 2950-2da8: 1112
   *(uint64_t*)out = mir_hash_strict(key, (uint64_t)len, (uint64_t)seed);
 }
+static inline bool mirhashstrict32low_bad_seeds(std::vector<uint32_t> &seeds)
+{
+  seeds = std::vector<uint32_t> { 0x7fcc747f };
+  return true;
+}
 inline void mirhashstrict32low (const void * key, int len, uint32_t seed, void * out) {
   *(uint32_t*)out = 0xFFFFFFFF & mir_hash_strict(key, (uint64_t)len, (uint64_t)seed);
 }
+static void mirhash_seed_init(size_t &seed)
+{
+  // reject bad seeds
+  std::vector<uint64_t> bad_seeds;
+  mirhash_bad_seeds(bad_seeds);
+  for (uint64_t s : bad_seeds) {
+    if (s == seed) {
+      seed++; break;
+    }
+    // also all hi ranges
+    if ((s << 32) & seed) {
+      seed++; break;
+    }
+  }
+}
+static void mirhash32_seed_init(size_t &seed)
+{
+  // reject bad seeds
+  std::vector<uint32_t> bad_seeds;
+  mirhash32_bad_seeds(bad_seeds);
+  while (std::find(bad_seeds.begin(), bad_seeds.end(), (uint32_t)seed) != bad_seeds.end())
+    seed++;
+}
+
 
 //TODO MSVC
 #ifndef _MSC_VER
@@ -647,7 +805,7 @@ inline void blake2b160_test(const void *key, int len, uint32_t seed, void *out)
 {
   // objsize
   blake2b_init(&ltc_state, 20, NULL, 0);
-  ltc_state.blake2b.h[0] = CONST64(0x6a09e667f3bcc908) ^ seed; // mix seed into lowest int
+  ltc_state.blake2b.h[0] ^= seed; // mix seed into lowest int
   blake2b_process(&ltc_state, (unsigned char *)key, len);
   blake2b_done(&ltc_state, (unsigned char *)out);
 }
@@ -655,7 +813,7 @@ inline void blake2b224_test(const void *key, int len, uint32_t seed, void *out)
 {
   // objsize
   blake2b_init(&ltc_state, 28, NULL, 0);
-  ltc_state.blake2b.h[0] = CONST64(0x6a09e667f3bcc908) ^ seed;
+  ltc_state.blake2b.h[0] ^= seed;
   blake2b_process(&ltc_state, (unsigned char *)key, len);
   blake2b_done(&ltc_state, (unsigned char *)out);
 }
@@ -663,7 +821,7 @@ inline void blake2b256_test(const void *key, int len, uint32_t seed, void *out)
 {
   // objsize
   blake2b_init(&ltc_state, 32, NULL, 0);
-  ltc_state.blake2b.h[0] = CONST64(0x6a09e667f3bcc908) ^ seed;
+  ltc_state.blake2b.h[0] ^= seed;
   blake2b_process(&ltc_state, (unsigned char *)key, len);
   blake2b_done(&ltc_state, (unsigned char *)out);
 }
@@ -672,7 +830,7 @@ inline void blake2b256_64(const void *key, int len, uint32_t seed, void *out)
   // objsize
   unsigned char buf[32];
   blake2b_init(&ltc_state, 32, NULL, 0);
-  ltc_state.blake2b.h[0] = CONST64(0x6a09e667f3bcc908) ^ seed;
+  ltc_state.blake2b.h[0] ^= seed;
   blake2b_process(&ltc_state, (unsigned char *)key, len);
   blake2b_done(&ltc_state, buf);
   memcpy(out, buf, 8);
@@ -683,7 +841,7 @@ inline void blake2s128_test(const void * key, int len, uint32_t seed, void * out
 {
   // objsize
   blake2s_init(&ltc_state, 16, NULL, 0);
-  ltc_state.blake2s.h[0] = 0x6A09E667UL ^ seed;
+  ltc_state.blake2s.h[0] ^= seed;
   blake2s_process(&ltc_state, (unsigned char *)key, len);
   blake2s_done(&ltc_state, (unsigned char *)out);
 }
@@ -691,7 +849,7 @@ inline void blake2s160_test(const void * key, int len, uint32_t seed, void * out
 {
   // objsize
   blake2s_init(&ltc_state, 20, NULL, 0);
-  ltc_state.blake2s.h[0] = 0x6A09E667UL ^ seed;
+  ltc_state.blake2s.h[0] ^= seed;
   blake2s_process(&ltc_state, (unsigned char *)key, len);
   blake2s_done(&ltc_state, (unsigned char *)out);
 }
@@ -699,7 +857,7 @@ inline void blake2s224_test(const void * key, int len, uint32_t seed, void * out
 {
   // objsize
   blake2s_init(&ltc_state, 28, NULL, 0);
-  ltc_state.blake2s.h[0] = 0x6A09E667UL ^ seed;
+  ltc_state.blake2s.h[0] ^= seed;
   blake2s_process(&ltc_state, (unsigned char *)key, len);
   blake2s_done(&ltc_state, (unsigned char *)out);
 }
@@ -707,7 +865,7 @@ inline void blake2s256_test(const void * key, int len, uint32_t seed, void * out
 {
   // objsize
   blake2s_init(&ltc_state, 32, NULL, 0);
-  ltc_state.blake2s.h[0] = 0x6A09E667UL ^ seed;
+  ltc_state.blake2s.h[0] ^= seed;
   blake2s_process(&ltc_state, (unsigned char *)key, len);
   blake2s_done(&ltc_state, (unsigned char *)out);
 }
@@ -716,17 +874,19 @@ inline void blake2s256_64(const void * key, int len, uint32_t seed, void * out)
   // objsize
   unsigned char buf[32];
   blake2s_init(&ltc_state, 32, NULL, 0);
-  ltc_state.blake2s.h[0] = 0x6A09E667UL ^ seed;
+  ltc_state.blake2s.h[0] ^= seed;
   blake2s_process(&ltc_state, (unsigned char *)key, len);
   blake2s_done(&ltc_state, buf);
   memcpy(out, buf, 8);
 }
+// almost all seeds are bad
 inline void sha2_224(const void *key, int len, uint32_t seed, void *out)
 {
   // objsize
   unsigned char buf[28];
   sha224_init(&ltc_state);
-  ltc_state.sha256.state[0] = 0xc1059ed8UL ^ seed;
+  ltc_state.sha256.state[0] ^= seed;
+  ltc_state.sha256.state[0] += len; // hardened against padding
   sha224_process(&ltc_state, (unsigned char *)key, len);
   sha224_done(&ltc_state, (unsigned char *)out);
 }
@@ -735,7 +895,8 @@ inline void sha2_224_64(const void *key, int len, uint32_t seed, void *out)
   // objsize
   unsigned char buf[28];
   sha224_init(&ltc_state);
-  ltc_state.sha256.state[0] = 0xc1059ed8UL ^ seed;
+  ltc_state.sha256.state[0] ^= seed;
+  ltc_state.sha256.state[0] += len; // hardened against padding
   sha224_process(&ltc_state, (unsigned char *)key, len);
   sha224_done(&ltc_state, buf);
   memcpy(out, buf, 8);
@@ -744,7 +905,8 @@ inline void sha2_256(const void *key, int len, uint32_t seed, void *out)
 {
   // objsize
   sha256_init(&ltc_state);
-  ltc_state.sha256.state[0] = 0x6A09E667UL ^ seed;
+  ltc_state.sha256.state[0] ^= seed;
+  ltc_state.sha256.state[0] += len; // hardened against padding
   sha256_process(&ltc_state, (unsigned char *)key, len);
   sha256_done(&ltc_state, (unsigned char *)out);
 }
@@ -753,7 +915,8 @@ inline void sha2_256_64(const void *key, int len, uint32_t seed, void *out)
   // objsize
   unsigned char buf[32];
   sha256_init(&ltc_state);
-  ltc_state.sha256.state[0] = 0x6A09E667UL ^ seed;
+  ltc_state.sha256.state[0] ^= seed;
+  ltc_state.sha256.state[0] += len; // hardened against padding
   sha256_process(&ltc_state, (unsigned char *)key, len);
   sha256_done(&ltc_state, buf);
   memcpy(out, buf, 8);
@@ -762,7 +925,7 @@ inline void rmd128(const void *key, int len, uint32_t seed, void *out)
 {
   // objsize
   rmd128_init(&ltc_state);
-  ltc_state.rmd128.state[0] = 0x67452301UL ^ seed;
+  ltc_state.rmd128.state[0] ^= seed;
   rmd128_process(&ltc_state, (unsigned char *)key, len);
   rmd128_done(&ltc_state, (unsigned char *)out);
 }
@@ -778,7 +941,7 @@ inline void rmd256(const void *key, int len, uint32_t seed, void *out)
 {
   // objsize
   rmd256_init(&ltc_state);
-  ltc_state.rmd256.state[0] = 0x67452301UL ^ seed;
+  ltc_state.rmd256.state[0] ^= seed;
   rmd256_process(&ltc_state, (unsigned char *)key, len);
   rmd256_done(&ltc_state, (unsigned char *)out);
 }
@@ -788,7 +951,7 @@ inline void sha3_256_64(const void *key, int len, uint32_t seed, void *out)
   // objsize
   unsigned char buf[32];
   sha3_256_init(&ltc_state);
-  ltc_state.sha3.s[0] = CONST64(1) ^ seed;
+  ltc_state.sha3.s[0] ^= seed;
   sha3_process(&ltc_state, (unsigned char *)key, len);
   sha3_done(&ltc_state, buf);
   memcpy(out, buf, 8);
@@ -798,7 +961,7 @@ inline void sha3_256(const void *key, int len, uint32_t seed, void *out)
   // objsize
   unsigned char buf[32];
   sha3_256_init(&ltc_state);
-  ltc_state.sha3.s[0] = CONST64(1) ^ seed;
+  ltc_state.sha3.s[0] ^= seed;
   sha3_process(&ltc_state, (unsigned char *)key, len);
   sha3_done(&ltc_state, (unsigned char *)out);
 }
@@ -808,7 +971,9 @@ inline void wysha(const void *key, int len, unsigned seed, void *out) {
   memcpy(out, s, 32);
 }
 
-#if defined(HAVE_AESNI) && defined(__SIZEOF_INT128__) /*&& !defined(HAVE_UBSAN)*/
+#if defined(HAVE_AESNI) && defined(__SIZEOF_INT128__) && \
+  (defined(__x86_64__) || defined(_M_AMD64) || defined(__i386__)  || defined(_M_IX86))
+#define HAVE_MEOW_HASH
 #include "meow_hash_x64_aesni.h"
 // objsize: 0x84b0-8b94 = 1764
 inline void MeowHash128_test(const void *key, int len, unsigned seed, void *out) {
@@ -840,17 +1005,19 @@ inline void sha1ni(const void *key, int len, uint32_t seed, void *out)
 {
   // objsize: 0x2c1 + this (0x408bac - 0x408a90) = 989
   uint32_t state[5] = {0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0};
-  state[0] = 0x67452301U ^ seed;
+  state[0] ^= seed;
   if (len < 64) {
     uint8_t padded[64];
     memcpy (padded, key, len);
     memset (&padded[len], 0, 64-len);
+    state[0] += len;
     sha1_process_x86(state, (const uint8_t*)padded, 64);
   } else if (len % 64) {
     uint32_t lenpadded = len + (64 - len % 64);
     uint8_t *padded = (uint8_t*)malloc (lenpadded);
     memcpy (padded, key, len);
     memset (&padded[len], 0, lenpadded-len);
+    state[0] += len;
     sha1_process_x86(state, (const uint8_t*)padded, lenpadded);
     free (padded);
   } else {
@@ -864,7 +1031,7 @@ inline void sha1ni(const void *key, int len, uint32_t seed, void *out)
 inline void sha1ni_32(const void *key, int len, uint32_t seed, void *out)
 {
   uint32_t state[5] = {0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0};
-  state[0] = 0x67452301U ^ seed;
+  state[0] ^= seed;
   if (len < 64) {
     uint8_t padded[64];
     memcpy (padded, key, len);
@@ -887,23 +1054,21 @@ inline void sha1ni_32(const void *key, int len, uint32_t seed, void *out)
 inline void sha2ni_256(const void *key, int len, uint32_t seed, void *out)
 {
   // objsize: 0x2f1 + this (0x4095c0-0x408820) = 4241
-  uint32_t state[8] = {
-                       0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-                       0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
-  };
-  state[0] = 0x6a09e667U ^ seed;
+  uint32_t state[8] = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+                       0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
+  state[0] ^= seed;
   if (len < 64) {
     uint8_t padded[64];
     memcpy (padded, key, len);
     memset (&padded[len], 0, 64-len);
-    //state[0] += len; to prevent Zeroes
+    state[0] += len; // to prevent Zeroes
     sha256_process_x86(state, (const uint8_t*)padded, 64);
   } else if (len % 64) {
     uint32_t lenpadded = len + (64 - len % 64);
     uint8_t *padded = (uint8_t*)malloc (lenpadded);
     memcpy (padded, key, len);
     memset (&padded[len], 0, lenpadded-len);
-    //state[0] += len;
+    state[0] += len;
     sha256_process_x86(state, (const uint8_t*)padded, lenpadded);
     free (padded);
   } else {
@@ -913,11 +1078,9 @@ inline void sha2ni_256(const void *key, int len, uint32_t seed, void *out)
 }
 inline void sha2ni_256_64(const void *key, int len, uint32_t seed, void *out)
 {
-  uint32_t state[8] = {
-                       0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-                       0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
-  };
-  state[0] = 0x6a09e667U ^ seed;
+  uint32_t state[8] = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+                       0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
+  state[0] ^= seed;
   if (len < 64) {
     uint8_t padded[64];
     memcpy (padded, key, len);
@@ -976,11 +1139,18 @@ extern "C" {
   inline void blake3c_test ( const void * key, int len, unsigned seed, void * out )
   {
     blake3_hasher hasher;
+#if 1
     blake3_hasher_init (&hasher);
-    // mix-in seed. key0 is not enough to pass MomentChi2. but even mixing all does not help
-    //for (int i = 0; i < 8; i++)
-    //  hasher.key[i] ^= (uint32_t)seed;
+    // See GH #168
     hasher.key[0] ^= (uint32_t)seed;
+    hasher.chunk.cv[0] ^= (uint32_t)seed;
+#else
+    // same speed
+    uint32_t seed_key[8] = {0x6A09E667 ^ (uint32_t)seed, 0xBB67AE85, 0x3C6EF372,
+      0xA54FF53A, 0x510E527F, 0x9B05688C,
+      0x1F83D9AB, 0x5BE0CD19};    // Copied the default IV from blake3_impl.h
+    blake3_hasher_init_keyed(&hasher, (uint8_t*)seed_key); // Changed to the KEYED variant
+#endif
     blake3_hasher_update (&hasher, (uint8_t*)key, (size_t)len);
     blake3_hasher_finalize (&hasher, (uint8_t*)out, BLAKE3_OUT_LEN);
   }
@@ -1039,56 +1209,48 @@ inline void aesnihash_test ( const void * key, int len, unsigned seed, void * ou
 
 #ifdef HAVE_INT64
 // https://github.com/avaneev/prvhash
-// objsize: 4129f0 - 412bcc: 476
-#include "prvhash42.h"
-inline void prvhash42_32test ( const void * key, int len, unsigned seed, void * out )
+#include "prvhash/prvhash64.h"
+// objsize: 4113ad - 411250: 349
+inline void prvhash64_64mtest ( const void * key, int len, unsigned seed, void * out )
 {
-  uint8_t hash[4] = {0};
-  prvhash42 ((const uint8_t *)key, len, hash, 4, (uint64_t)seed, NULL);
-  memcpy (out, hash, 4);
+  *(uint64_t*)out = prvhash64_64m ((const uint8_t *)key, len, (uint64_t)seed);
 }
-// objsize: 412850 - 4129ea: 960
-inline void prvhash42_64test ( const void * key, int len, unsigned seed, void * out )
-{
-  uint8_t hash[8] = {0};
-  prvhash42 ((const uint8_t *)key, len, hash, 8, (uint64_t)seed, NULL);
-  memcpy (out, hash, 8);
-}
-// objsize: 412bd0 - 412d80: 432
-inline void prvhash42_128test ( const void * key, int len, unsigned seed, void * out )
+// objsize: 411b40 - 411cc0: 384
+inline void prvhash64_64test ( const void * key, int len, unsigned seed, void * out )
 {
   uint8_t hash[16] = {0};
-  prvhash42 ((const uint8_t *)key, len, hash, 16, (uint64_t)seed, NULL);
+  prvhash64 ((const uint8_t *)key, len, hash, 8, (uint64_t)seed, NULL);
+  memcpy (out, hash, 8);
+}
+// objsize: 411870 - 411b3e: 718
+inline void prvhash64_128test ( const void * key, int len, unsigned seed, void * out )
+{
+  uint8_t hash[32] = {0};
+  prvhash64 ((const uint8_t *)key, len, hash, 16, (uint64_t)seed, NULL);
   memcpy (out, hash, 16);
 }
 
-#include "prvhash42s.h"
-// objsize: 4137e0 - 4141ee: 2574
-inline void prvhash42s_32test ( const void * key, int len, unsigned seed, void * out )
+// the more secure variants
+#include "prvhash/prvhash64s.h"
+#define PRVHASH64S_PAR 4
+// objsize: 411cc0 - 412710: 2640
+inline void prvhash64s_64test ( const void * key, int len, unsigned seed, void * out )
 {
-  PRVHASH42S_CTX ctx;
-  uint64_t SeedXOR[ 4 ] = { (uint64_t)seed, (uint64_t)seed, (uint64_t)seed, (uint64_t)seed };
-  prvhash42s_init( &ctx, (uint8_t* const)out, 4, SeedXOR, 0 );
-  prvhash42s_update( &ctx, (const uint8_t*)key, (size_t)len );
-  prvhash42s_final( &ctx );
+  // if seedless: prvhash64s_oneshot(key, len, out, 8);
+  PRVHASH64S_CTX ctx;
+  uint64_t SeedXOR[ PRVHASH64S_PAR ] = { (uint64_t)seed, (uint64_t)seed, (uint64_t)seed, (uint64_t)seed };
+  prvhash64s_init( &ctx, (uint8_t* const)out, 8, SeedXOR, 0 );
+  prvhash64s_update( &ctx, (const uint8_t*)key, (size_t)len );
+  prvhash64s_final( &ctx );
 }
-// objsize: 4141f0 - 414c3d: 2637
-inline void prvhash42s_64test ( const void * key, int len, unsigned seed, void * out )
+// objsize: 412710 - 4131ff: 2799
+inline void prvhash64s_128test ( const void * key, int len, unsigned seed, void * out )
 {
-  PRVHASH42S_CTX ctx;
-  uint64_t SeedXOR[ 4 ] = { (uint64_t)seed, (uint64_t)seed, (uint64_t)seed, (uint64_t)seed };
-  prvhash42s_init( &ctx, (uint8_t* const)out, 8, SeedXOR, 0 );
-  prvhash42s_update( &ctx, (const uint8_t*)key, (size_t)len );
-  prvhash42s_final( &ctx );
-}
-// objsize: 414230 - 4137dd: 2653
-inline void prvhash42s_128test ( const void * key, int len, unsigned seed, void * out )
-{
-  PRVHASH42S_CTX ctx;
-  uint64_t SeedXOR[ 4 ] = { (uint64_t)seed, (uint64_t)seed, (uint64_t)seed, (uint64_t)seed };
-  prvhash42s_init( &ctx, (uint8_t* const)out, 16, SeedXOR, 0 );
-  prvhash42s_update( &ctx, (const uint8_t*)key, (size_t)len );
-  prvhash42s_final( &ctx );
+  PRVHASH64S_CTX ctx;
+  uint64_t SeedXOR[ PRVHASH64S_PAR ] = { (uint64_t)seed, (uint64_t)seed, (uint64_t)seed, (uint64_t)seed };
+  prvhash64s_init( &ctx, (uint8_t* const)out, 16, SeedXOR, 0 );
+  prvhash64s_update( &ctx, (const uint8_t*)key, (size_t)len );
+  prvhash64s_final( &ctx );
 }
 #endif
 
@@ -1108,8 +1270,13 @@ inline void pengyhash_test ( const void * key, int len, uint32_t seed, void * ou
 
 // requires modern builtins, like __builtin_uaddll_overflow
 #if defined(__SSE4_2__) && defined(__x86_64__) && !defined(_MSC_VER)
-
 // objsize: 4bcb90 - 4bd18a
 #include "umash.hpp"
-
 #endif
+
+extern "C" {
+  // objsize: b200 - c2f5: 4341
+  void asconhashv12_64  ( const void * key, int len, uint32_t seed, void * out );
+  // objsize: c300 - dc5a: 6490
+  void asconhashv12_256 ( const void * key, int len, uint32_t seed, void * out );
+}

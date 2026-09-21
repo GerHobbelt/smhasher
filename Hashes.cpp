@@ -749,11 +749,148 @@ void clhash_init()
   void* data = get_random_key_for_clhash(UINT64_C(0xb3816f6a2c68e530), 711);
   memcpy(clhash_random, data, RANDOM_BYTES_NEEDED_FOR_CLHASH);
 }
-void clhash_seed_init(size_t seed)
+bool clhash_bad_seeds(std::vector<uint64_t> &seeds)
 {
+  seeds = std::vector<uint64_t> { UINT64_C(0) };
+  return true;
+}
+void clhash_seed_init(size_t &seed)
+{
+  // reject bad seeds
+  const std::vector<uint64_t> bad_seeds = { UINT64_C(0) };
+  while (std::find(bad_seeds.begin(), bad_seeds.end(), (uint64_t)seed) != bad_seeds.end())
+    seed++;
   memcpy(clhash_random, &seed, sizeof(seed));
 }
+
 #endif
+
+#include "halftime-hash.hpp"
+
+alignas(64) static uint64_t
+    halftime_hash_random[8 * ((halftime_hash::kEntropyBytesNeeded / 64) + 1)];
+
+void halftime_hash_style64_test(const void *key, int len, uint32_t seed, void *out) {
+  *(uint64_t *)out =
+      halftime_hash::HalftimeHashStyle64(halftime_hash_random, (char *)key, (size_t)len);
+}
+
+void halftime_hash_style128_test(const void *key, int len, uint32_t seed, void *out) {
+  *(uint64_t *)out =
+      halftime_hash::HalftimeHashStyle128(halftime_hash_random, (char *)key, (size_t)len);
+}
+
+void halftime_hash_style256_test(const void *key, int len, uint32_t seed, void *out) {
+  *(uint64_t *)out =
+      halftime_hash::HalftimeHashStyle256(halftime_hash_random, (char *)key, (size_t)len);
+}
+
+void halftime_hash_style512_test(const void *key, int len, uint32_t seed, void *out) {
+  *(uint64_t *)out =
+      halftime_hash::HalftimeHashStyle512(halftime_hash_random, (char *)key, (size_t)len);
+}
+
+void halftime_hash_init() {
+  size_t seed =
+#ifdef HAVE_BIT32
+    0xcc70c4c1ULL;
+#else
+    0xcc70c4c1798e4a6fUL; // 64bit only
+#endif
+  halftime_hash_seed_init(seed);
+}
+
+// romu random number generator for seeding the HalftimeHash entropy
+
+// TODO: align and increase size of outut random array
+
+#if defined(__AVX512F__)
+
+#include <immintrin.h>
+
+void romuQuad32simd(const __m512i seeds[4], uint64_t *output, size_t count) {
+  __m512i wState = seeds[0], xState = seeds[1], yState = seeds[2],
+       zState = seeds[3];
+  const auto m = _mm512_set1_epi32(3323815723u);
+  for (size_t i = 0; i < count; i += 8) {
+    __m512i wp = wState, xp = xState, yp = yState, zp = zState;
+    wState = _mm512_mullo_epi32(m, zp);
+    xState = _mm512_add_epi32(zp, _mm512_rol_epi32(wp, 26));
+    yState = _mm512_sub_epi32(yp, xp);
+    zState = _mm512_add_epi32(yp, wp);
+    zState = _mm512_rol_epi32(zState, 9);
+    _mm512_store_epi64(&output[i], xp);
+  }
+}
+
+void halftime_hash_seed_init(size_t &seed) {
+  __m512i seeds[4] = {
+      {
+          (long long)seed ^ (long long)0x9a9b4c4e44dd48d1,
+          (long long)seed ^ (long long)0xf8b0cd76a61945b1,
+          (long long)seed ^ (long long)0x86268b0ae8494ce2,
+          (long long)seed ^ (long long)0x7d31e5469df4484d,
+          (long long)seed ^ (long long)0x62cb7b3e5e334aab,
+          (long long)seed ^ (long long)0xc4c4065529834f39,
+          (long long)seed ^ (long long)0xcc7972121c52411f,
+          (long long)seed ^ (long long)0x7e08efb9ea5a434f,
+      },
+      {
+          (long long)seed ^ (long long)0xccbc1ec6f244430c,
+          (long long)seed ^ (long long)0xecf76d38f32b4296,
+          (long long)seed ^ (long long)0xdf061d7c86664fa2,
+          (long long)seed ^ (long long)0x08e0da9580d44252,
+          (long long)seed ^ (long long)0xd074f3685aeb4f71,
+          (long long)seed ^ (long long)0x3f83eb99126d4a74,
+          (long long)seed ^ (long long)0xb5d24f61b4f540fa,
+          (long long)seed ^ (long long)0x33f248aa4b3c4aaf,
+      },
+      {
+          (long long)seed ^ (long long)0xd292ecaddb1c4dc1,
+          (long long)seed ^ (long long)0x94489307a0d041ed,
+          (long long)seed ^ (long long)0x25a4752be4bd4b84,
+          (long long)seed ^ (long long)0xa1d4010ab16c4b96,
+          (long long)seed ^ (long long)0x87175e8421534efa,
+          (long long)seed ^ (long long)0x0df85252bb894d2b,
+          (long long)seed ^ (long long)0x1d43b52179374cb4,
+          (long long)seed ^ (long long)0x5586b8bf3d4f4ca7,
+      },
+      {
+          (long long)seed ^ (long long)0x7275e2473e0f4618,
+          (long long)seed ^ (long long)0x2340093a933a4191,
+          (long long)seed ^ (long long)0x849ec473349843ac,
+          (long long)seed ^ (long long)0x9b8873c068ac4e41,
+          (long long)seed ^ (long long)0x3b8a6084e4ec44a7,
+          (long long)seed ^ (long long)0x341dadfa6e524396,
+          (long long)seed ^ (long long)0xb735256ca12649e9,
+          (long long)seed ^ (long long)0x1bd21c39a0694d4f,
+      },
+  };
+  romuQuad32simd(seeds, halftime_hash_random,
+                 sizeof(halftime_hash_random) / sizeof(halftime_hash_random[0]));
+}
+
+#else
+
+void halftime_hash_seed_init(size_t &seed)
+{
+#define ROTL(d,lrot) ((d<<(lrot)) | (d>>(8*sizeof(d)-(lrot))))
+  uint64_t wState = seed, xState= 0xecfc1357d65941ae, yState=0xbe1927f97b8c43f1,
+    zState=0xf4d4beb14ae042bb;
+  for (unsigned i = 0; i < sizeof(halftime_hash_random) / sizeof(halftime_hash_random[0]);
+       ++i) {
+    const uint64_t wp = wState, xp = xState, yp = yState, zp = zState;
+    wState = 15241094284759029579u * zp;  // a-mult
+    xState = zp + ROTL(wp, 52);           // b-rotl, c-add
+    yState = yp - xp;                     // d-sub
+    zState = yp + wp;                     // e-add
+    zState = ROTL(zState, 19);            // f-rotl
+    halftime_hash_random[i] = xp;
+  }
+#undef ROTL
+}
+#endif
+
 
 // Multiply shift from
 // Thorup "High Speed Hashing for Integers and Strings" 2018
@@ -789,27 +926,30 @@ void clhash_seed_init(size_t seed)
       *(uint64_t*)out = h;
    }
    static __uint128_t rand128() {
-      // We don't know how many bits we get from rand(),
-      // but it is at least 16, so we concattenate a couple.
-      __uint128_t r = rand();
-      for (int i = 0; i < 7; i++) {
-         r <<= 16;
-         r ^= rand();
-      }
-      return r;
+     return rand_u128();
    }
    void multiply_shift_seed_init_slow(size_t seed) {
       srand(seed);
       for (int i = 0; i < MULTIPLY_SHIFT_RANDOM_WORDS; i++) {
          multiply_shift_random[i] = rand128();
+         if (!multiply_shift_random[i])
+           multiply_shift_random[i]++;
          // We don't need an odd multiply, when we add the seed in the beginning
          //multiply_shift_random[i] |= 1;
       }
    }
-   void multiply_shift_seed_init(size_t seed) {
-      // The seeds we get are not random values, but just something like 1, 2 or 3.
-      // So we xor it with a random number to get something slightly more reasonable.
-      multiply_shift_random[0] = (__uint128_t)seed ^ multiply_shift_r;
+   bool multiply_shift_bad_seeds(std::vector<uint64_t> &seeds) {
+     // all seeds & 0xfffffff0
+     seeds = std::vector<uint64_t> { UINT64_C(0xfffffff0), UINT64_C(0x1fffffff0) };
+     return true;
+   }
+   void multiply_shift_seed_init(size_t &seed) {
+     // The seeds we get are not random values, but just something like 1, 2 or 3.
+     // So we xor it with a random number to get something slightly more reasonable.
+     // But skip really bad seed patterns: 0x...fffffff0
+     if ((seed & 0xfffffff0ULL) == 0xfffffff0ULL)
+       seed++;
+     multiply_shift_random[0] = (__uint128_t)seed ^ multiply_shift_r;
    }
    void multiply_shift_init() {
       multiply_shift_seed_init_slow(0);
@@ -914,7 +1054,7 @@ void clhash_seed_init(size_t seed)
    void poly_4_mersenne(const void * key, int len_bytes, uint32_t seed, void * out) {
       *(uint32_t*)out = (uint32_t)poly_k_mersenne(key, len_bytes, seed, 4);
    }
-   void poly_mersenne_seed_init(size_t seed) {
+   void poly_mersenne_seed_init(size_t &seed) {
       srand(seed);
       // a has be at most 2^60, or the lazy modular reduction won't work.
       poly_mersenne_a = rand128() % (MERSENNE_61/2);
@@ -926,7 +1066,8 @@ void clhash_seed_init(size_t seed)
       }
    }
    void poly_mersenne_init() {
-      poly_mersenne_seed_init(0);
+     size_t seed = 0;
+     poly_mersenne_seed_init(seed);
    }
 
 #endif
@@ -938,9 +1079,9 @@ void clhash_seed_init(size_t seed)
 static uint8_t tsip_key[16];
 void tsip_init()
 {
-  uint64_t r = random();
+  uint64_t r = rand_u64();
   memcpy(&tsip_key[0], &r, 8);
-  r = random();
+  r = rand_u64();
   memcpy(&tsip_key[8], &r, 8);
 }
 void tsip_test(const void *bytes, int len, uint32_t seed, void *out)

@@ -45,8 +45,22 @@ check_type_size(__int64 __INT64)
 check_type_size(int64_t INT64_T)
 check_type_size(__uint128_t __UINT128_T)
 
-# TODO: rather parse `$CC -march=native -dM -E - <<< ''` [gh #10]
-if(NOT (CMAKE_CROSSCOMPILING))
+message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+if ((CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+    OR (CMAKE_SYSTEM_PROCESSOR STREQUAL "i386")
+    OR (CMAKE_SYSTEM_PROCESSOR STREQUAL "i586")
+    OR (CMAKE_SYSTEM_PROCESSOR STREQUAL "i686")
+    OR (CMAKE_SYSTEM_PROCESSOR STREQUAL "amd64") # freebsd
+    OR (CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64") # windows
+    OR (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86"))
+  set(PROCESSOR_FAMILY "Intel")
+elseif ((CMAKE_SYSTEM_PROCESSOR STREQUAL "arm")
+    OR (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64"))
+  set(PROCESSOR_FAMILY "Arm")
+endif()
+
+# TODO: rather parse `$CC -march=native -dM -E - <<< ''` [GH #10]
+if(NOT CMAKE_CROSSCOMPILING)
   if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     exec_program(
       cat ARGS
@@ -68,8 +82,10 @@ if(NOT (CMAKE_CROSSCOMPILING))
     string(COMPARE EQUAL "sha_ni" "${SHA_THERE}" SHA_TRUE)
     string(REGEX REPLACE "^.* (avx2) .*$" "\\1" AVX2_THERE ${CPUINFO})
     string(COMPARE EQUAL "avx2" "${AVX2_THERE}" AVX2_TRUE)
-    string(REGEX REPLACE "^.* (avx512) .*$" "\\1" AVX512_THERE ${CPUINFO})
-    string(COMPARE EQUAL "avx512" "${AVX512_THERE}" AVX512_TRUE)
+    string(REGEX REPLACE "^.* (avx512f) .*$" "\\1" AVX512F_THERE ${CPUINFO})
+    string(COMPARE EQUAL "avx512f" "${AVX512F_THERE}" AVX512F_TRUE)
+    string(REGEX REPLACE "^.* (avx512vl) .*$" "\\1" AVX512VL_THERE ${CPUINFO})
+    string(COMPARE EQUAL "avx512vl" "${AVX512VL_THERE}" AVX512VL_TRUE)
   elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     exec_program("/usr/sbin/sysctl -n machdep.cpu.features" OUTPUT_VARIABLE
                  CPUINFO)
@@ -155,9 +171,9 @@ if(NOT (CMAKE_CROSSCOMPILING))
       endif()
     endif()
   endif()
-endif()
+endif(NOT CMAKE_CROSSCOMPILING)
 
-if (NOT (CMAKE_CROSSCOMPILING))
+if(PROCESSOR_FAMILY STREQUAL "Intel")
  if(CMAKE_COMPILER_IS_GNUCC)
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(CMAKE_ASM_FLAGS "${CFLAGS} -m64")
@@ -211,10 +227,12 @@ if(CMAKE_COMPILER_IS_GNUCC
   # "${CMAKE_CXX_FLAGS} -maes") ENDIF (AES_TRUE) IF (SHA_TRUE) set(CMAKE_C_FLAGS
   # "${CMAKE_C_FLAGS} -msha") set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msha")
   # ENDIF (SHA_TRUE)
-  if(NOT (CMAKE_CROSSCOMPILING))
+  if(NOT CMAKE_CROSSCOMPILING)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
   endif()
+  set_source_files_properties(blake3/blake3.c
+                              PROPERTIES COMPILE_FLAGS "-std=c99")
 elseif(MSVC)
   # using Visual Studio C++, already the default with VS17
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O3 /arch:SSE2")
@@ -283,16 +301,33 @@ else(AVX2_TRUE)
       CACHE BOOL "AVX2 not available")
   message(STATUS "AVX2 not available")
 endif(AVX2_TRUE)
-if(AVX512_TRUE)
-  set(AVX512_FOUND
+if(AVX512F_TRUE)
+  set(AVX512F_FOUND
       true
-      CACHE BOOL "AVX512 available")
-else(AVX512_TRUE)
-  set(AVX512_FOUND
+      CACHE BOOL "AVX512F available")
+else(AVX512F_TRUE)
+  set(AVX512F_FOUND
       false
-      CACHE BOOL "AVX512 not available")
-  message(STATUS "AVX512 not available")
-endif(AVX512_TRUE)
+      CACHE BOOL "AVX512F not available")
+  message(STATUS "AVX512F not available")
+endif(AVX512F_TRUE)
+if(AVX512VL_TRUE)
+  set(AVX512VL_FOUND
+      true
+      CACHE BOOL "AVX512VL available")
+else(AVX512VL_TRUE)
+  set(AVX512VL_FOUND
+      false
+      CACHE BOOL "AVX512VL not available")
+  message(STATUS "AVX512VL not available")
+endif(AVX512VL_TRUE)
+
+if(CMAKE_CROSSCOMPILING)
+  set(SSE2_FOUND false)
+  set(SSE4_2_FOUND false)
+  set(AES_FOUND false)
+  set(SHA_FOUND false)
+endif(CMAKE_CROSSCOMPILING)
 
 if(HAVE___UINT128_T)
   add_definitions(-DHAVE_INT128)
@@ -364,15 +399,17 @@ int main(int argc, char **argv)
 else()
   add_definitions(-DHAVE_ALIGNED_ACCESS_REQUIRED)
   message(STATUS "Assuming aligned access is required, as on arm with -maligned-access or sparc")
-endif()
+endif(NOT CMAKE_CROSSCOMPILING)
 
 if(AES_FOUND AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
   set(SSE4_OBJ ${FALKHASH_OBJ})
 endif()
 
+find_package( Threads )
+#set(CMAKE_THREAD_LIBS_INIT "-lpthread")
+
 if(SSE4_2_FOUND)
   add_definitions(-DHAVE_SSE42)
-  set(CMAKE_THREAD_LIBS_INIT "-lpthread")
   set(SSE2_SRC hasshe2.c)
   set(SSE4_SRC crc32_hw.c)
   # 64bit only:
@@ -395,7 +432,7 @@ else()
   set(SIPHASH_SRC siphash.c)
 endif(SSE4_2_FOUND)
 
-if(AES_FOUND)
+if(AES_FOUND AND (PROCESSOR_FAMILY STREQUAL "Intel"))
   add_definitions(-DHAVE_AESNI)
   set(T1HA_SRC
       t1ha/t1ha0.c t1ha/t1ha1.c t1ha/t1ha2.c t1ha/t1ha0_ia32aes_noavx.c
@@ -407,7 +444,7 @@ if(AES_FOUND)
     set_source_files_properties(t1ha/t1ha0_ia32aes_avx.c
                                 PROPERTIES COMPILE_FLAGS "/arch:avx")
     set_source_files_properties(t1ha/t1ha0_ia32aes_avx2.c
-                                PROPERTIES COMPILE_FLAGS "/arch:avx2")
+      PROPERTIES COMPILE_FLAGS "/arch:avx2")
   else()
     set_source_files_properties(
       t1ha/t1ha0_ia32aes_noavx.c PROPERTIES COMPILE_FLAGS
@@ -419,15 +456,17 @@ if(AES_FOUND)
   endif()
 else()
   set(T1HA_SRC t1ha/t1ha0.c t1ha/t1ha1.c t1ha/t1ha2.c)
-endif()
+endif(AES_FOUND AND (PROCESSOR_FAMILY STREQUAL "Intel"))
+
 if(CLMUL_FOUND)
   add_definitions(-DHAVE_CLMUL)
-endif()
+endif(CLMUL_FOUND)
 if(SHA_FOUND)
   add_definitions(-DHAVE_SHANI)
   # todo: arm, power
   set(SHA_SRC SHA-Intrinsics/sha1-x86.c SHA-Intrinsics/sha256-x86.c)
-endif()
+endif(SHA_FOUND)
+
 
 if(NOT MSVC)
   set(NOTMSVC_SRC seahash.c)
@@ -436,17 +475,22 @@ if(NOT MSVC)
   set_source_files_properties(
     SpeedTest.cpp PROPERTIES COMPILE_FLAGS "-std=c++0x -I${CMAKE_SOURCE_DIR}")
   set_source_files_properties(main.cpp PROPERTIES COMPILE_FLAGS "-std=c++0x")
+  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set_source_files_properties(Hashes.cpp PROPERTIES COMPILE_FLAGS "-std=c++1y -I${CMAKE_SOURCE_DIR} -DWYHASH32 -flax-vector-conversions")
+  else()
+    set_source_files_properties(Hashes.cpp PROPERTIES COMPILE_FLAGS "-std=c++1y -I${CMAKE_SOURCE_DIR} -flax-vector-conversions")
+  endif()
   set_source_files_properties(bittest.cpp PROPERTIES COMPILE_FLAGS "-std=c++0x")
   # https://github.com/dgryski/trifles/tree/master/tsip
   set(TSIP_SRC tsip.c)
 else()
   set_source_files_properties(SpeedTest.cpp PROPERTIES COMPILE_FLAGS
                                                        "-I${CMAKE_SOURCE_DIR}")
-endif()
-set_source_files_properties(Hashes.cpp PROPERTIES COMPILE_FLAGS
-                                                  "-I${CMAKE_SOURCE_DIR}")
-if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-  set_source_files_properties(Hashes.cpp PROPERTIES COMPILE_FLAGS "-DWYHASH32")
+  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set_source_files_properties(Hashes.cpp PROPERTIES COMPILE_FLAGS "-I${CMAKE_SOURCE_DIR} -DWYHASH32 -flax-vector-conversions")
+  else()
+    set_source_files_properties(Hashes.cpp PROPERTIES COMPILE_FLAGS "-I${CMAKE_SOURCE_DIR} -flax-vector-conversions")
+  endif()
 endif()
 
 find_library(HIGHWAY highwayhash)
@@ -459,37 +503,55 @@ if(HIGHWAY
   endif()
 endif()
 
-if(SSE4_2_FOUND AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
-  # Rust staticlib (PR #9) WIP
-  find_library(BLAKE3 blake3)
-  # if (BLAKE3) set(BLAKE3_LIB ${BLAKE3}) set(CMAKE_CXX_FLAGS
-  # "${CMAKE_CXX_FLAGS} -DHAVE_BLAKE3") endif()
+# rust staticlib: https://github.com/tkaitchuck/aHash/ smhasher/ahash-cbindings/install.sh
+find_library(AHASH_C ahash_c
+             HINTS /usr/local/lib)
+if(AHASH_C
+   AND (NOT(CMAKE_CROSSCOMPILING)))
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(AHASH_C_LIB ahash_c)
+    add_definitions(-DHAVE_AHASH_C)
+  endif()
 endif()
+
+if(SSE4_2_FOUND AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
+  find_library(BLAKE3 blake3)
+  # if (BLAKE3)
+  #   set(BLAKE3_LIB ${BLAKE3})
+  #   add_definitions(-DHAVE_BLAKE3)
+  # endif()
+endif()
+
 set(BLAKE3_SRC blake3/blake3.c blake3/blake3_dispatch.c
                blake3/blake3_portable.c)
 if(SSE4_2_FOUND)
   set(BLAKE3_SRC ${BLAKE3_SRC} blake3/blake3_sse41.c)
   set_source_files_properties(blake3/blake3_sse41.c
-                              PROPERTIES COMPILE_FLAGS "-DBLAKE3_USE_SSE41")
+                              PROPERTIES COMPILE_FLAGS "-DBLAKE3_USE_SSE41 -msse4.2")
 endif()
 if(AVX2_FOUND)
   set(BLAKE3_SRC ${BLAKE3_SRC} blake3/blake3_avx2.c)
   set_source_files_properties(
     blake3/blake3_avx2.c PROPERTIES COMPILE_FLAGS
-                                    "-DBLAKE3_USE_SSE41 -DBLAKE3_USE_AVX2")
+                                    "-DBLAKE3_USE_SSE41 -DBLAKE3_USE_AVX2 -mavx2")
 endif()
-if(AVX512_FOUND)
+if(AVX512F_FOUND AND AVX512VL_FOUND)
   set(BLAKE3_SRC ${BLAKE3_SRC} blake3/blake3_avx512.c)
   set_source_files_properties(
     blake3/blake3_avx512.c
     PROPERTIES COMPILE_FLAGS
-               "-DBLAKE3_USE_SSE41 -DBLAKE3_USE_AVX2 -DBLAKE3_USE_AVX512")
+               "-DBLAKE3_USE_SSE41 -DBLAKE3_USE_AVX2 -DBLAKE3_USE_AVX512 -mavx512f -mavx512vl")
 endif()
 if(SSE4_2_FOUND
    AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
    AND (NOT MSVC))
   set(UMASH_SRC umash.c umash.hpp)
 endif()
+
+set(ASCON_SRC asconhashv12/hash.c)
+set_source_files_properties(
+    ${ASCON_SRC}
+    PROPERTIES COMPILE_FLAGS "-Iasconhashv12 -DASCON_INLINE_MODE")
 
 if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug"))
   # PMP breaks Debug build
@@ -502,6 +564,10 @@ if(CMAKE_CROSSCOMPILING)
   unset(PMPML_SRC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCROSSCOMPILING")
 endif()
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+  unset(PMPML_SRC)
+endif()
+
 
 # IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/BeagleHashes_test.c") set(BEAGLE_SRC
 # BeagleHashes_test.c) set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}
@@ -589,6 +655,8 @@ add_library(
   rijndael-alg-fst.c
   ${BLAKE3_SRC}
   pengyhash.c
+  # wyhash_condom.c
+  ${ASCON_SRC}
   ${UMASH_SRC})
 
 add_executable(SMHasher main.cpp)
@@ -604,7 +672,8 @@ else()
   message(STATUS "IPO / LTO not supported: <${error}>")
 endif()
 
-target_link_libraries(SMHasher SMHasherSupport ${HIGHWAY_LIB} ${BLAKE3_LIB}
+target_link_libraries(SMHasher SMHasherSupport
+                      ${HIGHWAY_LIB} ${BLAKE3_LIB} ${AHASH_C_LIB}
                       ${CMAKE_THREAD_LIBS_INIT})
 
 # add_executable( bittest bittest.cpp )

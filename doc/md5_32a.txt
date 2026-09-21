@@ -10,48 +10,48 @@ Running AppendedZeroesTest .......... PASS
 [[[ Speed Tests ]]]
 
 Bulk speed test - 262144-byte keys
-Alignment  7 -  0.124 bytes/cycle -  353.82 MiB/sec @ 3 ghz
-Alignment  6 -  0.124 bytes/cycle -  353.76 MiB/sec @ 3 ghz
-Alignment  5 -  0.124 bytes/cycle -  353.89 MiB/sec @ 3 ghz
-Alignment  4 -  0.124 bytes/cycle -  353.88 MiB/sec @ 3 ghz
+Alignment  7 -  0.124 bytes/cycle -  353.61 MiB/sec @ 3 ghz
+Alignment  6 -  0.124 bytes/cycle -  353.62 MiB/sec @ 3 ghz
+Alignment  5 -  0.124 bytes/cycle -  353.61 MiB/sec @ 3 ghz
+Alignment  4 -  0.124 bytes/cycle -  353.74 MiB/sec @ 3 ghz
 Alignment  3 -  0.124 bytes/cycle -  353.62 MiB/sec @ 3 ghz
-Alignment  2 -  0.124 bytes/cycle -  353.68 MiB/sec @ 3 ghz
-Alignment  1 -  0.124 bytes/cycle -  353.68 MiB/sec @ 3 ghz
-Alignment  0 -  0.124 bytes/cycle -  353.62 MiB/sec @ 3 ghz
-Average      -  0.124 bytes/cycle -  353.74 MiB/sec @ 3 ghz
+Alignment  2 -  0.124 bytes/cycle -  353.63 MiB/sec @ 3 ghz
+Alignment  1 -  0.124 bytes/cycle -  353.63 MiB/sec @ 3 ghz
+Alignment  0 -  0.124 bytes/cycle -  353.64 MiB/sec @ 3 ghz
+Average      -  0.124 bytes/cycle -  353.64 MiB/sec @ 3 ghz
 
-Small key speed test -    1-byte keys -   615.00 cycles/hash
-Small key speed test -    2-byte keys -   615.08 cycles/hash
-Small key speed test -    3-byte keys -   615.84 cycles/hash
-Small key speed test -    4-byte keys -   614.70 cycles/hash
-Small key speed test -    5-byte keys -   614.86 cycles/hash
-Small key speed test -    6-byte keys -   614.99 cycles/hash
-Small key speed test -    7-byte keys -   614.98 cycles/hash
-Small key speed test -    8-byte keys -   635.00 cycles/hash
-Small key speed test -    9-byte keys -   635.00 cycles/hash
+Small key speed test -    1-byte keys -   613.00 cycles/hash
+Small key speed test -    2-byte keys -   615.00 cycles/hash
+Small key speed test -    3-byte keys -   615.00 cycles/hash
+Small key speed test -    4-byte keys -   613.00 cycles/hash
+Small key speed test -    5-byte keys -   613.00 cycles/hash
+Small key speed test -    6-byte keys -   613.00 cycles/hash
+Small key speed test -    7-byte keys -   613.00 cycles/hash
+Small key speed test -    8-byte keys -   634.91 cycles/hash
+Small key speed test -    9-byte keys -   634.92 cycles/hash
 Small key speed test -   10-byte keys -   635.00 cycles/hash
-Small key speed test -   11-byte keys -   635.00 cycles/hash
-Small key speed test -   12-byte keys -   635.00 cycles/hash
-Small key speed test -   13-byte keys -   635.00 cycles/hash
+Small key speed test -   11-byte keys -   634.99 cycles/hash
+Small key speed test -   12-byte keys -   634.85 cycles/hash
+Small key speed test -   13-byte keys -   634.97 cycles/hash
 Small key speed test -   14-byte keys -   635.00 cycles/hash
-Small key speed test -   15-byte keys -   635.00 cycles/hash
-Small key speed test -   16-byte keys -   635.00 cycles/hash
-Small key speed test -   17-byte keys -   635.00 cycles/hash
-Small key speed test -   18-byte keys -   635.00 cycles/hash
-Small key speed test -   19-byte keys -   635.00 cycles/hash
-Small key speed test -   20-byte keys -   635.00 cycles/hash
-Small key speed test -   21-byte keys -   635.00 cycles/hash
-Small key speed test -   22-byte keys -   635.00 cycles/hash
-Small key speed test -   23-byte keys -   635.00 cycles/hash
-Small key speed test -   24-byte keys -   635.00 cycles/hash
-Small key speed test -   25-byte keys -   635.00 cycles/hash
-Small key speed test -   26-byte keys -   635.00 cycles/hash
-Small key speed test -   27-byte keys -   635.00 cycles/hash
-Small key speed test -   28-byte keys -   635.00 cycles/hash
-Small key speed test -   29-byte keys -   635.00 cycles/hash
-Small key speed test -   30-byte keys -   635.00 cycles/hash
-Small key speed test -   31-byte keys -   635.00 cycles/hash
-Average                                    630.498 cycles/hash
+Small key speed test -   15-byte keys -   634.99 cycles/hash
+Small key speed test -   16-byte keys -   634.86 cycles/hash
+Small key speed test -   17-byte keys -   634.49 cycles/hash
+Small key speed test -   18-byte keys -   634.49 cycles/hash
+Small key speed test -   19-byte keys -   634.49 cycles/hash
+Small key speed test -   20-byte keys -   634.40 cycles/hash
+Small key speed test -   21-byte keys -   634.49 cycles/hash
+Small key speed test -   22-byte keys -   634.49 cycles/hash
+Small key speed test -   23-byte keys -   634.49 cycles/hash
+Small key speed test -   24-byte keys -   634.42 cycles/hash
+Small key speed test -   25-byte keys -   634.28 cycles/hash
+Small key speed test -   26-byte keys -   634.35 cycles/hash
+Small key speed test -   27-byte keys -   634.34 cycles/hash
+Small key speed test -   28-byte keys -   634.26 cycles/hash
+Small key speed test -   29-byte keys -   634.31 cycles/hash
+Small key speed test -   30-byte keys -   634.30 cycles/hash
+Small key speed test -   31-byte keys -   634.36 cycles/hash
+Average                                    629.854 cycles/hash
 
 [[[ 'Hashmap' Speed Tests ]]]
 
@@ -1123,5 +1123,19 @@ The PRNG test is designed for hashes >= 64-bit
 
 ...........
 Max bias 0.025160 - ( 27 :  14, 30)
+
+
+[[[ BadSeeds Tests ]]]
+
+Testing 1 internal secrets:
+0x265cab52 Broken seed 0x265cab52 => 0 with key[16] of all 0 bytes confirmed => hash 0
+Testing the first 0xffffffff seeds ...
+4 threads starting...
+at 0 at 40000000 at c0000000 at 80000000 1ffffff 81ffffff 41ffffff 3ffffff 43ffffff 83ffffff 45ffffff 5ffffff 85ffffff 47ffffff 7ffffff 87ffffff 9ffffff 49ffffff 89ffffff bffffff 4bffffff 8bffffff dffffff 4dffffff 8dffffff fffffff 4fffffff 8fffffff 11ffffff 51ffffff 91ffffff 13ffffff 53ffffff 93ffffff 15ffffff 55ffffff 95ffffff 17ffffff 57ffffff 97ffffff 19ffffff 59ffffff 99ffffff 1bffffff 9bffffff 5bffffff 1dffffff 5dffffff 9dffffff 1fffffff 9fffffff 5fffffff 21ffffff a1ffffff 61ffffff 23ffffff a3ffffff 63ffffff 25ffffff a5ffffff Broken seed 0x265cab52 => 0 with key[16] of all 0 bytes
+65ffffff 27ffffff a7ffffff 67ffffff 29ffffff a9ffffff 69ffffff 2bffffff abffffff 6bffffff 2dffffff adffffff 6dffffff 2fffffff afffffff 6fffffff 31ffffff b1ffffff 71ffffff 33ffffff b3ffffff 73ffffff 35ffffff b5ffffff 75ffffff 37ffffff b7ffffff 77ffffff 39ffffff b9ffffff 79ffffff 3bffffff bbffffff 7bffffff 3dffffff bdffffff 7dffffff 3fffffff bfffffff 7fffffff All 4 threads ended
+FAIL
+Ensure to add these bad seeds to the list of secrets in main.cpp
+
+*********FAIL*********
 
 
