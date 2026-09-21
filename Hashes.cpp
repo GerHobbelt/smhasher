@@ -94,6 +94,59 @@ MurmurOAAT_test(const void *key, int len, uint32_t seed, void *out)
 //----------------------------------------------------------------------------
 
 void
+fibonacci(const void *key, int len, uint32_t seed, void *out)
+{
+  size_t h = (size_t)seed;
+  size_t *dw = (size_t *)key; //word stepper
+  const size_t *endw = &((const size_t*)key)[len/sizeof(size_t)];
+  for (; dw < endw; dw++) {
+    h += *dw * BIG_CONSTANT(11400714819323198485);
+  }
+  if (len & (sizeof(size_t)-1)) {
+    uint8_t *dc = (uint8_t*)dw; //byte stepper
+    const uint8_t *endc = &((const uint8_t*)key)[len];
+    for (; dc < endc; dc++) {
+      h += *dc * BIG_CONSTANT(11400714819323198485);
+    }
+  }
+  *(size_t *) out = h;
+}
+
+void
+FNV2(const void *key, int len, uint32_t seed, void *out)
+{
+  size_t h = (size_t)seed;
+  size_t *dw = (size_t *)key; //word stepper
+  const size_t *endw = &((const size_t*)key)[len/sizeof(size_t)];
+#ifdef HAVE_BIT32
+  h ^= BIG_CONSTANT(2166136261);
+#else
+  h ^= BIG_CONSTANT(0xcbf29ce484222325);
+#endif
+  for (; dw < endw; dw++) {
+    h ^= *dw;
+#ifdef HAVE_BIT32
+    h *= BIG_CONSTANT(16777619);
+#else
+    h *= BIG_CONSTANT(0x100000001b3);
+#endif
+  }
+  if (len & (sizeof(size_t)-1)) {
+    uint8_t *dc = (uint8_t*)dw; //byte stepper
+    const uint8_t *endc = &((const uint8_t*)key)[len];
+    for (; dc < endc; dc++) {
+      h ^= *dc;
+#ifdef HAVE_BIT32
+      h *= BIG_CONSTANT(16777619);
+#else
+      h *= BIG_CONSTANT(0x100000001b3);
+#endif
+    }
+  }
+  *(size_t *) out = h;
+}
+
+void
 FNV32a(const void *key, int len, uint32_t seed, void *out)
 {
   unsigned int	  h = seed;
@@ -189,6 +242,57 @@ void
 x17_test(const void *key, int len, uint32_t seed, void *out)
 {
   *(uint32_t *) out = x17(key, len, seed);
+}
+
+//64bit, ZFS
+//note the original fletcher2 assumes 128bit aligned data, and
+//can hereby advance the inner loop by 2 64bit words.
+//both fletcher's return 4 words, 256 bit. Both are nevertheless very weak hashes.
+void
+fletcher2(const void *key, int len, uint32_t seed, void *out)
+{
+  uint64_t *dataw = (uint64_t *)key;
+  const uint64_t *endw = &((const uint64_t*)key)[len/8];
+  uint64_t A = seed, B = 0;
+  for (; dataw < endw; dataw++) {
+    A += *dataw;
+    B += A;
+  }
+  if (len & 7) {
+    uint8_t *datac = (uint8_t*)dataw; //byte stepper
+    const uint8_t *endc = &((const uint8_t*)key)[len];
+    for (; datac < endc; datac++) {
+      A += *datac;
+      B += A;
+    }
+  }
+  *(uint64_t *) out = B;
+}
+
+//64bit, ZFS
+void
+fletcher4(const void *key, int len, uint32_t seed, void *out)
+{
+  uint32_t *dataw = (uint32_t *)key;
+  const uint32_t *endw = &((const uint32_t*)key)[len/4];
+  uint64_t A = seed, B = 0, C = 0, D = 0;
+  for (; dataw < endw; dataw++) {
+    A += *dataw;
+    B += A;
+    C += B;
+    D += C;
+  }
+  if (len & 3) {
+    uint8_t *datac = (uint8_t*)dataw; //byte stepper
+    const uint8_t *endc = &((const uint8_t*)key)[len];
+    for (; datac < endc; datac++) {
+      A += *datac;
+      B += A;
+      C += B;
+      D += C;
+    }
+  }
+  *(uint64_t *) out = D;
 }
 
 //-----------------------------------------------------------------------------
@@ -509,5 +613,3 @@ falkhash_test_cxx(const void *input, int len, uint32_t seed, void *out)
   *(uint64_t *) out = hash[0];
 }
 #endif
-
-

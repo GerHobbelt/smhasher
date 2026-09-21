@@ -6,12 +6,11 @@
 #include "MurmurHash2.h"
 #include "MurmurHash3.h"
 
-#if defined(__x86_64__)
+#define XXH_INLINE_ALL
 #include "xxhash.h"
 #include "metrohash.h"
 #include "cmetrohash.h"
 #include "opt_cmetrohash.h"
-#endif
 
 #include "fasthash.h"
 #include "jody_hash32.h"
@@ -61,9 +60,13 @@ void CityHashCrc64_test    ( const void * key, int len, uint32_t seed, void * ou
 void CityHashCrc128_test   ( const void * key, int len, uint32_t seed, void * out );
 void falkhash_test_cxx     ( const void * key, int len, uint32_t seed, void * out );
 #endif
+void fibonacci             ( const void * key, int len, uint32_t seed, void * out );
 void FNV32a                ( const void * key, int len, uint32_t seed, void * out );
 void FNV32a_YoshimitsuTRIAD( const void * key, int len, uint32_t seed, void * out );
 void FNV64a                ( const void * key, int len, uint32_t seed, void * out );
+void FNV2                  ( const void * key, int len, uint32_t seed, void * out );
+void fletcher2             ( const void * key, int len, uint32_t seed, void * out );
+void fletcher4             ( const void * key, int len, uint32_t seed, void * out );
 void Bernstein             ( const void * key, int len, uint32_t seed, void * out );
 void sdbm                  ( const void * key, int len, uint32_t seed, void * out );
 void x17_test              ( const void * key, int len, uint32_t seed, void * out );
@@ -77,14 +80,26 @@ void MurmurOAAT_test       ( const void * key, int len, uint32_t seed, void * ou
 void Crap8_test            ( const void * key, int len, uint32_t seed, void * out );
 
 void CityHash32_test       ( const void * key, int len, uint32_t seed, void * out );
+void CityHash64noSeed_test ( const void * key, int len, uint32_t seed, void * out );
 void CityHash64_test       ( const void * key, int len, uint32_t seed, void * out );
+inline void CityHash64_low_test ( const void * key, int len, uint32_t seed, void * out ) {
+  uint64_t result;
+  CityHash64_test(key, len, seed, &result);
+  *(uint32_t*)out = (uint32_t)result;
+}
+inline void CityHash64_high_test ( const void * key, int len, uint32_t seed, void * out ) {
+  uint64_t result;
+  CityHash64_test(key, len, seed, &result);
+  *(uint32_t*)out = (uint32_t)(result>>32);
+}
 void CityHash128_test      ( const void * key, int len, uint32_t seed, void * out );
 void FarmHash32_test       ( const void * key, int len, uint32_t seed, void * out );
 void FarmHash64_test       ( const void * key, int len, uint32_t seed, void * out );
+void FarmHash64noSeed_test ( const void * key, int len, uint32_t seed, void * out );
 void FarmHash128_test      ( const void * key, int len, uint32_t seed, void * out );
-void farmhash32_c_test       ( const void * key, int len, uint32_t seed, void * out );
-void farmhash64_c_test       ( const void * key, int len, uint32_t seed, void * out );
-void farmhash128_c_test      ( const void * key, int len, uint32_t seed, void * out );
+void farmhash32_c_test     ( const void * key, int len, uint32_t seed, void * out );
+void farmhash64_c_test     ( const void * key, int len, uint32_t seed, void * out );
+void farmhash128_c_test    ( const void * key, int len, uint32_t seed, void * out );
 
 void SpookyHash32_test     ( const void * key, int len, uint32_t seed, void * out );
 void SpookyHash64_test     ( const void * key, int len, uint32_t seed, void * out );
@@ -130,19 +145,53 @@ inline void MurmurHash64B_test ( const void * key, int len, uint32_t seed, void 
 }
 
 inline void jodyhash32_test( const void * key, int len, uint32_t seed, void * out ) {
-  *(uint32_t*)out = (uint32_t) jody_block_hash32((const jodyhash32_t *)key, (jodyhash32_t) seed, (size_t) len);
+  *(uint32_t*)out = jody_block_hash32((const jodyhash32_t *)key, (jodyhash32_t) seed, (size_t) len);
 }
 inline void jodyhash64_test( const void * key, int len, uint32_t seed, void * out ) {
-  *(uint32_t*)out = (uint32_t) jody_block_hash((const jodyhash_t *)key, (jodyhash_t) seed, (size_t) len);
+  *(uint64_t*)out = jody_block_hash((const jodyhash_t *)key, (jodyhash_t) seed, (size_t) len);
 }
 
-#if defined(__x86_64__)
+
 inline void xxHash32_test( const void * key, int len, uint32_t seed, void * out ) {
   *(uint32_t*)out = (uint32_t) XXH32(key, (size_t) len, (unsigned) seed);
 }
 inline void xxHash64_test( const void * key, int len, uint32_t seed, void * out ) {
   *(uint64_t*)out = (uint64_t) XXH64(key, (size_t) len, (unsigned long long) seed);
 }
+
+#define restrict // oddly enough, seems to choke on this keyword
+#include "xxh3.h"
+
+inline void xxh3_test( const void * key, int len, uint32_t seed, void * out ) {
+  (void)seed;
+  *(uint64_t*)out = (uint64_t) XXH3_64bits_withSeed(key, (size_t) len, seed);
+}
+
+inline void xxh3low_test( const void * key, int len, uint32_t seed, void * out ) {
+  (void)seed;
+  *(uint32_t*)out = (uint32_t) XXH3_64bits(key, (size_t) len);
+}
+
+inline void xxh3high_test( const void * key, int len, uint32_t seed, void * out ) {
+  (void)seed;
+  *(uint32_t*)out = (uint32_t) (XXH3_64bits(key, (size_t) len) >> 32);
+}
+
+inline void xxh128_test( const void * key, int len, uint32_t seed, void * out ) {
+  (void)seed;
+  *(XXH128_hash_t*)out = XXH128(key, (size_t) len, seed);
+}
+
+inline void xxh128low_test( const void * key, int len, uint32_t seed, void * out ) {
+  (void)seed;
+  *(uint64_t*)out = (uint64_t) (XXH128(key, (size_t) len, seed).low64);
+}
+
+inline void xxh128high_test( const void * key, int len, uint32_t seed, void * out ) {
+  (void)seed;
+  *(uint64_t*)out = (uint64_t) (XXH128(key, (size_t) len, seed).high64);
+}
+
 
 inline void metrohash64_1_test ( const void * key, int len, uint32_t seed, void * out ) {
   metrohash64_1((const uint8_t *)key,(uint64_t)len,seed,(uint8_t *)out);
@@ -185,44 +234,96 @@ inline void fasthash32_test ( const void * key, int len, uint32_t seed, void * o
 inline void fasthash64_test ( const void * key, int len, uint32_t seed, void * out ) {
   *(uint64_t*)out = fasthash64(key, (size_t) len, (uint64_t)seed);
 }
-#endif
+
+
+void mum_hash_test(const void * key, int len, uint32_t seed, void * out);
+
+inline void mum_low_test ( const void * key, int len, uint32_t seed, void * out ) {
+  uint64_t result;
+  mum_hash_test(key, len, seed, &result);
+  *(uint32_t*)out = (uint32_t)result;
+}
+inline void mum_high_test ( const void * key, int len, uint32_t seed, void * out ) {
+  uint64_t result;
+  mum_hash_test(key, len, seed, &result);
+  *(uint32_t*)out = (uint32_t)(result>>32);
+}
+
 
 //-----------------------------------------------------------------------------
 
 #include "t1ha.h"
 
-inline void t1ha_test(const void * key, int len, uint32_t seed, void * out)
+inline void t1ha2_atonce_test(const void * key, int len, uint32_t seed, void * out)
 {
-  *(uint64_t*)out = t1ha(key, len, seed);
+  *(uint64_t*)out = t1ha2_atonce(key, len, seed);
 }
 
-void mum_hash_test(const void * key, int len, uint32_t seed, void * out);
-
-#if (defined(__SSE4_2__) && defined(__x86_64__)) || defined(_M_X64)
-inline void t1ha_crc_test(const void * key, int len, uint32_t seed, void * out)
+inline void t1ha2_stream_test(const void * key, int len, uint32_t seed, void * out)
 {
-  *(uint64_t*)out = t1ha_ia32crc(key, len, seed);
-}
-#endif
-
-inline void t1ha_64be_test(const void * key, int len, uint32_t seed, void * out)
-{
-  *(uint64_t*)out = t1ha_64be(key, len, seed);
+  t1ha_context_t ctx;
+  t1ha2_init(&ctx, seed, 0);
+  t1ha2_update(&ctx, key, len);
+  *(uint64_t*)out = t1ha2_final(&ctx, NULL);
 }
 
-inline void t1ha_32le_test(const void * key, int len, uint32_t seed, void * out)
+inline void t1ha2_atonce128_test(const void * key, int len, uint32_t seed, void * out)
 {
-  *(uint64_t*)out = t1ha_32le(key, len, seed);
+  *(uint64_t*)out = t1ha2_atonce128((uint64_t*)out + 1, key, len, seed);
 }
 
-inline void t1ha_32be_test(const void * key, int len, uint32_t seed, void * out)
+inline void t1ha2_stream128_test(const void * key, int len, uint32_t seed, void * out)
 {
-  *(uint64_t*)out = t1ha_32be(key, len, seed);
+  t1ha_context_t ctx;
+  t1ha2_init(&ctx, seed, 0);
+  t1ha2_update(&ctx, key, len);
+  *(uint64_t*)out = t1ha2_final(&ctx, (uint64_t*)out + 1);
 }
 
-#if defined(__AES__) || defined(_M_X64) || defined(_M_IX86)
-inline void t1ha_aes_test(const void * key, int len, uint32_t seed, void * out)
+inline void t1ha1_64le_test(const void * key, int len, uint32_t seed, void * out)
 {
-  *(uint64_t*)out = t1ha_ia32aes(key, len, seed);
+  *(uint64_t*)out = t1ha1_le(key, len, seed);
 }
-#endif
+
+inline void t1ha1_64be_test(const void * key, int len, uint32_t seed, void * out)
+{
+  *(uint64_t*)out = t1ha1_be(key, len, seed);
+}
+
+inline void t1ha0_32le_test(const void * key, int len, uint32_t seed, void * out)
+{
+  *(uint64_t*)out = t1ha0_32le(key, len, seed);
+}
+
+inline void t1ha0_32be_test(const void * key, int len, uint32_t seed, void * out)
+{
+  *(uint64_t*)out = t1ha0_32be(key, len, seed);
+}
+
+#ifdef T1HA0_AESNI_AVAILABLE
+inline void t1ha0_ia32aes_noavx_test(const void * key, int len, uint32_t seed, void * out)
+{
+  *(uint64_t*)out = t1ha0_ia32aes_noavx(key, len, seed);
+}
+
+#if defined(__AVX__)
+inline void t1ha0_ia32aes_avx1_test(const void * key, int len, uint32_t seed, void * out)
+{
+  *(uint64_t*)out = t1ha0_ia32aes_avx(key, len, seed);
+}
+#endif /* __AVX__ */
+
+#if defined(__AVX2__)
+inline void t1ha0_ia32aes_avx2_test(const void * key, int len, uint32_t seed, void * out)
+{
+  *(uint64_t*)out = t1ha0_ia32aes_avx2(key, len, seed);
+}
+#endif /* __AVX2__ */
+#endif /* T1HA0_AESNI_AVAILABLE */
+
+//https://github.com/wangyi-fudan/wyhash
+#include "wyhash.h"
+
+inline void wyhash_test (const void * key, int len, uint32_t seed, void * out) {
+  *(uint64_t*)out = wyhash(key, (unsigned long long) len, (unsigned long long)seed);
+}

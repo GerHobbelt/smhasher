@@ -7,7 +7,7 @@ include(CheckCCompilerFlag)
 # Check if the same compile family is used for both C and CXX
 if (NOT (CMAKE_C_COMPILER_ID STREQUAL CMAKE_CXX_COMPILER_ID))
     message(WARNING "CMAKE_C_COMPILER_ID (${CMAKE_C_COMPILER_ID}) is different "
-                    "from CMAKE_CXX_COMPILER_ID (${CMAKE_CXX_COMPILER_ID})."
+                    "from CMAKE_CXX_COMPILER_ID (${CMAKE_CXX_COMPILER_ID}). "
                     "The final binary may be unusable.")
 endif()
 
@@ -46,7 +46,7 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
    STRING(COMPARE EQUAL "sse4_2" "${SSE_THERE}" SSE42_TRUE)
    set(FALKHASH_OBJ      falkhash-elf64.o)
    IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-     set(FHTW_OBJ          fhtw-elf64.o)
+     set(FHTW_OBJ        fhtw-elf64.o)
    ENDIF()
    STRING(REGEX REPLACE "^.*(aes).*$" "\\1" AES_THERE ${CPUINFO})
    STRING(COMPARE EQUAL "aes" "${AES_THERE}" AES_TRUE)
@@ -59,7 +59,7 @@ ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Darwin")
    STRING(COMPARE EQUAL "SSE4.2" "${SSE_THERE}" SSE42_TRUE)
    set(FALKHASH_OBJ      falkhash-macho64.o)
    IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-     set(FHTW_OBJ          fhtw-macho64.o)
+     set(FHTW_OBJ        fhtw-macho64.o)
    ENDIF()
    STRING(REGEX REPLACE "^.*(AES).*$" "\\1" AES_THERE ${CPUINFO})
    STRING(COMPARE EQUAL "AES" "${AES_THERE}" AES_TRUE)
@@ -72,7 +72,7 @@ ELSEIF(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
    STRING(COMPARE EQUAL "SSE4.2" "${SSE_THERE}" SSE42_TRUE)
    set(FALKHASH_OBJ      falkhash-elf64.o)
    IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-     set(FHTW_OBJ          fhtw-elf64.o)
+     set(FHTW_OBJ        fhtw-elf64.o)
    ENDIF()
    STRING(REGEX REPLACE "^.*(AES).*$" "\\1" AES_THERE ${CPUINFO})
    STRING(COMPARE EQUAL "AES" "${AES_THERE}" AES_TRUE)
@@ -101,12 +101,12 @@ if (CMAKE_COMPILER_IS_GNUCC
   #ENDIF (AES_TRUE)
   set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -march=native")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-  # using Visual Studio C++
+elseif (MSVC)
+  # using Visual Studio C++, already the default with VS17
   set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} /arch:SSE2")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE2")
 else()
-  message(WARNING "Unknown ${CMAKE_C_COMPILER_ID} compiler")
+  message(WARNING "Unknown ${CMAKE_CXX_COMPILER_ID} compiler")
 # TODO: BSD and ARM8 crc detection
 # TODO: 32bit filter
 endif()
@@ -127,6 +127,11 @@ ELSE (AES_TRUE)
   set(AES_FOUND false CACHE BOOL "AES-NI not available")
 ENDIF (AES_TRUE)
 
+IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DHAVE_BIT32")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_BIT32")
+ENDIF()
+
 IF(AES_FOUND AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
   set(SSE4_OBJ        ${FALKHASH_OBJ})
 ENDIF()
@@ -139,9 +144,9 @@ IF(SSE4_2_FOUND)
 IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
   #enable_language(ASM-NASM)
   #set(CMAKE_ASM_FLAGS "-f elf64")
-  set(SSE4_SRC1       crc32_hw1.c)
-  set(METROCRC64_SRC  metrohash64crc.cpp)
-  set(METROCRC128_SRC metrohash128crc.cpp)
+  set(X86_64ONLY_SRC farmhash-c.c farmhash-c-test.cc metrohash64crc.cpp metrohash128crc.cpp crc32_hw1.c)
+ELSE()
+  message(WARNING "32bit only: CMAKE_SIZEOF_VOID_P=${CMAKE_SIZEOF_VOID_P}")
 ENDIF()
   set(SIPHASH_SRC     siphash_ssse3.c)
 ELSEIF(SSE2_FOUND)
@@ -151,12 +156,16 @@ ELSE()
   set(SIPHASH_SRC     siphash.c)
 ENDIF(SSE4_2_FOUND)
 
-IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-  set(64ONLY_SRC
-    xxhash.c metrohash64.cpp metrohash128.cpp farmhash.cc
-    FarmTest.cc farmhash-c.c farmhash-c-test.cc cmetrohash64.c
-    opt_cmetrohash64_1.c fasthash.cpp)
-ENDIF()
+set(T1HA_SRC t1ha/t1ha0.c t1ha/t1ha1.c t1ha/t1ha2.c t1ha/t1ha0_ia32aes_noavx.c t1ha/t1ha0_ia32aes_avx.c t1ha/t1ha0_ia32aes_avx2.c)
+if(MSVC)
+set_source_files_properties(t1ha/t1ha0_ia32aes_noavx.c PROPERTIES COMPILE_FLAGS "/arch:ia32")
+set_source_files_properties(t1ha/t1ha0_ia32aes_avx.c PROPERTIES COMPILE_FLAGS "/arch:avx")
+set_source_files_properties(t1ha/t1ha0_ia32aes_avx2.c PROPERTIES COMPILE_FLAGS "/arch:avx2")
+else()
+set_source_files_properties(t1ha/t1ha0_ia32aes_noavx.c PROPERTIES COMPILE_FLAGS "-mno-avx2 -mno-avx -maes")
+set_source_files_properties(t1ha/t1ha0_ia32aes_avx.c PROPERTIES COMPILE_FLAGS "-mno-avx2 -mavx -maes")
+set_source_files_properties(t1ha/t1ha0_ia32aes_avx2.c PROPERTIES COMPILE_FLAGS "-mavx -mavx2 -maes")
+endif()
 
 add_library(
   SMHasherSupport
@@ -170,7 +179,6 @@ add_library(
   Hashes.cpp
   ${SSE2_SRC}
   ${SSE4_SRC}
-  ${SSE4_SRC1}
   KeysetTest.cpp
   lookup3.cpp
   md5.cpp
@@ -188,15 +196,19 @@ add_library(
   SuperFastHash.cpp
   Types.cpp
   PMurHash.c
-  ${64ONLY_SRC}
-  ${METROCRC64_SRC}
-  ${METROCRC128_SRC}
+  fasthash.cpp
+  xxhash.c
+  metrohash64.cpp
+  metrohash128.cpp
+  cmetrohash64.c opt_cmetrohash64_1.c
+  farmhash.cc FarmTest.cc
   ${SSE4_OBJ}
   # ${FHTW_OBJ}
-  t1ha.c
+  ${T1HA_SRC}
   mum.cc
   jody_hash32.c
   jody_hash64.c
+  ${X86_64ONLY_SRC}
 )
 
 add_executable(
