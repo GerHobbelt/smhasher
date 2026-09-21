@@ -114,9 +114,9 @@ FNV32a_YoshimitsuTRIAD(const void *key, int len, uint32_t seed, void *out)
 {
   const uint8_t  *p = (const uint8_t *)key;
   const uint32_t  PRIME = 709607;
-  uint32_t	  hash32A = seed ^ 2166136261;
-  uint32_t	  hash32B = 2166136261 + len;
-  uint32_t	  hash32C = 2166136261;
+  uint32_t	  hash32A = seed ^ BIG_CONSTANT(2166136261);
+  uint32_t	  hash32B = BIG_CONSTANT(2166136261) + len;
+  uint32_t	  hash32C = BIG_CONSTANT(2166136261);
 
   for (; len >= 3 * 2 * sizeof(uint32_t); len -= 3 * 2 * sizeof(uint32_t), p += 3 * 2 * sizeof(uint32_t)) {
     hash32A = (hash32A ^ (ROTL32(*(uint32_t *) (p + 0), 5)  ^ *(uint32_t *) (p + 4)))  * PRIME;
@@ -214,7 +214,7 @@ sdbm(const void *key, int len, uint32_t hash, void *out)
   unsigned char  *str = (unsigned char *)key;
   const unsigned char *const end = (const unsigned char *)str + len;
   //note that perl5 adds the seed to the end of key, which looks like cargo cult
-    while (str < end) {
+  while (str < end) {
     hash = (hash << 6) + (hash << 16) - hash + *str++;
   }
   *(uint32_t *) out = hash;
@@ -230,7 +230,7 @@ JenkinsOOAT(const void *key, int len, uint32_t hash, void *out)
   unsigned char  *seed = (unsigned char *)&s;
   //unsigned char seed[8];
   //note that perl5 adds the seed to the end of key, which looks like cargo cult
-    while (str < end) {
+  while (str < end) {
     hash += (hash << 10);
     hash ^= (hash >> 6);
     hash += *str++;
@@ -262,7 +262,7 @@ JenkinsOOAT(const void *key, int len, uint32_t hash, void *out)
 }
 
 //as used in perl5 until 5.17(one_at_a_time_old)
-  void		  JenkinsOOAT_perl(const void *key, int len, uint32_t hash, void *out)
+void JenkinsOOAT_perl(const void *key, int len, uint32_t hash, void *out)
 {
   unsigned char  *str = (unsigned char *)key;
   const unsigned char *const end = (const unsigned char *)str + len;
@@ -275,6 +275,61 @@ JenkinsOOAT(const void *key, int len, uint32_t hash, void *out)
   hash ^= (hash >> 11);
   hash = hash + (hash << 15);
   *(uint32_t *) out = hash;
+}
+
+//------------------------------------------------
+// One of a smallest non-multiplicative One-At-a-Time function
+// that passes whole SMHasher.
+// Author: Sokolov Yura aka funny-falcon <funny.falcon@gmail.com>
+void GoodOAAT(const void *key, int len, uint32_t seed, void *out) {
+#define grol(x,n) (((x)<<(n))|((x)>>(32-(n))))
+#define gror(x,n) (((x)>>(n))|((x)<<(32-(n))))
+  unsigned char  *str = (unsigned char *)key;
+  const unsigned char *const end = (const unsigned char *)str + len;
+  uint32_t h1 = seed ^ 0x3b00;
+  uint32_t h2 = grol(seed, 15);
+  for (;str != end; str++) {
+    h1 += str[0];
+    h1 += h1 << 3; // h1 *= 9
+    h2 += h1;
+    // the rest could be as in MicroOAAT: h1 = grol(h1, 7)
+    // but clang doesn't generate ROTL instruction then.
+    h2 = grol(h2, 7);
+    h2 += h2 << 2; // h2 *= 5
+  }
+  h1 ^= h2;
+  /* now h1 passes all collision checks,
+   * so it is suitable for hash-tables with prime numbers. */
+  h1 += grol(h2, 14);
+  h2 ^= h1; h2 += gror(h1, 6);
+  h1 ^= h2; h1 += grol(h2, 5);
+  h2 ^= h1; h2 += gror(h1, 8);
+  *(uint32_t *) out = h2;
+#undef grol
+#undef gror
+}
+
+// MicroOAAT suitable for hash-tables using prime numbers.
+// It passes all collision checks.
+// Author: Sokolov Yura aka funny-falcon <funny.falcon@gmail.com>
+void MicroOAAT(const void *key, int len, uint32_t seed, void *out) {
+#define grol(x,n) (((x)<<(n))|((x)>>(32-(n))))
+#define gror(x,n) (((x)>>(n))|((x)<<(32-(n))))
+  unsigned char  *str = (unsigned char *)key;
+  const unsigned char *const end = (const unsigned char *)str + len;
+  uint32_t h1 = seed ^ 0x3b00;
+  uint32_t h2 = grol(seed, 15);
+  for (;str != end; str++) {
+    h1 += str[0];
+    h1 += h1 << 3; // h1 *= 9
+    h2 -= h1;
+    // unfortunately, clang produces bad code here,
+    // cause it doesn't generate rotl instruction.
+    h1 = grol(h1, 7);
+  }
+  *(uint32_t *) out = h1 ^ h2;
+#undef grol
+#undef gror
 }
 
 //-----------------------------------------------------------------------------
@@ -337,8 +392,10 @@ hasshe2_test(const void *input, int len, uint32_t seed, void *out)
 }
 #endif
 
-#if defined(__SSE4_2__) && defined(__x86_64__)
-/* Compute CRC-32C using the Intel hardware instruction. */
+#if defined(__SSE4_2__) && (defined(__i686__) || defined(_M_IX86) || defined(__x86_64__))
+/* Compute CRC-32C using the Intel hardware instruction.
+   TODO: arm8
+ */
 void
 crc32c_hw_test(const void *input, int len, uint32_t seed, void *out)
 {
@@ -348,6 +405,17 @@ crc32c_hw_test(const void *input, int len, uint32_t seed, void *out)
   }
   *(uint32_t *) out = crc32c_hw(input, len, seed);
 }
+/* Faster Adler SSE4.2 crc32 in HW */
+void
+crc32c_hw1_test(const void *input, int len, uint32_t seed, void *out)
+{
+  if (!len) {
+    *(uint32_t *) out = 0;
+    return;
+  }
+  *(uint32_t *) out = crc32c(input, len, seed);
+}
+#if defined(__SSE4_2__) && defined(__x86_64__)
 /* Compute CRC-64C using the Intel hardware instruction. */
 void
 crc64c_hw_test(const void *input, int len, uint32_t seed, void *out)
@@ -358,21 +426,12 @@ crc64c_hw_test(const void *input, int len, uint32_t seed, void *out)
   }
   *(uint64_t *) out = crc64c_hw(input, len, seed);
 }
-/* Faster Adler SSE4.2 crc32 in HW */
-inline void
-crc32c_hw1_test(const void *input, int len, uint32_t seed, void *out)
-{
-  if (!len) {
-    *(uint32_t *) out = 0;
-    return;
-  }
-  *(uint32_t *) out = crc32c(input, len, seed);
-}
+#endif
 #endif
 
 /* Cloudflare optimized zlib crc32 with PCLMUL */
 #if 0
-inline void
+void
 zlib_crc32_test(const void *input, int len, uint32_t seed, void *out)
 {
     if (!len) {
@@ -383,21 +442,55 @@ zlib_crc32_test(const void *input, int len, uint32_t seed, void *out)
 }
 #endif
 
+#if 0 && defined(__x86_64__) && (defined(__linux__) || defined(__APPLE__))  
 extern "C" {
-  uint64_t siphash(const unsigned char key[16], const unsigned char *m, size_t len);
+  uint64_t fhtw_test(const unsigned char key[16], const unsigned char *m, size_t len);
+  int fhtw_hash(void* key, int key_len);
 }
+/* asm */
+inline void
+fhtw_test(const void *input, int len, uint32_t seed, void *out)
+{
+  *(uint32_t *) out = fhtw_hash(input, len);
+}
+#endif
+
+#include "siphash.h"
+
 /* https://github.com/floodyberry/siphash */
 void
 siphash_test(const void *input, int len, uint32_t seed, void *out)
 {
-  unsigned char	  key[16] = {0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0};
+  /* 128bit state, filled with a 32bit seed */
+  unsigned char	key[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   if (!len) {
     *(uint32_t *) out = 0;
     return;
   }
   memcpy(key, &seed, sizeof(seed));
   *(uint64_t *) out = siphash(key, (const unsigned char *)input, (size_t) len);
+}
+void
+siphash13_test(const void *input, int len, uint32_t seed, void *out)
+{
+  unsigned char	key[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  if (!len) {
+    *(uint32_t *) out = 0;
+    return;
+  }
+  memcpy(key, &seed, sizeof(seed));
+  *(uint64_t *) out = siphash13(key, (const unsigned char *)input, (size_t) len);
+}
+void
+halfsiphash_test(const void *input, int len, uint32_t seed, void *out)
+{
+  unsigned char	key[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  if (!len) {
+    *(uint32_t *) out = 0;
+    return;
+  }
+  memcpy(key, &seed, sizeof(seed));
+  *(uint32_t *) out = halfsiphash(key, (const unsigned char *)input, (size_t) len);
 }
 
 /* https://github.com/gamozolabs/falkhash */
@@ -417,3 +510,5 @@ falkhash_test_cxx(const void *input, int len, uint32_t seed, void *out)
   *(uint64_t *) out = hash[0];
 }
 #endif
+
+

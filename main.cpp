@@ -71,35 +71,42 @@ HashInfo g_hashes[] =
   { DoNothingHash,        64, 0x00000000, "donothing64", "Do-Nothing function (only valid for measuring call overhead)" },
   { DoNothingHash,       128, 0x00000000, "donothing128", "Do-Nothing function (only valid for measuring call overhead)" },
   { NoopOAATReadHash,     64, 0x00000000, "NOP_OAAT_read64", "Noop function (only valid for measuring call + OAAT reading overhead)" },
+  { BadHash,     	  32, 0xAB432E23, "BadHash", 	 "very simple XOR shift" },
+  { sumhash,     	  32, 0x0000A9AC, "sumhash", 	 "sum all bytes" },
+  { sumhash32,     	  32, 0xF5562C80, "sumhash32",   "sum all 32bit words" },
 
+  // here start the real hashes
   { crc32,                32, 0x3719DB20, "crc32",       "CRC-32 soft" },
 
-  { md5_32,               32, 0xC10C356B, "md5_32a",     "MD5, first 32 bits of result" },
-  { sha1_32a,             32, 0xF9376EA7, "sha1_32a",    "SHA1, first 32 bits of result" },
+  { md5_32,               32, 0xF7192210, "md5_32a",     "MD5, first 32 bits of result" },
+  { sha1_32a,             32, 0x7FE8C80E, "sha1_32a",    "SHA1, first 32 bits of result" },
 #if 0
-  { sha1_64a,             32, 0xF9376EA7, "sha1_64a",    "SHA1 64-bit, first 64 bits of result" },
-  { sha2_32a,             32, 0xF9376EA7, "sha2_32a",    "SHA2, first 32 bits of result" },
-  { sha2_64a,             64, 0xF9376EA7, "sha2_64a",    "SHA2, first 64 bits of result" },
-  { BLAKE2_32a,           32, 0xF9376EA7, "blake2_32a",  "BLAKE2, first 32 bits of result" },
-  { BLAKE2_64a,           64, 0xF9376EA7, "blake2_64a",  "BLAKE2, first 64 bits of result" },
-  { bcrypt_64a,           64, 0xF9376EA7, "bcrypt_64a",  "bcrypt, first 64 bits of result" },
-  { scrypt_64a,           64, 0xF9376EA7, "scrypt_64a",  "scrypt, first 64 bits of result" },
+  { sha1_64a,             32, 0x00000000, "sha1_64a",    "SHA1 64-bit, first 64 bits of result" },
+  { sha2_32a,             32, 0x00000000, "sha2_32a",    "SHA2, first 32 bits of result" },
+  { sha2_64a,             64, 0x00000000, "sha2_64a",    "SHA2, first 64 bits of result" },
+  { sha3_32a,             32, 0x00000000, "sha3_32a",    "SHA3, first 32 bits of result" },
+  { sha3_64a,             64, 0x00000000, "sha3_64a",    "SHA3, first 64 bits of result" },
+  { BLAKE2_32a,           32, 0x00000000, "blake2_32a",  "BLAKE2, first 32 bits of result" },
+  { BLAKE2_64a,           64, 0x00000000, "blake2_64a",  "BLAKE2, first 64 bits of result" },
+  { bcrypt_64a,           64, 0x00000000, "bcrypt_64a",  "bcrypt, first 64 bits of result" },
+  { scrypt_64a,           64, 0x00000000, "scrypt_64a",  "scrypt, first 64 bits of result" },
 #endif
 
 #ifdef __SSE2__
   { hasshe2_test,        256, 0xF5D39DFE, "hasshe2",     "SSE2 hasshe2, 256-bit" },
 #endif
 #if defined(__SSE4_2__) && defined(__x86_64__)
+  /* Even 32 uses crc32q, quad only */
   { crc32c_hw_test,       32, 0x0C7346F0, "crc32_hw",    "SSE4.2 crc32 in HW" },
-  { crc64c_hw_test,       64, 0xE7C3FD0E, "crc64_hw",    "SSE4.2 crc64 in HW" },
-#if 0
   { crc32c_hw1_test,      32, 0x0C7346F0, "crc32_hw1",   "Faster Adler SSE4.2 crc32 in HW" },
+  { crc64c_hw_test,       64, 0xE7C3FD0E, "crc64_hw",    "SSE4.2 crc64 in HW" },
 #endif
-#endif
-// elf64 or macho64 only
-//{ fhtw_test,            64, 0x0,        "fhtw",        "fhtw asm" },
-  { FNV32a,               32, 0xE3CBBE91, "FNV1a",         "Fowler-Noll-Vo hash, 32-bit" },
-  { FNV32a_YoshimitsuTRIAD,32,0xD8AFFD71, "FNV1a_YoshimitsuTRIAD", "FNV1a-YoshimitsuTRIAD 32-bit sanmayce" },
+#if 0 && defined(__x86_64__) && (defined(__linux__) || defined(__APPLE__))  
+  // elf64 or macho64 only
+  { fhtw_test,            64, 0x0,        "fhtw",        "fhtw asm" },
+#endif  
+  { FNV32a,               32, 0xE3CBBE91, "FNV1a",       "Fowler-Noll-Vo hash, 32-bit" },
+  { FNV32a_YoshimitsuTRIAD,32,0xD8AFFD71, "FNV1a_YT",    "FNV1a-YoshimitsuTRIAD 32-bit sanmayce" },
   { FNV64a,               64, 0x103455FC, "FNV64",       "Fowler-Noll-Vo hash, 64-bit" },
 #if 0
   { fletcher2,            64, 0x0, "fletcher2",  "fletcher2 ZFS"} //TODO
@@ -110,8 +117,10 @@ HashInfo g_hashes[] =
   { Bernstein,            32, 0xBDB4B640, "bernstein",   "Bernstein, 32-bit" },
   { sdbm,                 32, 0x582AF769, "sdbm",        "sdbm as in perl5" },
   { x17_test,             32, 0x8128E14C, "x17",         "x17" },
+  // also called jhash:
   { JenkinsOOAT,          32, 0x83E133DA, "JenkinsOOAT", "Bob Jenkins' OOAT as in perl 5.18" },
   { JenkinsOOAT_perl,     32, 0xEE05869B, "JenkinsOOAT_perl", "Bob Jenkins' OOAT as in old perl5" },
+  { MicroOAAT,            32, 0x16F1BA97, "MicroOAAT", "Small non-multiplicative OAAT that passes all collision checks (by funny-falcon)" },
   { lookup3_test,         32, 0x3D83917A, "lookup3",     "Bob Jenkins' lookup3" },
   { SuperFastHash,        32, 0x980ACD1D, "superfast",   "Paul Hsieh's SuperFastHash" },
   { MurmurOAAT_test,      32, 0x5363BD98, "MurmurOAAT",  "Murmur one-at-a-time" },
@@ -122,8 +131,14 @@ HashInfo g_hashes[] =
   { MurmurHash64A_test,   64, 0x1F0D3804, "Murmur2B",    "MurmurHash2 for x64, 64-bit" },
 #endif
   { MurmurHash64B_test,   64, 0xDD537C05, "Murmur2C",    "MurmurHash2 for x86, 64-bit" },
+  { halfsiphash_test,     32, 0xA7A05F72, "HalfSipHash", "HalfSipHash 2-4, 32bit" },
 
   // and now the quality hash funcs, which mostly work
+  // GoodOOAT passes whole SMHasher (by funny-falcon)
+  { GoodOAAT,             32, 0x7B14EEE5, "GoodOAAT",    "Small non-multiplicative OAAT" },
+  { siphash_test,         64, 0xC58D7F9C, "SipHash",     "SipHash 2-4 - SSSE3 optimized" },
+  // as in rust and swift
+  { siphash13_test,       64, 0x29C010BF, "SipHash13",   "SipHash 1-3 - SSSE3 optimized" },
   { PMurHash32_test,      32, 0xB0F57EE3, "PMurHash32",  "Shane Day's portable-ized MurmurHash3 for x86, 32-bit." },
   { MurmurHash3_x86_32,   32, 0xB0F57EE3, "Murmur3A",    "MurmurHash3 for x86, 32-bit" },
   { MurmurHash3_x86_128, 128, 0xB3ECE62A, "Murmur3C",    "MurmurHash3 for x86, 128-bit" },
@@ -131,8 +146,8 @@ HashInfo g_hashes[] =
   { MurmurHash3_x64_128, 128, 0x6384BA69, "Murmur3F",    "MurmurHash3 for x64, 128-bit" },
 #endif
 #if defined(__x86_64__)
-  { fasthash32_test,      32, 0xE9481AFC, "fasthash32",        "fast-hash 32bit" },
-  { fasthash64_test,      64, 0xA16231A7, "fasthash64",        "fast-hash 64bit" },
+  { fasthash32_test,      32, 0xE9481AFC, "fasthash32",  "fast-hash 32bit" },
+  { fasthash64_test,      64, 0xA16231A7, "fasthash64",  "fast-hash 64bit" },
 #endif
   { CityHash32_test,      32, 0x5C28AD62, "City32",      "Google CityHash32WithSeed (old)" },
   { CityHash64_test,      64, 0x25A20825, "City64",      "Google CityHash64WithSeed (old)" },
@@ -146,7 +161,6 @@ HashInfo g_hashes[] =
   { farmhash64_c_test,    64, 0x35F84A93, "farmhash64_c",  "farmhash64_with_seed (C99)" },
   { farmhash128_c_test,  128, 0x9E636AAE, "farmhash128_c", "farmhash128_with_seed (C99)" },
 #endif
-  { siphash_test,         64, 0xC58D7F9C, "SipHash",     "SipHash - SSSE3 optimized" },
   { SpookyHash32_test,    32, 0x3F798BBB, "Spooky32",    "Bob Jenkins' SpookyHash, 32-bit result" },
   { SpookyHash64_test,    64, 0xA7F955F1, "Spooky64",    "Bob Jenkins' SpookyHash, 64-bit result" },
   { SpookyHash128_test,  128, 0x8D263080, "Spooky128",   "Bob Jenkins' SpookyHash, 128-bit result" },
@@ -156,7 +170,7 @@ HashInfo g_hashes[] =
 #if 0
   { xxhash256_test,       64, 0x024B7CF4, "xxhash256",   "xxhash256, 64-bit unportable" },
 #endif
-#endif  
+#endif
   #if defined(__x86_64__)
   { metrohash64_1_test,       64, 0xEE88F7D2, "metrohash64_1",     "MetroHash64_1 for 64-bit" },
   { metrohash64_2_test,       64, 0xE1FC7C6E, "metrohash64_2",     "MetroHash64_2 for 64-bit" },
@@ -170,13 +184,30 @@ HashInfo g_hashes[] =
 #endif
 #endif
 #if defined(__x86_64__)
-  { cmetrohash64_1_optshort_test, 64, 0xEE88F7D2, "cmetrohash64_1_optshort", "cmetrohash64_1 (shorter key optimized) , 64-bit for x64" },
+  { cmetrohash64_1_optshort_test, 64, 0xEE88F7D2, "cmetrohash64_1o", "cmetrohash64_1 (shorter key optimized) , 64-bit for x64" },
   { cmetrohash64_1_test,        64, 0xEE88F7D2, "cmetrohash64_1",    "cmetrohash64_1, 64-bit for x64" },
   { cmetrohash64_2_test,        64, 0xE1FC7C6E, "cmetrohash64_2",    "cmetrohash64_2, 64-bit for x64" },
 #endif
 #if defined(__SSE4_2__) && defined(__x86_64__)
   { falkhash_test_cxx,          64, 0x2F99B071, "falkhash",          "falkhash.asm with aesenc, 64-bit for x64" },
 #endif
+  { t1ha_test,                  64, 0xD6836381, "t1ha",              "Fast Positive Hash (portable, best for: 64-bit, little-endian)" },
+  { t1ha_64be_test,             64, 0x93F864DE, "t1ha_64be",         "Fast Positive Hash (portable, best for: 64-bit, big-engian)" },
+  { t1ha_32le_test,             64, 0xE489F366, "t1ha_32le",         "Fast Positive Hash (portable, best for: 32-bit, little-endian)" },
+  { t1ha_32be_test,             64, 0x71F649A9, "t1ha_32be",         "Fast Positive Hash (portable, best for: 32-bit, big-endian)" },
+#if (defined(__SSE4_2__) && defined(__x86_64__)) || defined(_M_X64)
+  { t1ha_crc_test,              64, 0xA57ACE7D, "t1ha_crc",          "Fast Positive Hash (machine-specific, requires: SSE4.2 CRC32C)" },
+#endif
+#if defined(__AES__) || defined(_M_X64) || defined(_M_IX86)
+  { t1ha_aes_test,              64, 0x54BBFF21, "t1ha_aes",          "Fast Positive Hash (machine-specific, requires: AES-NI)" },
+#endif
+  { mum_hash_test,              64,
+#if defined(__GNUC__) && UINT_MAX != ULONG_MAX
+                                    0x3EEAE2D4,
+#else
+                                    0xA973C6C0,
+#endif
+                                                "MUM",               "github.com/vnmakarov/mum-hash" },
 };
 
 HashInfo * findHash ( const char * name )
@@ -262,7 +293,7 @@ void test ( hashfunc<hashtype> hash, HashInfo * info )
     {
       sum += TinySpeedTest(hashfunc<hashtype>(info->hash),sizeof(hashtype),i,info->verification,true);
     }
-    sum = sum / 32.0;
+    sum = sum / 31.0;
     printf("Average                                    %6.3f cycles/hash\n",sum);
     printf("\n");
     fflush(NULL);
@@ -679,9 +710,27 @@ void testHash ( const char * name )
 }
 //-----------------------------------------------------------------------------
 
+#ifdef _MSC_VER
+static char* strndup(char const *s, size_t n)
+{
+  size_t len = strnlen(s, n);
+  char *p = (char*) malloc(len + 1);
+
+  if (p == NULL)
+    return NULL;
+
+  p[len] = '\0';
+  return (char*) memcpy(p, s, len);
+}
+#endif
+
 int main ( int argc, char ** argv )
 {
+#if (defined(__x86_64__) && __SSE4_2__) || defined(_M_X64) || defined(_X86_64_)
   const char * defaulthash = "metrohash64crc_1"; /* "murmur3a"; */
+#else
+  const char * defaulthash = "t1ha_32le";
+#endif
   const char * hashToTest = defaulthash;
 
   if(argc < 2) {
@@ -694,7 +743,7 @@ int main ( int argc, char ** argv )
     if (strncmp(hashToTest,"--", 2) == 0) {
       if (strcmp(hashToTest,"--list") == 0) {
         for(size_t i = 0; i < sizeof(g_hashes) / sizeof(HashInfo); i++) {
-          printf("%s\t(%s)\n", g_hashes[i].name, g_hashes[i].desc);
+          printf("%-16s\t(%s)\n", g_hashes[i].name, g_hashes[i].desc);
         }
         exit(0);
       }

@@ -18,6 +18,7 @@
 //----------
 // These are _not_ hash functions (even though people tend to use crc32 as one...)
 
+void BadHash               ( const void * key, int len, uint32_t seed, void * out );
 void sumhash               ( const void * key, int len, uint32_t seed, void * out );
 void sumhash32             ( const void * key, int len, uint32_t seed, void * out );
 
@@ -66,6 +67,8 @@ void sdbm                  ( const void * key, int len, uint32_t seed, void * ou
 void x17_test              ( const void * key, int len, uint32_t seed, void * out );
 void JenkinsOOAT           ( const void * key, int len, uint32_t seed, void * out );
 void JenkinsOOAT_perl      ( const void * key, int len, uint32_t seed, void * out );
+void GoodOAAT              ( const void * key, int len, uint32_t seed, void * out );
+void MicroOAAT             ( const void * key, int len, uint32_t seed, void * out );
 void SuperFastHash         ( const void * key, int len, uint32_t seed, void * out );
 void lookup3_test          ( const void * key, int len, uint32_t seed, void * out );
 void MurmurOAAT_test       ( const void * key, int len, uint32_t seed, void * out );
@@ -93,6 +96,8 @@ void MurmurHash2_test      ( const void * key, int len, uint32_t seed, void * ou
 void MurmurHash2A_test     ( const void * key, int len, uint32_t seed, void * out );
 
 void siphash_test          ( const void * key, int len, uint32_t seed, void * out );
+void siphash13_test        ( const void * key, int len, uint32_t seed, void * out );
+void halfsiphash_test      ( const void * key, int len, uint32_t seed, void * out );
 
 //-----------------------------------------------------------------------------
 // Test harnesses for Murmur1/2
@@ -170,5 +175,45 @@ inline void fasthash32_test ( const void * key, int len, uint32_t seed, void * o
 }
 inline void fasthash64_test ( const void * key, int len, uint32_t seed, void * out ) {
   *(uint64_t*)out = fasthash64(key, (size_t) len, (uint64_t)seed);
+}
+#endif
+
+//-----------------------------------------------------------------------------
+
+#include "t1ha.h"
+
+inline void t1ha_test(const void * key, int len, uint32_t seed, void * out)
+{
+  *(uint64_t*)out = t1ha(key, len, seed);
+}
+
+void mum_hash_test(const void * key, int len, uint32_t seed, void * out);
+
+#if (defined(__SSE4_2__) && defined(__x86_64__)) || defined(_M_X64)
+inline void t1ha_crc_test(const void * key, int len, uint32_t seed, void * out)
+{
+  *(uint64_t*)out = t1ha_ia32crc(key, len, seed);
+}
+#endif
+
+inline void t1ha_64be_test(const void * key, int len, uint32_t seed, void * out)
+{
+  *(uint64_t*)out = t1ha_64be(key, len, seed);
+}
+
+inline void t1ha_32le_test(const void * key, int len, uint32_t seed, void * out)
+{
+  *(uint64_t*)out = t1ha_32le(key, len, seed);
+}
+
+inline void t1ha_32be_test(const void * key, int len, uint32_t seed, void * out)
+{
+  *(uint64_t*)out = t1ha_32be(key, len, seed);
+}
+
+#if defined(__AES__) || defined(_M_X64) || defined(_M_IX86)
+inline void t1ha_aes_test(const void * key, int len, uint32_t seed, void * out)
+{
+  *(uint64_t*)out = t1ha_ia32aes(key, len, seed);
 }
 #endif
