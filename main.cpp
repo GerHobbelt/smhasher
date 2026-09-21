@@ -12,7 +12,7 @@
 #include <time.h>
 
 //-----------------------------------------------------------------------------
-// Configuration. TODO - move these to command-line flags
+// Configuration.
 
 bool g_drawDiagram     = false;
 bool g_testAll         = true;
@@ -31,9 +31,11 @@ bool g_testTwoBytes    = false;
 bool g_testText        = false;
 bool g_testZeroes      = false;
 bool g_testSeed        = false;
+bool g_testPerlinNoise = false;
 bool g_testDiff        = false;
 bool g_testDiffDist    = false;
 bool g_testMomentChi2  = false;
+bool g_testPrng        = false;
 bool g_testBIC         = false;
 //bool g_testLongNeighbors = false;
 
@@ -45,7 +47,7 @@ struct TestOpts {
 };
 TestOpts g_testopts[] =
 {
-  { g_testAll, 		"All" },
+  { g_testAll,          "All" },
   { g_testVerifyAll,    "VerifyAll" },
   { g_testSanity,       "Sanity" },
   { g_testSpeed,        "Speed" },
@@ -59,14 +61,16 @@ TestOpts g_testopts[] =
   { g_testText,	        "Text" },
   { g_testZeroes,       "Zeroes" },
   { g_testSeed,	        "Seed" },
+  { g_testPerlinNoise,	"PerlinNoise" },
   { g_testDiff,         "Diff" },
   { g_testDiffDist,     "DiffDist" },
   { g_testBIC, 	        "BIC" },
-  { g_testMomentChi2,   "MomentChi2" }
+  { g_testMomentChi2,   "MomentChi2" },
+  { g_testPrng,         "Prng" },
   //{ g_testLongNeighbors,"LongNeighbors" }
 };
 
-bool MomentChi2Test ( struct HashInfo *info );
+bool MomentChi2Test ( struct HashInfo *info, int inputSize );
 
 //-----------------------------------------------------------------------------
 // This is the list of all hashes that SMHasher can test.
@@ -89,19 +93,17 @@ HashInfo g_hashes[] =
 #ifdef HAVE_BIT32
  #define FIBONACCI_VERIF      0x09952480
  #define FNV2_VERIF           0x739801C5
- #define MULTSHIFT_VERIF      0x0
- #define PAIRMS_VERIF         0xE6ABA97D
 #else
  #define FIBONACCI_VERIF      0xFE3BD380
  #define FNV2_VERIF           0x1967C625
- #define MULTSHIFT_VERIF      0x0
- #define PAIRMS_VERIF         0xB6B5D710
 #endif
+
+#ifdef __SIZEOF_INT128__
   // M. Dietzfelbinger, T. Hagerup, J. Katajainen, and M. Penttonen. A reliable randomized
   // algorithm for the closest-pair problem. J. Algorithms, 25:19–51, 1997.
-  // must be skipped for hashmaps, extremly bad! FIXME
-  { multiply_shift, __WORDSIZE,MULTSHIFT_VERIF, "multiply_shift", "Dietzfelbinger Multiply-shift on strings", POOR },
-  { pair_multiply_shift, __WORDSIZE, PAIRMS_VERIF, "pair_multiply_shift", "Pair-multiply-shift", POOR },
+  { multiply_shift,       64, 0, "multiply_shift", "Dietzfelbinger Multiply-shift on strings", POOR },
+  { pair_multiply_shift,  64, 0, "pair_multiply_shift", "Pair-multiply-shift", POOR },
+#endif
   { crc32,                32, 0x3719DB20, "crc32",       "CRC-32 soft", POOR },
   { md5_128,             128, 0xF263F96F, "md5-128",     "MD5", GOOD },
   { md5_32,               32, 0x634E5AEC, "md5_32a",     "MD5, low 32 bits", POOR },
@@ -112,7 +114,7 @@ HashInfo g_hashes[] =
 #  define SHA1_VERIF          0x6AF411D8
 #  define SHA1a_VERIF         0xB3122757
 #endif
-  { sha1_160,            160, SHA1_VERIF, "sha1-160",     "SHA1", GOOD},
+  { sha1_160,            160, SHA1_VERIF, "sha1-160",     "SHA1", POOR},
   { sha1_32a,             32, SHA1a_VERIF,"sha1_32a",     "SHA1, low 32 bits", POOR},
   { sha2_224,            224, 0x60424E90, "sha2-224",     "SHA2-224", GOOD },
   { sha2_224_64,          64, 0x7EF6BB61, "sha2-224_64",  "SHA2-224, low 64 bits", GOOD },
@@ -152,6 +154,18 @@ HashInfo g_hashes[] =
 #ifdef __SSE2__
   { hasshe2_test,        256, 0xF5D39DFE, "hasshe2",     "SSE2 hasshe2, 256-bit", POOR },
 #endif
+#ifdef __SIZEOF_INT128__
+  // Thomas Dybdahl Ahle, Jakob Tejs Bæk Knudsen, and Mikkel Thorup2
+  // "The Power of Hashing with Mersenne Primes".
+  // Similar insecurity as with CRC, hashes cancel itself out.
+  { poly_1_mersenne,      32, 0, "poly_1_mersenne", "Degree 1 Hashing mod 2^61-1", POOR },
+  { poly_2_mersenne,      32, 0, "poly_2_mersenne", "Degree 2 Hashing mod 2^61-1", GOOD },
+  { poly_3_mersenne,      32, 0, "poly_3_mersenne", "Degree 3 Hashing mod 2^61-1", GOOD },
+  { poly_4_mersenne,      32, 0, "poly_4_mersenne", "Degree 4 Hashing mod 2^61-1", GOOD },
+  // Similar insecurity as with CRC, hashes cancel itself out.
+  { tabulation_test,      64, 0, "tabulation",      "64-bit Tabulation with Multiply-Shift Mixer", GOOD },
+#endif
+  { tabulation_32_test,   32, 0, "tabulation32",    "32-bit Tabulation with Multiply-Shift Mixer", POOR },
 #if defined(__SSE4_2__) && defined(__x86_64__)
   /* Even 32 uses crc32q, quad only */
   { crc32c_hw_test,       32, 0x0C7346F0, "crc32_hw",    "SSE4.2 crc32 in HW", POOR },
@@ -161,6 +175,9 @@ HashInfo g_hashes[] =
   // 32bit crashes
 #if defined(HAVE_CLMUL) && !defined(_MSC_VER) && defined(__x86_64__)
   { crc32c_pclmul_test,   32, 0x00000000, "crc32_pclmul","-mpclmul crc32 in asm on HW", POOR },
+#endif
+#ifdef HAVE_INT64
+  { o1hash_test,          64, 0x85051E87, "o1hash",       "o(1)hash unseeded, from wyhash", POOR },
 #endif
 #if 0 && defined(__x86_64__) && (defined(__linux__) || defined(__APPLE__))
   // elf64 or macho64 only
@@ -187,20 +204,21 @@ HashInfo g_hashes[] =
   { VHASH_32,             32, 0xF0077651, "VHASH_32",    "VHASH_32 by Ted Krovetz and Wei Dai", POOR },
   { VHASH_64,             64, 0xF97D84FE, "VHASH_64",    "VHASH_64 by Ted Krovetz and Wei Dai", POOR },
   { MicroOAAT_test,       32, 0x16F1BA97, "MicroOAAT",   "Small non-multiplicative OAAT (by funny-falcon)", POOR },
+#ifdef HAVE_SSE2
   { farsh32_test,         32, 0xBCDE332C, "farsh32",     "FARSH 32bit", POOR }, // insecure
   { farsh64_test,         64, 0xDE2FDAEE, "farsh64",     "FARSH 64bit", POOR }, // insecure
   //{ farsh128_test,     128, 0x82B6CBEC, "farsh128",    "FARSH 128bit", POOR },
   //{ farsh256_test,     256, 0xFEBEA0BC, "farsh256",    "FARSH 256bit", POOR },
+#endif
   { jodyhash32_test,      32, 0xFB47D60D, "jodyhash32",  "jodyhash, 32-bit (v5)", POOR },
 #ifdef HAVE_INT64
   { jodyhash64_test,      64, 0x9F09E57F, "jodyhash64",  "jodyhash, 64-bit (v5)", POOR },
 #endif
   { lookup3_test,         32, 0x3D83917A, "lookup3",     "Bob Jenkins' lookup3", POOR },
   { SuperFastHash_test,   32, 0xC4CB7C07, "superfast",   "Paul Hsieh's SuperFastHash", POOR },
-  { beamsplitter_64,      64, 0x044AF818, "beamsplitter", "A hash made only with S-boxes", POOR },
   { MurmurOAAT_test,      32, 0x5363BD98, "MurmurOAAT",  "Murmur one-at-a-time", POOR },
   { Crap8_test,           32, 0x743E97A1, "Crap8",       "Crap8", POOR },
-  { xxHash32_test,        32, 0xBA88B743, "xxHash32",    "xxHash, 32-bit for x64", POOR },
+  { xxHash32_test,        32, 0xBA88B743, "xxHash32",    "xxHash, 32-bit for x86", POOR },
   { MurmurHash2_test,     32, 0x27864C1E, "Murmur2",     "MurmurHash2 for x86, 32-bit", POOR },
   { MurmurHash2A_test,    32, 0x7FBD4396, "Murmur2A",    "MurmurHash2A for x86, 32-bit", POOR },
 #if __WORDSIZE >= 64
@@ -212,11 +230,13 @@ HashInfo g_hashes[] =
   { MurmurHash3_x86_32,   32, 0xB0F57EE3, "Murmur3A",    "MurmurHash3 for x86, 32-bit", POOR },
   { PMurHash32_test,      32, 0xB0F57EE3, "PMurHash32",  "Shane Day's portable-ized MurmurHash3 for x86, 32-bit", POOR },
   { MurmurHash3_x86_128, 128, 0xB3ECE62A, "Murmur3C",    "MurmurHash3 for x86, 128-bit", POOR },
-#ifndef HAVE_ASAN
+#if !defined(DEBUG) && !defined(CROSSCOMPILING)
+# ifndef HAVE_ASAN
   // TODO seeded
   { PMPML_32_CPP,         32, 0xEAE2E3CC, "PMPML_32",    "PMP_Multilinear 32-bit unseeded", POOR },
-# if defined(_WIN64) || defined(__x86_64__)
+#  if defined(_WIN64) || defined(__x86_64__)
   { PMPML_64_CPP,         64, 0x584CC9DF, "PMPML_64",    "PMP_Multilinear 64-bit unseeded", POOR },
+#  endif
 # endif
 #endif
   { fasthash64_test,      64, 0xA16231A7, "fasthash64",  "fast-hash 64bit", POOR },
@@ -238,19 +258,23 @@ HashInfo g_hashes[] =
   { metrohash128crc_1_test,128, 0x5E75144E, "metrohash128crc_1", "MetroHash128crc_1 for x64 (legacy)", GOOD },
   { metrohash128crc_2_test,128, 0x1ACF3E77, "metrohash128crc_2", "MetroHash128crc_2 for x64 (legacy)", GOOD },
 #endif
-  { CityHash64noSeed_test, 64, 0x63FC6063, "City64noSeed",    "Google CityHash64 without seed (default version, misses one final avalanche)", POOR },
-  { CityHash64_test,       64, 0x25A20825, "City64",          "Google CityHash64WithSeed (old)", POOR },
+  { CityHash64noSeed_test, 64, 0x63FC6063, "City64noSeed","Google CityHash64 without seed (default version, misses one final avalanche)", POOR },
+  { CityHash64_test,      64, 0x25A20825, "City64",       "Google CityHash64WithSeed (old)", POOR },
+#if defined(HAVE_SSE2) && defined(HAVE_AESNI) && !defined(_MSC_VER)
+  { aesnihash_test,       64, 0x0,        "aesnihash",    "majek's unseeded aesnihash with aesenc, 64-bit for x64", POOR },
+#endif
 #if defined(__SSE4_2__) && defined(__x86_64__)
   { falkhash_test_cxx,    64, 0x2F99B071, "falkhash",    "falkhash.asm with aesenc, 64-bit for x64", POOR },
+#endif
+#if defined(HAVE_AESNI) && defined(__SIZEOF_INT128__)
+  { MeowHash32_test,      32, 0x8872DE1A, "MeowHash32low","MeowHash (requires x64 AES-NI)", POOR },
+  { MeowHash64_test,      64, 0xB04AC842, "MeowHash64low","MeowHash (requires x64 AES-NI)", POOR },
+  { MeowHash128_test,    128, 0xA0D29861, "MeowHash",     "MeowHash (requires x64 AES-NI)", POOR },
 #endif
   { t1ha1_64le_test,      64, 0xD6836381, "t1ha1_64le",  "Fast Positive Hash (portable, aims 64-bit, little-endian)", POOR },
   { t1ha1_64be_test,      64, 0x93F864DE, "t1ha1_64be",  "Fast Positive Hash (portable, aims 64-bit, big-engian)", POOR },
   { t1ha0_32le_test,      64, 0x7F7D7B29, "t1ha0_32le",  "Fast Positive Hash (portable, aims 32-bit, little-endian)", POOR },
   { t1ha0_32be_test,      64, 0xDA6A4061, "t1ha0_32be",  "Fast Positive Hash (portable, aims 32-bit, big-endian)", POOR },
-  { xxh3_test,            64, 0x5921E69E, "xxh3",        "xxHash v3, 64-bit", POOR },
-  { xxh3low_test,         32, 0xAC902311, "xxh3low",     "xxHash v3, 64-bit, low 32-bits part", POOR },
-  { xxh128_test,         128, 0x80E5D1DF, "xxh128",      "xxHash v3, 128-bit", POOR },
-  { xxh128low_test,       64, 0xB1BB6A50, "xxh128low",   "xxHash v3, 128-bit, low 64-bits part", POOR },
 
 #if __WORDSIZE >= 64
 # define TIFU_VERIF       0x644236D4
@@ -260,19 +284,34 @@ HashInfo g_hashes[] =
 #endif
   // and now the quality hash funcs, slowest first
   { tifuhash_64,          64, TIFU_VERIF, "tifuhash_64", "Tiny Floatingpoint Unique Hash with continued egyptian fractions", POOR },
+  { beamsplitter_64,      64, 0x1BDF358B, "beamsplitter","A possibly universal hash made with a 10x64 s-box.", GOOD },
   // different verif on gcc vs clang
-  { floppsyhash_64,       64, 0x0, "floppsyhash_64", "slow hash designed for floating point hardware", GOOD },
+  { floppsyhash_64,       64, 0x0,        "floppsyhash", "slow hash designed for floating point hardware", GOOD },
   { chaskey_test,         64, 0x81A90131, "chaskey",     "mouha.be/chaskey/ with added seed support", GOOD },
   { siphash_test,         64, 0xC58D7F9C, "SipHash",     "SipHash 2-4 - SSSE3 optimized", GOOD },
   { halfsiphash_test,     32, 0xA7A05F72, "HalfSipHash", "HalfSipHash 2-4, 32bit", GOOD },
   { GoodOAAT_test,        32, 0x7B14EEE5, "GoodOAAT",    "Small non-multiplicative OAAT", GOOD },
+#ifdef HAVE_INT64
+  { prvhash42_32test,     32, 0x306E660B, "prvhash42_32", "prvhash42 32bit", GOOD },
+  { prvhash42_64test,     64, 0x828B1D67, "prvhash42_64", "prvhash42 64bit", GOOD },
+  { prvhash42_128test,   128, 0xCA2E25C1, "prvhash42_128","prvhash42 128bit", GOOD },
+  { prvhash42s_32test,    32, 0x0A19FAFC, "prvhash42s_32","prvhash42s 32bit", GOOD },
+  { prvhash42s_64test,    64, 0x4E1925F3, "prvhash42s_64","prvhash42s 64bit", GOOD },
+  { prvhash42s_128test,  128, 0xAD6FE7FE, "prvhash42s_128","prvhash42s 128bit", GOOD },
+#endif
   // as in rust and swift:
   { siphash13_test,       64, 0x29C010BF, "SipHash13",   "SipHash 1-3 - SSSE3 optimized", GOOD },
+#if defined(_MSC_VER) && defined(LTO)
+#  define BEBB4185_VERIF          0xB7013C8F
+#else
+#  define BEBB4185_VERIF          0xBEBB4185
+#endif
+  { BEBB4185_64,          64, BEBB4185_VERIF, "BEBB4185", "BEBB4185 64", GOOD },
 #ifndef _MSC_VER
   { tsip_test,            64, 0x8E48155B, "TSip",        "Damian Gryski's Tiny SipHash variant", GOOD },
 #ifdef HAVE_INT64
-  { seahash_test,         64, 0x5449DB26, "seahash",     "seahash (64-bit, little-endian)", GOOD },
-  { seahash32low,         32, 0xFD867C5F, "seahash32low","seahash - lower 32bit", GOOD },
+  { seahash_test,         64, 0xF0374078, "seahash",     "seahash (64-bit, little-endian)", GOOD },
+  { seahash32low,         32, 0x712F0EE8, "seahash32low","seahash - lower 32bit", GOOD },
 #endif /* HAVE_INT64 */
 #endif /* !MSVC */
 #if defined(__SSE4_2__) && defined(__x86_64__)
@@ -314,7 +353,7 @@ HashInfo g_hashes[] =
   { CityHashCrc128_test, 128, 0xD4389C97, "CityCrc128",  "Google CityHashCrc128WithSeed SSE4.2 (old)", GOOD },
 #endif
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__)
 #  define FARM64_VERIF        0x0
 #  define FARM128_VERIF       0x0
 #else
@@ -338,44 +377,41 @@ HashInfo g_hashes[] =
   { SpookyHash32_test,    32, 0x3F798BBB, "Spooky32",    "Bob Jenkins' SpookyHash, 32-bit result", GOOD },
   { SpookyHash64_test,    64, 0xA7F955F1, "Spooky64",    "Bob Jenkins' SpookyHash, 64-bit result", GOOD },
   { SpookyHash128_test,  128, 0x8D263080, "Spooky128",   "Bob Jenkins' SpookyHash, 128-bit result", GOOD },
+  { pengyhash_test,       64, 0x1FC2217B, "pengyhash",   "pengyhash", GOOD },
+  { mx3hash64_test,       64, 0x4DB51E5B, "mx3",         "mx3 64bit", GOOD },
+#if defined(__SSE4_2__) && defined(__x86_64__) && !defined(_MSC_VER)
+  { umash32,              32, 0x2F0C2CC6, "umash32",     "umash 32", GOOD },
+  { umash32_hi,           32, 0xD323A67D, "umash32_hi",  "umash 32 hi", GOOD },
+  { umash,                64, 0x7518A050, "umash64",     "umash 64", GOOD },
+  { umash128,            128, 0x1ED02AAA, "umash128",    "umash 128", GOOD },
+#endif
+  
   { t1ha2_atonce_test,           64, 0x8F16C948, "t1ha2_atonce",    "Fast Positive Hash (portable, aims 64-bit, little-endian)", GOOD },
   { t1ha2_stream_test,           64, 0xDED9B580, "t1ha2_stream",    "Fast Positive Hash (portable, aims 64-bit, little-endian)", POOR },
   { t1ha2_atonce128_test,       128, 0xB44C43A1, "t1ha2_atonce128", "Fast Positive Hash (portable, aims 64-bit, little-endian)", GOOD },
   { t1ha2_stream128_test,       128, 0xE929E756, "t1ha2_stream128", "Fast Positive Hash (portable, aims 64-bit, little-endian)", POOR },
-#if 1
-# if T1HA0_AESNI_AVAILABLE
+#if T1HA0_AESNI_AVAILABLE
 #  ifndef _MSC_VER
-  { t1ha0_ia32aes_noavx_test,    64, 0xF07C4DA5, "t1ha0_aes_noavx", "Fast Positive Hash (machine-specific, requires AES-NI)", GOOD },
+  { t1ha0_ia32aes_noavx_test,  64, 0xF07C4DA5, "t1ha0_aes_noavx", "Fast Positive Hash (machine-specific, requires AES-NI)", GOOD },
 #  endif
 #  if defined(__AVX__)
-  { t1ha0_ia32aes_avx1_test,     64, 0xF07C4DA5, "t1ha0_aes_avx1",  "Fast Positive Hash (machine-specific, requires AES-NI & AVX)", GOOD },
+  { t1ha0_ia32aes_avx1_test,   64, 0xF07C4DA5, "t1ha0_aes_avx1",  "Fast Positive Hash (machine-specific, requires AES-NI & AVX)", GOOD },
 #  endif /* __AVX__ */
 #  if defined(__AVX2__)
-  { t1ha0_ia32aes_avx2_test,     64, 0x8B38C599, "t1ha0_aes_avx2",  "Fast Positive Hash (machine-specific, requires AES-NI & AVX2)", GOOD },
+  { t1ha0_ia32aes_avx2_test,   64, 0x8B38C599, "t1ha0_aes_avx2",  "Fast Positive Hash (machine-specific, requires AES-NI & AVX2)", GOOD },
 #  endif /* __AVX2__ */
-# endif /* T1HA0_AESNI_AVAILABLE */
-#endif /* older t1ha */
-#if defined(HAVE_AESNI) && defined(__SIZEOF_INT128__)
-# if defined(HAVE_BIT32)
-#  define MEOW_VERIF           0x2736F5A8
-#  define MEOW32_VERIF         0x8872DE1A
-# else
-#  define MEOW_VERIF           0xA0D29861
-#  define MEOW32_VERIF         0x8872DE1A
-# endif
-  { MeowHash128_test,     128, MEOW_VERIF, "MeowHash",  "Meow hash (requires x64 AES-NI)", POOR },
-  { MeowHash32_test,       32, MEOW32_VERIF, "MeowHash32low",  "Meow hash lower 32bit (requires x64 AES-NI)", POOR },
+#endif /* T1HA0_AESNI_AVAILABLE */
+  { xxh3_test,            64, 0x39CD9E4A, "xxh3",        "xxHash v3, 64-bit", GOOD },
+  { xxh3low_test,         32, 0xFAE8467B, "xxh3low",     "xxHash v3, 64-bit, low 32-bits part", GOOD },
+  { xxh128_test,         128, 0xEB61B3A0, "xxh128",      "xxHash v3, 128-bit", GOOD },
+  { xxh128low_test,       64, 0x54D1CC70, "xxh128low",   "xxHash v3, 128-bit, low 64-bits part", GOOD },
+#ifdef HAVE_BIT32
+  { wyhash32_test,         32, 0x09DE8066, "wyhash32",       "wyhash (32-bit)", GOOD },
+#else
+  { wyhash32low,           32, 0xDCFB4E8F, "wyhash32low",    "wyhash lower 32bit", GOOD },
 #endif
 #ifdef HAVE_INT64
-# define WYHASH_VERIF     0x025E5797
-# define WYHASH32L_VERIF  0x86A66572
-# ifdef DEBUG
-  { wysha,                 32, 0xD09A85B3, "wysha",          "wyhash v4 test", GOOD },
-# endif
-  { wyhash_test,           64, WYHASH_VERIF, "wyhash",          "wyhash v4 (64-bit, little-endian)", GOOD },
-  { wyhash32low,           32, WYHASH32L_VERIF,"wyhash32low",   "wyhash v4 - lower 32bit", GOOD }
-#else
-  { NULL }
+  { wyhash_test,           64, 0x8323EB7E, "wyhash",         "wyhash (64-bit)", GOOD },
 #endif
 
 };
@@ -395,11 +431,28 @@ HashInfo * findHash ( const char * name )
 void Hash_init (HashInfo* info) {
   if (info->hash == sha2_224_64)
     sha224_init(&ltc_state);
+  //else if (info->hash == md5_128 || info->hash == md5_32)
+  //  md5_init();
   else if (info->hash == rmd128)
     rmd128_init(&ltc_state);
+#ifdef __SIZEOF_INT128__
+  else if(info->hash == multiply_shift || info->hash == pair_multiply_shift)
+    multiply_shift_init();
+  else if(info->hash == poly_0_mersenne || info->hash == poly_1_mersenne || info->hash == poly_2_mersenne || info->hash == poly_3_mersenne || info->hash == poly_4_mersenne)
+    poly_mersenne_init();
+  else if(info->hash == tabulation_test)
+    tabulation_init();
+#endif
+  else if(info->hash == tabulation_32_test)
+    tabulation_32_init();
 #if defined(__SSE4_2__) && defined(__x86_64__)
   else if(info->hash == clhash_test)
     clhash_init();
+  //else if(info->hash == umash32_test ||
+  //        info->hash == umash32hi_test ||
+  //        info->hash == umash64_test ||
+  //        info->hash == umash128_test)
+  //  umash_init();
 #endif
   else if (info->hash == VHASH_32 || info->hash == VHASH_64)
     VHASH_init();
@@ -415,6 +468,45 @@ void Hash_init (HashInfo* info) {
     chaskey_init();
 }
 
+// optional hash seed initializers.
+// esp. for Hashmaps, whenever the seed changes, for expensive seeding.
+void Seed_init (HashInfo* info, size_t seed) {
+  Hash_Seed_init (info->hash, seed);
+}
+
+void Hash_Seed_init (pfHash hash, size_t seed) {
+  //if (hash == md5_128 || hash == md5_32)
+  //  md5_seed_init(seed);
+  //if (hash == VHASH_32 || hash == VHASH_64)
+  //  VHASH_seed_init(seed);
+  if (true)
+     ;
+#ifdef __SIZEOF_INT128__
+  else if(hash == multiply_shift || hash == pair_multiply_shift)
+    multiply_shift_seed_init(seed);
+  else if(hash == poly_0_mersenne || hash == poly_1_mersenne || hash == poly_2_mersenne || hash == poly_3_mersenne || hash == poly_4_mersenne)
+    poly_mersenne_seed_init(seed);
+  else if(hash == tabulation_test)
+    tabulation_seed_init(seed);
+#endif
+  else if(hash == tabulation_32_test)
+    tabulation_32_seed_init(seed);
+#if defined(__SSE4_2__) && defined(__x86_64__)
+  else if (hash == clhash_test)
+    clhash_seed_init(seed);
+  else if (hash == umash32 ||
+          hash == umash32_hi ||
+          hash == umash ||
+          hash == umash128)
+    umash_seed_init(seed);
+  /*
+  else if(hash == hashx_test)
+    hashx_seed_init(info, seed);
+  */
+#endif
+}
+
+
 //-----------------------------------------------------------------------------
 // Self-test on startup - verify that all installed hashes work correctly.
 
@@ -424,8 +516,7 @@ void SelfTest(bool verbose) {
     HashInfo *info = &g_hashes[i];
     if (verbose)
       printf("%20s - ", info->name);
-    pass &= VerificationTest(info->hash, info->hashbits, info->verification,
-                             verbose);
+    pass &= VerificationTest(info, verbose);
   }
 
   if (!pass) {
@@ -434,8 +525,7 @@ void SelfTest(bool verbose) {
       for (size_t i = 0; i < sizeof(g_hashes) / sizeof(HashInfo); i++) {
         HashInfo *info = &g_hashes[i];
         printf("%20s - ", info->name);
-        pass &= VerificationTest(info->hash, info->hashbits, info->verification,
-                                 true);
+        pass &= VerificationTest(info, true);
       }
     }
     exit(1);
@@ -479,7 +569,8 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     printf("[[[ Sanity Tests ]]]\n\n");
     fflush(NULL);
 
-    VerificationTest(hash,hashbits,info->verification,true);
+    VerificationTest(info,true);
+    Seed_init (info, 0);
     SanityTest(hash,hashbits);
     AppendedZeroesTest(hash,hashbits);
     printf("\n");
@@ -495,13 +586,15 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     printf("[[[ Speed Tests ]]]\n\n");
     fflush(NULL);
 
+    Seed_init (info, info->verification);
     BulkSpeedTest(info->hash,info->verification);
     printf("\n");
     fflush(NULL);
 
     for(int i = 1; i < 32; i++)
     {
-      sum += TinySpeedTest(hashfunc<hashtype>(info->hash),sizeof(hashtype),i,info->verification,true);
+      volatile int j = i;
+      sum += TinySpeedTest(hashfunc<hashtype>(info->hash),sizeof(hashtype),j,info->verification,true);
     }
     g_speed = sum = sum / 31.0;
     printf("Average                                    %6.3f cycles/hash\n",sum);
@@ -509,9 +602,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     fflush(NULL);
   } else {
     // known slow hashes (> 500), cycle/hash
-    const struct { pfHash h; double cycles; } speeds[] =
-    {{ multiply_shift,    50.50 },
-     { pair_multiply_shift,31.71},
+    const struct { pfHash h; double cycles; } speeds[] = {
      { md5_32,           670.99 },
      { md5_128,          730.30 },
      { sha1_32a,        1385.80 },
@@ -534,7 +625,9 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
      { blake2b256_64,   1236.84 },
      { sha3_256,        3877.18 },
      { sha3_256_64,     3909.00 },
-     { tifuhash_64,     1679.52 }
+     { tifuhash_64,     1679.52 },
+     { floppsyhash_64,   450.93 },
+     { beamsplitter_64,  682.45 },
     };
     for (int i=0; i<sizeof(speeds)/sizeof(speeds[0]); i++) {
       if (speeds[i].h == hash)
@@ -550,7 +643,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     printf("[[[ 'Hashmap' Speed Tests ]]]\n\n");
     fflush(NULL);
     int trials = 50;
-    if ((g_speed > 500 /*|| hash == multiply_shift || hash == pair_multiply_shift*/ )
+    if ((g_speed > 500)
          && !g_testExtra)
       trials = 5;
     bool result = true;
@@ -558,7 +651,11 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
       result = false;
     } else {
       std::vector<std::string> words = HashMapInit(g_drawDiagram);
-      result &= HashMapTest(hash,info->hashbits,words,trials,g_drawDiagram);
+      if (words.size()) {
+        const uint32_t seed = rand_u32();
+        Seed_init (info, seed);
+        result &= HashMapTest(hash,info->hashbits,words,seed,trials,g_drawDiagram);
+      }
     }
     if(!result) printf("*********FAIL*********\n");
     printf("\n");
@@ -579,6 +676,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     bool result = true;
     bool verbose = g_drawDiagram; //.......... progress dots
 
+    Seed_init (info, 0);
     result &= AvalancheTest< Blob< 24>, hashtype > (hash,300000,verbose);
     result &= AvalancheTest< Blob< 32>, hashtype > (hash,300000,verbose);
     result &= AvalancheTest< Blob< 40>, hashtype > (hash,300000,verbose);
@@ -635,7 +733,8 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     fflush(NULL);
 
     bool result = true;
-   
+
+    Seed_init (info, 0);
       result &= SparseKeyTest<  16,hashtype>(hash,9,true,true,true, g_drawDiagram);
       result &= SparseKeyTest<  24,hashtype>(hash,8,true,true,true, g_drawDiagram);
       result &= SparseKeyTest<  32,hashtype>(hash,7,true,true,true, g_drawDiagram);
@@ -713,6 +812,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
 
       uint32_t blocks[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
+      Seed_init (info, 0);
       result &= CombinationKeyTest<hashtype>(hash,7,blocks,
                                              sizeof(blocks) / sizeof(uint32_t),
                                              true,true, g_drawDiagram);
@@ -1008,6 +1108,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     int windowbits = 20;
     const int keybits = (hashbits >= 64) ? 32 : hashbits*2+2;
 
+    Seed_init (info, 0);
     result &= WindowedKeyTest< Blob<keybits>, hashtype >
       ( hash, windowbits, testCollision, testDistribution, g_drawDiagram );
 
@@ -1032,6 +1133,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
 #endif
     bool result = true;
 
+    Seed_init (info, 0);
     result &= CyclicKeyTest<hashtype>(hash,sizeof(hashtype)+0,8,reps, g_drawDiagram);
     result &= CyclicKeyTest<hashtype>(hash,sizeof(hashtype)+1,8,reps, g_drawDiagram);
     result &= CyclicKeyTest<hashtype>(hash,sizeof(hashtype)+2,8,reps, g_drawDiagram);
@@ -1067,6 +1169,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
         maxlen = 8;
     }
 
+    Seed_init (info, 0);
     for(int len = 4; len <= maxlen; len += 4)
     {
       result &= TwoBytesTest2<hashtype>(hash, len, g_drawDiagram);
@@ -1087,10 +1190,19 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     bool result = true;
 
     const char * alnum = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    const char * passwordchars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+                                 ".,!?:;-+=()<>/|\"'@#$%&*_^";
 
+    Seed_init (info, 0);
     result &= TextKeyTest( hash, "Foo",    alnum, 4, "Bar",    g_drawDiagram );
     result &= TextKeyTest( hash, "FooBar", alnum, 4, "",       g_drawDiagram );
     result &= TextKeyTest( hash, "",       alnum, 4, "FooBar", g_drawDiagram );
+
+    // maybe use random-len vector of strings here, from len 6-16
+    result &= WordsKeyTest( hash, 4000000L, 6, 16, alnum, "alnum", g_drawDiagram );
+    result &= WordsKeyTest( hash, 4000000L, 6, 16, passwordchars, "password", g_drawDiagram );
+    std::vector<std::string> words = HashMapInit(g_drawDiagram);
+    result &= WordsStringTest( hash, words, g_drawDiagram );
 
     if(!result) printf("*********FAIL*********\n");
     printf("\n");
@@ -1106,6 +1218,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
 
     bool result = true;
 
+    Seed_init (info, 0);
     result &= ZeroKeyTest<hashtype>( hash, g_drawDiagram );
 
     if(!result) printf("*********FAIL*********\n");
@@ -1130,9 +1243,34 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
   }
 
   //-----------------------------------------------------------------------------
+  // Keyset 'PerlinNoise'
+
+  if(g_testPerlinNoise || g_testAll)
+  {
+    printf("[[[ Keyset 'PerlinNoise' Tests ]]]\n\n");
+
+    bool testCollision = true;
+    bool testDistribution = g_testExtra;
+
+    bool result = true;
+    Seed_init (info, 0);
+    result &= PerlinNoise<hashtype>( hash, 2, testCollision, testDistribution, g_drawDiagram );
+    if (g_testExtra) {
+        result &= PerlinNoise<hashtype>( hash, 4, testCollision, testDistribution, g_drawDiagram );
+        result &= PerlinNoise<hashtype>( hash, 8, testCollision, testDistribution, g_drawDiagram );
+        result &= PerlinNoise<hashtype>( hash,16, testCollision, testDistribution, g_drawDiagram );
+    }
+
+    if(!result) printf("*********FAIL*********\n");
+    printf("\n");
+    fflush(NULL);
+  }
+
+
+  //-----------------------------------------------------------------------------
   // Differential tests
   // 5m30 with xxh3
-  // less reps with slow hashes
+  // less reps with slow or very bad hashes
   // md5: 1h38m with 1000 reps!
 
   if(g_testDiff || g_testAll)
@@ -1144,8 +1282,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     bool dumpCollisions = g_drawDiagram; // from --verbose
     int reps = 1000;
     if ((g_speed > 500.0 || info->hashbits > 128 ||
-         hash == multiply_shift || hash == pair_multiply_shift
-         ) && !g_testExtra)
+         hash == o1hash_test) && !g_testExtra)
       reps = 100; // sha1: 7m, md5: 4m53
 
     result &= DiffTest< Blob<64>,  hashtype >(hash,5,reps,dumpCollisions);
@@ -1161,7 +1298,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
   // Differential-distribution tests
   // 2m40 with xxh3
 
-  if(g_testDiffDist || g_testAll)
+  if (g_testDiffDist || g_testAll)
   {
     printf("[[[ DiffDist 'Differential Distribution' Tests ]]]\n\n");
     fflush(NULL);
@@ -1187,12 +1324,33 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
   //   7     35s
   //   13    20s
   //   16    12s
-  if(g_testMomentChi2 || g_testAll)
+  if (g_testMomentChi2 || g_testAll)
   {
     printf("[[[ MomentChi2 Tests ]]]\n\n");
 
     bool result = true;
-    result &= MomentChi2Test(info);
+    result &= MomentChi2Test(info, 4);
+    if (g_testExtra) {
+        result &= MomentChi2Test(info, 8);
+        result &= MomentChi2Test(info, 16);
+    }
+
+    if(!result) printf("\n*********FAIL*********\n");
+    printf("\n");
+    fflush(NULL);
+  }
+
+
+  if (g_testPrng || g_testAll)
+  {
+    printf("[[[ Prng Tests ]]]\n\n");
+
+    bool testCollision = true;
+    bool testDistribution = g_testExtra;
+
+    bool result = true;
+    Seed_init (info, 0);
+    result &= PrngTest<hashtype>( hash, testCollision, testDistribution, g_drawDiagram );
 
     if(!result) printf("\n*********FAIL*********\n");
     printf("\n");
@@ -1215,6 +1373,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
 
     bool result = true;
 
+    Seed_init (info, 0);
     result &= testLongNeighbors(info->hash, info->hashbits, g_drawDiagram);
 
     if(!result) printf("*********FAIL*********\n");
@@ -1229,12 +1388,13 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
   // 4m with xxh3
   // 152m with farmhash128_c with reps=1000000, => 8m with 100000
 
-  if(g_testBIC || (info->hashbits > 64 && g_testExtra))
+  if(g_testBIC || (g_testAll && info->hashbits > 64 && g_testExtra))
   {
     printf("[[[ BIC 'Bit Independence Criteria' Tests ]]]\n\n");
     fflush(NULL);
 
     bool result = true;
+    Seed_init (info, 0);
     if (info->hashbits > 64 || g_speed > 500.0) {
       result &= BicTest3<Blob<128>,hashtype>(hash,100000,g_drawDiagram);
     } else {
@@ -1247,7 +1407,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
     printf("\n");
     fflush(NULL);
   }
-  
+
 }
 
 //-----------------------------------------------------------------------------
@@ -1269,53 +1429,152 @@ void VerifyHash ( const void * key, int len, uint32_t seed, void * out )
 }
 
 // sha1_32a: 23m with step 3
-bool MomentChi2Test ( struct HashInfo *info )
+bool MomentChi2Test ( struct HashInfo *info, int inputSize)
 {
-  pfHash hash = info->hash;
-  const int size = info->hashbits / 8;
+  pfHash const hash = info->hash;
   const int step = ((g_speed > 500 || info->hashbits > 128)
                     && !g_testExtra) ? 6 : 3;
-  unsigned k = 0, s = 0;
-  unsigned long l, h, x;
   const unsigned mx = 0xfffffff0;
-  long double sa=0, saa=0, sb=0, sbb=0,	n = mx/step;
-  hash(&k,sizeof(k),s,&l);
-  printf("Running 1st unseeded MomentChi2 for the low 32bits/step %d ... ", step);
-  fflush(NULL);
-  for(unsigned i=1; i<=mx; i+=step){
-    hash(&i,sizeof(i),s,&h);
-    x = popcount8(l^h); // check the lower 32bits only
-    x = x*x*x*x*x;
-    sa+=x; saa+=x*x; l=h;
-  }
-  sa/=n; saa=(saa/n-sa*sa)/n;
-  printf("%Lf - %Lf\n", sa, saa);
-  printf("Running 2nd   seeded MomentChi2 for the low 32bits/step %d ... ", step);
-  fflush(NULL);
-  hash(&k,sizeof(k),s,&l);
-  for(unsigned i=1; i<=mx; i+=step){
-    hash(&k,sizeof(k),i,&h);
-    x = popcount8(l^h);
-    x = x*x*x*x*x;
-    sb+=x; sbb+=x*x; l=h;
-  }
-  sb/=n; sbb=(sbb/n-sb*sb)/n;
+  assert(inputSize >= 4);
+  long double const n = mx/step;
+#define INPUT_SIZE_MAX 256
+  assert(inputSize <= INPUT_SIZE_MAX);
+  char key[INPUT_SIZE_MAX] = {0};
+#define HASH_SIZE_MAX 64
+  int hbits = info->hashbits;
+  assert(hbits <= HASH_SIZE_MAX*8);
+  char hbuff[HASH_SIZE_MAX] = {0};
 
-  double chi2=(sa-sb)*(sa-sb)/(saa+sbb);
-  printf("%Lf - %Lf\nKeySeedMomentChi2:\t%g\t", sb, sbb, chi2);
+  assert(inputSize > 0);
+  printf("Analyze hashes produced from a serie of linearly increasing numbers "
+         "of %i-bit, using a step of %d ... \n", inputSize*8, step);
   fflush(NULL);
-  if (chi2 > 3.84145882069413)
-  {
-    printf("FAIL!!!!\n");
-    fflush(NULL);
-    return false;
+
+  /* Notes on the ranking system.
+   * Ideally, this test should report and sum all popcount values
+   * and compare the resulting distribution to an ideal distribution.
+   *
+   * What happens here is quite simplified :
+   * the test gives "points" for each popcount, and sum them all.
+   * The metric (using N^5) is heavily influenced by the largest outliers.
+   * For example, a 64-bit hash should have a popcount close to 32.
+   * But a popcount==40 will tilt the metric upward
+   * more than popcount==24 will tilt the metric downward.
+   * In reality, both situations should be ranked similarly.
+   *
+   * To compensate, we measure both popcount1 and popcount0,
+   * and compare to some pre-calculated "optimal" sums for the hash size.
+   *
+   * Another limitation of this test is that it only popcounts the first 64-bit.
+   * For large hashes, bits beyond this limit are ignored.
+   */
+
+  if (hbits > 64) hbits = 64;   // limited due to popcount8
+  long double srefh, srefl;
+  switch (hbits/8) {
+      case 8:
+          srefh = 38918200.;
+          srefl = 410450.;
+          break;
+      case 4:
+          srefh = 1391290.;
+          srefl = 1030.9;
+          break;
+      default:
+          printf("hash size not covered \n");
+          abort();
   }
-  else
-  {
-    printf("PASS\n");
-    fflush(NULL);
-    return true;
+  printf("Target values to approximate : %Lf - %Lf \n", srefh, srefl);
+
+  unsigned const seed = 0;
+  uint64_t previous = 0;
+  long double b1h = 0. , b1l = 0., db1h = 0., db1l = 0.;
+  long double b0h = 0. , b0l = 0., db0h = 0., db0l = 0.;
+  Hash_Seed_init (hash, seed);
+  for (unsigned i=1; i<=mx; i+=step) {
+    assert(sizeof(i) <= inputSize);
+    memcpy(key, &i, sizeof(i));
+    hash(key, inputSize, seed, hbuff);
+
+    uint64_t h; memcpy(&h, hbuff, 8);
+    // popcount8 assumed to work on 64-bit
+    // note : ideally, one should rather popcount the whole hash
+    {   uint64_t const bits1 = popcount8(h);
+        uint64_t const bits0 = hbits - bits1;
+        uint64_t const b1_exp5 = bits1 * bits1 * bits1 * bits1 * bits1;
+        uint64_t const b0_exp5 = bits0 * bits0 * bits0 * bits0 * bits0;
+        b1h+=b1_exp5; b1l+=b1_exp5*b1_exp5;
+        b0h+=b0_exp5; b0l+=b0_exp5*b0_exp5;
+    }
+    // derivative
+    {   uint64_t const bits1 = popcount8(previous^h);
+        uint64_t const bits0 = hbits - bits1;
+        uint64_t const b1_exp5 = bits1 * bits1 * bits1 * bits1 * bits1;
+        uint64_t const b0_exp5 = bits0 * bits0 * bits0 * bits0 * bits0;
+        db1h+=b1_exp5; db1l+=b1_exp5*b1_exp5;
+        db0h+=b0_exp5; db0l+=b0_exp5*b0_exp5;
+    }
+    previous=h;
   }
+
+  b1h/=n; b1l=(b1l/n-b1h*b1h)/n;
+  db1h/=n; db1l=(db1l/n-db1h*db1h)/n;
+  b0h/=n; b0l=(b0l/n-b0h*b0h)/n;
+  db0h/=n; db0l=(db0l/n-db0h*db0h)/n;
+
+  printf("Popcount 1 stats : %Lf - %Lf\n", b1h, b1l);
+  printf("Popcount 0 stats : %Lf - %Lf\n", b0h, b0l);
+  double worsec2 = 0;
+  {   double chi2 = (b1h-srefh) * (b1h-srefh) / (b1l+srefl);
+      printf("MomentChi2 for bits 1 :  %8.6g \n", chi2);
+      if (chi2 > worsec2) worsec2 = chi2;
+  }
+  {   double chi2 = (b0h-srefh) * (b0h-srefh) / (b0l+srefl);
+      printf("MomentChi2 for bits 0 :  %8.6g \n", chi2);
+      if (chi2 > worsec2) worsec2 = chi2;
+  }
+
+  /* Derivative :
+   * In this scenario, 2 consecutive hashes are xored,
+   * and the outcome of this xor operation is then popcount controlled.
+   * Obviously, the _order_ in which the hash values are generated becomes critical.
+   *
+   * This scenario comes from the prng world,
+   * where derivative of the generated suite of random numbers is analyzed
+   * to ensure the suite is truly "random".
+   *
+   * However, in almost all prng, the seed of next random number is the previous random number.
+   *
+   * This scenario is quite different: it introduces a fixed distance between 2 consecutive "seeds".
+   * This is especially detrimental to algorithms relying on linear operations, such as multiplications.
+   *
+   * This scenario is relevant if the hash is used as a prng and generates values from a linearly increasing counter as a seed.
+   * It is not relevant for scenarios employing the hash as a prng
+   * with the more classical method of using the previous random number as a seed for the next one.
+   * This scenario has no relevance for classical usages of hash algorithms,
+   * such as hash tables, bloom filters and such, were only the raw values are ever used.
+   */
+  printf("\nDerivative stats (transition from 2 consecutive values) : \n");
+  printf("Popcount 1 stats : %Lf - %Lf\n", db1h, db1l);
+  printf("Popcount 0 stats : %Lf - %Lf\n", db0h, db0l);
+  {   double chi2 = (db1h-srefh) * (db1h-srefh) / (db1l+srefl);
+      printf("MomentChi2 for deriv b1 :  %8.6g \n", chi2);
+      if (chi2 > worsec2) worsec2 = chi2;
+  }
+  {   double chi2 = (db0h-srefh) * (db0h-srefh) / (db0l+srefl);
+      printf("MomentChi2 for deriv b0 :  %8.6g \n", chi2);
+      if (chi2 > worsec2) worsec2 = chi2;
+  }
+
+  // note : previous threshold : 3.84145882069413
+  int const rank = (worsec2 < 500.) + (worsec2 < 50.) + (worsec2 < 5.);
+  assert(0 <= rank && rank <= 3);
+
+  const char* rankstr[4] = { "FAIL !!!!", "pass", "Good !", "Great !!" };
+  printf("\n  %s \n\n", rankstr[rank]);
+  fflush(NULL);
+
+  return (rank > 0);
 }
 
 
@@ -1382,68 +1641,74 @@ static char* strndup(char const *s, size_t n)
 
 int main ( int argc, const char ** argv )
 {
-#ifdef DEBUG
-  const char * defaulthash = "wysha";
-#elif (defined(__x86_64__) && __SSE4_2__) || defined(_M_X64) || defined(_X86_64_)
-  const char * defaulthash = "xxh3"; // because it fails some tests
+#if defined(__x86_64__) || defined(_M_X64) || defined(_X86_64_)
+  const char * defaulthash = "xxh3";
 #else
   const char * defaulthash = "wyhash";
 #endif
   const char * hashToTest = defaulthash;
 
-  if(argc < 2) {
+  if (argc < 2) {
     printf("No test hash given on command line, testing %s.\n", hashToTest);
     printf("Usage: SMHasher [--list][--listnames][--tests] [--verbose][--extra]\n"
            "       [--test=Speed,...] hash\n");
   }
-  else {
-    int i = 1;
-    hashToTest = argv[i];
 
-    if (strncmp(hashToTest,"--", 2) == 0) {
-      if (strcmp(hashToTest,"--help") == 0) {
+  for (int argnb = 1; argnb < argc; argnb++) {
+    const char* const arg = argv[argnb];
+    if (strncmp(arg,"--", 2) == 0) {
+      // This is a command
+      if (strcmp(arg,"--help") == 0) {
         printf("Usage: SMHasher [--list][--listnames][--tests] [--verbose][--extra]\n"
                "       [--test=Speed,...] hash\n");
         exit(0);
       }
-      if (strcmp(hashToTest,"--list") == 0) {
+      if (strcmp(arg,"--list") == 0) {
         for(size_t i = 0; i < sizeof(g_hashes) / sizeof(HashInfo); i++) {
           printf("%-16s\t\"%s\" %s\n", g_hashes[i].name, g_hashes[i].desc, quality_str[g_hashes[i].quality]);
         }
         exit(0);
       }
-      if (strcmp(hashToTest,"--listnames") == 0) {
+      if (strcmp(arg,"--listnames") == 0) {
         for(size_t i = 0; i < sizeof(g_hashes) / sizeof(HashInfo); i++) {
           printf("%s\n", g_hashes[i].name);
         }
         exit(0);
       }
-      if (strcmp(hashToTest,"--tests") == 0) {
+      if (strcmp(arg,"--tests") == 0) {
         printf("Valid tests:\n");
         for(size_t i = 0; i < sizeof(g_testopts) / sizeof(TestOpts); i++) {
           printf("  %s\n", g_testopts[i].name);
         }
         exit(0);
       }
-      if (strcmp(hashToTest,"--verbose") == 0) {
+      if (strcmp(arg,"--verbose") == 0) {
         g_drawDiagram = true;
-        i++;
-        if (argc > i)
-          hashToTest = argv[i];
-        else
-          hashToTest = defaulthash;
+        continue;
       }
-      if (strcmp(hashToTest,"--extra") == 0) {
+      if (strcmp(arg,"--extra") == 0) {
         g_testExtra = true;
-        i++;
-        if (argc > i)
-          hashToTest = argv[i];
-        else
-          hashToTest = defaulthash;
+        continue;
+      }
+      if (strcmp(arg,"--EstimateNbCollisions") == 0) {
+        printf ("EstimateNbCollisions:\n");
+        const int keys[] = {86536545, 44251425, 33554432, 22370049, 16777216, 15082603, 14776336, 14196869,
+                            8303633, 5000000, 4514873, 3469497, 2796417, 2396744, 2096896, 1271626, 1000000,
+                            524801, 204800, 200000, 102774, 100000, 77163};
+        const int bits[] = {64, 37, 35, 32, 30, 27, 25, 12, 8};
+        for (int i = 0; i < sizeof(keys)/sizeof(keys[0]); i++) {
+          const int key = keys[i];
+          for (int j = 0; j < sizeof(bits)/sizeof(bits[0]); j++) {
+            const int bit = bits[j];
+            // 77163 - 32 => 0.5
+            printf ("%8d - %2d: %0.1f\n", key, bit, EstimateNbCollisions(key, bit));
+          }
+        }
+        exit(0);
       }
       /* default: --test=All. comma seperated list of options */
-      if (strncmp(hashToTest,"--test=", 6) == 0) {
-        char *opt = (char *)&hashToTest[7];
+      if (strncmp(arg,"--test=", 6) == 0) {
+        char *opt = (char *)&arg[7];
         char *rest = opt;
         char *p;
         bool found = false;
@@ -1455,7 +1720,7 @@ int main ( int argc, const char ** argv )
           } else {
             opt = rest;
           }
-          for(size_t i = 0; i < sizeof(g_testopts) / sizeof(TestOpts); i++) {
+          for (size_t i = 0; i < sizeof(g_testopts) / sizeof(TestOpts); i++) {
             if (strcmp(opt, g_testopts[i].name) == 0) {
               g_testopts[i].var = true; found = true; break;
             }
@@ -1466,17 +1731,20 @@ int main ( int argc, const char ** argv )
             for(size_t i = 1; i < sizeof(g_testopts) / sizeof(TestOpts); i++) {
               printf(",%s", g_testopts[i].name);
             }
-            printf("\n");
-            exit(0);
+            printf(" \n");
+            exit(1);
           }
         } while (p);
+        continue;
       }
-      i++;
-      if (argc > i)
-        hashToTest = argv[i];
-      else
-        hashToTest = defaulthash;
+      // invalid command
+      printf("Invalid command \n");
+      printf("Usage: SMHasher [--list][--listnames][--tests] [--verbose][--extra]\n"
+             "       [--test=Speed,...] hash\n");
+      exit(1);
     }
+    // Not a command ? => interpreted as hash name
+    hashToTest = arg;
   }
 
   // Code runs on the 3rd CPU by default? only for speed tests

@@ -5,8 +5,9 @@ use File::Basename 'basename';
 my $endtest = qr(^(?:---|\[\[\[ |Input vcode 0x));
 # mkdir partests; build/SMHasher --list|perl -alne'print $F[0] | parallel -j4 --bar 'build/SMHasher --test=Sparse,Permutation,Cyclic,TwoBytes,DiffDist,Text,Zeroes,Seed,Sanity,Avalanche,BIC,LongNeighbors,Diff,MomentChi2 {} >partests/{}'
 # build/SMHasher --list|perl -alne'print $F[0] | parallel -j4 --bar 'build/SMHasher --test=Sparse,Permutation,Cyclic,TwoBytes,DiffDist,Text,Zeroes,Seed {} >lowcoll/{}'
-my @keysettests = qw(Sparse Permutation Cyclic TwoBytes Window Text Zeroes Seed);
-my @othertests = qw(Sanity Avalanche  Diff DiffDist BIC LongNeighbors MomentChi2);
+my @orderedtests = qw(Sanity Speed HashMap Sparse Permutation Window Cyclic TwoBytes Text Zeroes Seed PerlinNoise Diff DiffDist MomentChi2 Prng LongNeighbors BIC );
+my @keysettests = qw(Sparse Permutation Window Cyclic TwoBytes Text Zeroes Seed PerlinNoise);
+my @othertests = qw(Sanity Avalanche Diff DiffDist MomentChi2 Prng LongNeighbors BIC );
 my %tests = map {$_ => 1} @keysettests, @othertests;
 my $testrx = '(' . join('|',@othertests) . ')';
 $testrx = qr($testrx);
@@ -14,7 +15,7 @@ $testrx = qr($testrx);
 if (@ARGV) {
   readf($_) for @ARGV;
 } else {
-  readf($_) for <partests/*>;
+  readf($_) for <partests/*.txt>;
 }
 
 sub readf {
@@ -55,8 +56,8 @@ sub fixup {
   my ($n,$r,$fn) = @_;
   return unless $n;
   return if !%$r;
-  return if "doc/$n" eq $fn;
-  open(my $I, "<", "doc/$n") or die "open doc/$n $!";
+  return if "doc/$n.txt" eq $fn;
+  open(my $I, "<", "doc/$n.txt") or die "open doc/$n.txt $!";
   open(my $O, ">", "doc/$n.new") or die "open doc/$n.new $!";
   my $found;
   my %r = %$r;
@@ -65,7 +66,7 @@ sub fixup {
     # search for $n in doc
     if (/^--- Testing /) {
       if ($found && %r) {
-        print STDERR "tests not in doc/$n:\n", join(" ",sort keys %r), "\n";
+        print STDERR "tests not in doc/$n.txt:\n", join(" ",sort keys %r), "\n";
       }
       $found = /^--- Testing $n /;
     }
@@ -96,9 +97,9 @@ sub fixup {
     }
   }
   if (%r) {
-    print STDERR "finally tests not found in doc/$n:\n", join(" ",sort keys %r), "\n";
+    print STDERR "finally tests not found in doc/$n.txt:\n", join(" ",sort keys %r), "\n";
   }
   close $I;
   close $O;
-  mv ("doc/$n.new", "doc/$n") if $found;
+  mv ("doc/$n.new", "doc/$n.txt") if $found;
 }

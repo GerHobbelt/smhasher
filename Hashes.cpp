@@ -1,3 +1,4 @@
+#define _HASHES_CPP
 #include "Hashes.h"
 #include "Random.h"
 
@@ -128,14 +129,64 @@ fibonacci(const char *key, int len, uint32_t seed)
 size_t
 FNV2(const char *key, int len, size_t seed)
 {
-  size_t h = seed;
+  size_t h;
   size_t *dw = (size_t *)key; //word stepper
   const size_t *const endw = &((const size_t*)key)[len/sizeof(size_t)];
+  int i;
+
 #ifdef HAVE_BIT32
-  h ^= UINT32_C(2166136261);
+  h = seed ^ UINT32_C(2166136261);
 #else
-  h ^= UINT64_C(0xcbf29ce484222325);
+  h = seed ^ UINT64_C(0xcbf29ce484222325);
 #endif
+
+#ifdef HAVE_ALIGNED_ACCESS_REQUIRED
+  // avoid ubsan, misaligned writes
+  if ((i = (uintptr_t)dw % sizeof (size_t))) {
+    uint8_t *dc = (uint8_t*)key;
+    switch (i) {
+    case 1:
+      h ^= *dc++;
+#ifdef HAVE_BIT32
+      h *= UINT32_C(16777619);
+#else
+      h *= UINT64_C(0x100000001b3);
+#endif
+    case 2:
+      h ^= *dc++;
+#ifdef HAVE_BIT32
+      h *= UINT32_C(16777619);
+#else
+      h *= UINT64_C(0x100000001b3);
+#endif
+    case 3:
+      h ^= *dc++;
+#ifdef HAVE_BIT32
+      h *= UINT32_C(16777619);
+#else
+      h *= UINT64_C(0x100000001b3);
+#endif
+#ifndef HAVE_BIT32
+    case 4:
+      h ^= *dc++;
+      h *= UINT64_C(0x100000001b3);
+    case 5:
+      h ^= *dc++;
+      h *= UINT64_C(0x100000001b3);
+    case 6:
+      h ^= *dc++;
+      h *= UINT64_C(0x100000001b3);
+    case 7:
+      h ^= *dc++;
+      h *= UINT64_C(0x100000001b3);
+#endif
+    default:
+      break;
+    }
+    dw = (size_t*)dc; //word stepper
+  }
+#endif
+
   while (dw < endw) {
     h ^= *dw++;
 #ifdef HAVE_BIT32
@@ -550,7 +601,7 @@ extern "C" {
 #endif
 #if defined(__SSE4_2__) && defined(__x86_64__)
   uint32_t	  crc32c_hw(const void *input, int len, uint32_t seed);
-  uint32_t	  crc32c(const void *input, int len, uint32_t seed);
+  uint32_t	  crc32c(const void *input, size_t len, uint32_t seed);
   uint64_t	  crc64c_hw(const void *input, int len, uint32_t seed);
 #endif
 }
@@ -698,61 +749,188 @@ void clhash_init()
   void* data = get_random_key_for_clhash(UINT64_C(0xb3816f6a2c68e530), 711);
   memcpy(clhash_random, data, RANDOM_BYTES_NEEDED_FOR_CLHASH);
 }
+void clhash_seed_init(size_t seed)
+{
+  memcpy(clhash_random, &seed, sizeof(seed));
+}
+#endif
+
+// Multiply shift from
+// Thorup "High Speed Hashing for Integers and Strings" 2018
+// https://arxiv.org/pdf/1504.06804.pdf
+//
+#ifdef __SIZEOF_INT128__
+   const static int MULTIPLY_SHIFT_RANDOM_WORDS = 1<<8;
+   static __uint128_t multiply_shift_random[MULTIPLY_SHIFT_RANDOM_WORDS];
+   const static __uint128_t multiply_shift_r = ((__uint128_t)0x75f17d6b3588f843 << 64) | 0xb13dea7c9c324e51;
+   void multiply_shift(const void * key, int len_bytes, uint32_t seed, void * out) {
+      const uint8_t* buf = (const uint8_t*) key;
+      const int len = len_bytes/8;
+
+      // The output is 64 bits, and we consider the input 64 bit as well,
+      // so our intermediate values are 128.
+      // We mix in len_bytes in the basis, since smhasher considers two keys
+      // of different length to be different, even if all the extra bits are 0.
+      // This is needed for the AppendZero test.
+      uint64_t h = (seed + len_bytes) * multiply_shift_r >> 64;
+      for (int i = 0; i < len; i++, buf += 8)
+         h += multiply_shift_random[i % MULTIPLY_SHIFT_RANDOM_WORDS] * take64(buf) >> 64;
+
+      // Now get the last bytes
+      int remaining_bytes = len_bytes & 7;
+      if (remaining_bytes) {
+         uint64_t last = 0;
+         if (remaining_bytes & 4) {last = take32(buf); buf += 4;}
+         if (remaining_bytes & 2) {last = (last << 16) | take16(buf); buf += 2;}
+         if (remaining_bytes & 1) {last = (last << 8) | take08(buf);}
+         h += multiply_shift_random[len % MULTIPLY_SHIFT_RANDOM_WORDS] * last >> 64;
+      }
+
+      *(uint64_t*)out = h;
+   }
+   static __uint128_t rand128() {
+      // We don't know how many bits we get from rand(),
+      // but it is at least 16, so we concattenate a couple.
+      __uint128_t r = rand();
+      for (int i = 0; i < 7; i++) {
+         r <<= 16;
+         r ^= rand();
+      }
+      return r;
+   }
+   void multiply_shift_seed_init_slow(size_t seed) {
+      srand(seed);
+      for (int i = 0; i < MULTIPLY_SHIFT_RANDOM_WORDS; i++) {
+         multiply_shift_random[i] = rand128();
+         // We don't need an odd multiply, when we add the seed in the beginning
+         //multiply_shift_random[i] |= 1;
+      }
+   }
+   void multiply_shift_seed_init(size_t seed) {
+      // The seeds we get are not random values, but just something like 1, 2 or 3.
+      // So we xor it with a random number to get something slightly more reasonable.
+      multiply_shift_random[0] = (__uint128_t)seed ^ multiply_shift_r;
+   }
+   void multiply_shift_init() {
+      multiply_shift_seed_init_slow(0);
+   }
+
+   // Vector multiply-shift (3.4) from Thorup's notes.
+   void pair_multiply_shift(const void * key, int len_bytes, uint32_t seed, void * out) {
+      const uint8_t* buf = (const uint8_t*) key;
+      int len = len_bytes/8;
+
+      uint64_t h = (__uint128_t)(seed + len_bytes) * multiply_shift_r >> 64;
+      for (int i = 0; i < len/2; i++, buf += 16)
+         h += (multiply_shift_random[2*i & MULTIPLY_SHIFT_RANDOM_WORDS-1] + take64(buf+8))
+            * (multiply_shift_random[2*i+1 & MULTIPLY_SHIFT_RANDOM_WORDS-1] + take64(buf)) >> 64;
+
+      // Make sure we have the last word, if the number of words is odd
+      if (len & 1) {
+         h += multiply_shift_random[len-1 & MULTIPLY_SHIFT_RANDOM_WORDS-1] * take64(buf) >> 64;
+         buf += 8;
+      }
+
+      // Get the last bytes when things are unaligned
+      int remaining_bytes = len_bytes & 7;
+      if (remaining_bytes) {
+         uint64_t last = 0;
+         if (remaining_bytes & 4) {last = take32(buf); buf += 4;}
+         if (remaining_bytes & 2) {last = (last << 16) | take16(buf); buf += 2;}
+         if (remaining_bytes & 1) {last = (last << 8) | take08(buf);}
+         h += multiply_shift_random[len & MULTIPLY_SHIFT_RANDOM_WORDS-1] * last >> 64;
+      }
+
+      *(uint64_t*)out = h;
+   }
+
+  //objsize: 450fb0-45118f: 479. low32 of 128bit
+   const static uint64_t MERSENNE_61 = (1ull << 61) - 1;
+   static uint64_t mult_combine61(uint64_t h, uint64_t x, uint64_t a) {
+      __uint128_t temp = (__uint128_t)h * x + a;
+      return ((uint64_t)temp & MERSENNE_61) + (uint64_t)(temp >> 61);
+   }
+   const static int POLY_MERSENNE_MAX_K = 4;
+   static uint64_t poly_mersenne_random[POLY_MERSENNE_MAX_K+1];
+   static uint64_t poly_mersenne_a;
+   static uint64_t poly_mersenne_b;
+   static uint32_t poly_k_mersenne(const void * key, int len_bytes, uint32_t seed, const int k) {
+      const uint8_t* buf = (const uint8_t*) key;
+
+      // We first combine hashes using a polynomial in `a`:
+      // hash = x1 + x2 * a + x3 * a^2 + ... (mod p)
+      // This hash has collision probability len/p, since the polynomial is
+      // degree and so can have at most len roots (values of a that make it zero).
+      const uint64_t a = poly_mersenne_a;
+
+      // We use the length as the first character.
+      // We also add the seed, which is not quite how it is intended, but polyhash
+      // really doesn't take a runtime seed. It is rather reseeded from seed_init.
+      uint64_t h = len_bytes ^ seed;
+
+      for (int i = 0; i < len_bytes/4; i++, buf += 4) {
+         // Partial modular reduction. Since each round adds 32 bits, and this
+         // subtracts (up to) 61 bits, we make sure to never overflow.
+         h = mult_combine61(h, a, take32(buf));
+      }
+
+      // Get the last character
+      int remaining_bytes = len_bytes % 4;
+      if (remaining_bytes) {
+         uint32_t last = 0;
+         if (remaining_bytes & 2) {last = take16(buf); buf += 2;}
+         if (remaining_bytes & 1) {last = (last << 8) | take08(buf);}
+         h = mult_combine61(h, a, last);
+      }
+
+      // Increase hash strength from low collision rate to K-independence.
+      // hash = a1 + a2 * h + a3 * h^2 + ... (mod p)
+      if (k != 0) {
+         uint64_t h0 = h;
+         h = poly_mersenne_random[0];
+         for (int i = 1; i <= k; i++) {
+            h = mult_combine61(h, h0, poly_mersenne_random[i]);
+         }
+      }
+
+      // Finally complete the modular reduction
+      if (h >= MERSENNE_61)
+         h -= MERSENNE_61;
+
+      return h;
+   }
+   void poly_0_mersenne(const void * key, int len_bytes, uint32_t seed, void * out) {
+      *(uint32_t*)out = (uint32_t)poly_k_mersenne(key, len_bytes, seed, 0);
+   }
+   void poly_1_mersenne(const void * key, int len_bytes, uint32_t seed, void * out) {
+      *(uint32_t*)out = (uint32_t)poly_k_mersenne(key, len_bytes, seed, 1);
+   }
+   void poly_2_mersenne(const void * key, int len_bytes, uint32_t seed, void * out) {
+      *(uint32_t*)out = (uint32_t)poly_k_mersenne(key, len_bytes, seed, 2);
+   }
+   void poly_3_mersenne(const void * key, int len_bytes, uint32_t seed, void * out) {
+      *(uint32_t*)out = (uint32_t)poly_k_mersenne(key, len_bytes, seed, 3);
+   }
+   void poly_4_mersenne(const void * key, int len_bytes, uint32_t seed, void * out) {
+      *(uint32_t*)out = (uint32_t)poly_k_mersenne(key, len_bytes, seed, 4);
+   }
+   void poly_mersenne_seed_init(size_t seed) {
+      srand(seed);
+      // a has be at most 2^60, or the lazy modular reduction won't work.
+      poly_mersenne_a = rand128() % (MERSENNE_61/2);
+      poly_mersenne_b = rand128() % MERSENNE_61;
+      for (int i = 0; i < POLY_MERSENNE_MAX_K+1; i++) {
+         // The random values should be at most 2^61-2, or the lazy
+         // modular reduction won't work.
+         poly_mersenne_random[i] = rand128() % MERSENNE_61;
+      }
+   }
+   void poly_mersenne_init() {
+      poly_mersenne_seed_init(0);
+   }
 
 #endif
 
-// just to prove how bad academic papers really are:
-// Thorup "High Speed Hashing for Integers and Strings" 2018
-// https://arxiv.org/pdf/1504.06804.pdf
-// objsize: 0x1bc0-0x1d19: 345
-void multiply_shift (const void *key, int len, uint32_t seed, void *out) {
-  size_t h   = (size_t)(seed | 1);
-  size_t *dw = (size_t *)key; //word stepper
-  const size_t *const endw = &((const size_t*)key)[len/sizeof(size_t)];
-  const int bits = 8 * sizeof(size_t);
-  const size_t shift = bits - len >= 0
-    ? bits - len : len % bits;
-  // hashes x universally into len bits using the random odd seed.
-  while (dw < endw) {
-    h += (*dw++ * h) >> shift;
-  }
-  if (len & (bits-1)) {
-    uint8_t *dc = (uint8_t*)dw; //byte stepper
-    const uint8_t *const endc = &((const uint8_t*)key)[len];
-    while (dc < endc) {
-      h += (*dc++ * h) >> shift;
-    }
-  }
-  *(size_t *) out = h + (seed & 8);
-}
-
-// objsize: 0x1d20-0x1f81: 609
-void pair_multiply_shift (const void *key, int len, uint32_t seed, void *out) {
-  const uint16_t h1 = (seed & 0xffff) | 0x423d0001;
-  const uint16_t h2 = (seed >> 8)     | 0x1f380001;
-  const uint8_t b   = seed & 8;
-  size_t h = seed | 1;
-  size_t *dw = (size_t *)key; //word stepper
-  const size_t *const endw = &((const size_t*)key)[len/sizeof(size_t) - 1];
-  const int bits = 8 * sizeof(size_t);
-  const size_t shift = bits - len >= 0
-    ? bits - len : len % bits;
-  // hashes x universally into len bits using the random odd seed pair.
-  while (dw < endw) {
-    h += (*dw + h1) * (*(dw+1) + h2) + b;
-    dw++; dw++;
-  }
-  h >>= shift;
-  if (len & (bits-1)) {
-    uint8_t *dc = (uint8_t*)dw; //byte stepper
-    const uint8_t *const endc = &((const uint8_t*)key)[len-1];
-    while (dc < endc) {
-      h += (*dc + h1) * (*(dc+1) + h2) + b;
-      dc++; dc++;
-    }
-  }
-  *(size_t *) out = h;
-}
 
 //TODO MSVC
 #ifdef HAVE_INT64
@@ -774,3 +952,38 @@ void tsip_test(const void *bytes, int len, uint32_t seed, void *out)
 
 #endif /* !MSVC */
 #endif /* HAVE_INT64 */
+
+// arm also has AESNI, check for sse2
+#if defined(HAVE_SSE2) && defined(HAVE_AESNI) && !defined(_MSC_VER)
+/* See https://news.ycombinator.com/item?id=22463979 */
+/* From https://gist.github.com/majek/96dd615ed6c8aa64f60aac14e3f6ab5a */
+uint64_t aesnihash(uint8_t *in, unsigned long src_sz) {
+  uint8_t tmp_buf[16] = {0};
+  __m128i rk0 = {0x736f6d6570736575ULL, 0x646f72616e646f6dULL};
+  __m128i rk1 = {0x1231236570743245ULL, 0x126f12321321456dULL};
+  __m128i hash = rk0;
+
+  while (src_sz >= 16) {
+  onemoretry:
+    __m128i piece = _mm_loadu_si128((__m128i *)in);
+    in += 16;
+    src_sz -= 16;
+    hash = _mm_aesenc_si128(_mm_xor_si128(hash, piece), rk0);
+    hash = _mm_aesenc_si128(hash, rk1);
+  }
+
+  if (src_sz > 0) {
+    unsigned long i;
+    for (i = 0; i < src_sz && i < 16; i++) {
+      tmp_buf[i] = in[i];
+    }
+    src_sz = 16;
+    in = &tmp_buf[0];
+    goto onemoretry;
+  }
+
+  hash = _mm_aesenc_si128(hash, _mm_set_epi64x(src_sz, src_sz));
+
+  return hash[0] ^ hash[1];
+}
+#endif

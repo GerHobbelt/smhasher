@@ -179,7 +179,7 @@ NEVER_INLINE int64_t timehash ( pfHash hash, const void * key, int len, int seed
 
 //-----------------------------------------------------------------------------
 // Specialized procedure for small lengths. Serialize invocations of the hash
-// function, make sure they would not be computed in parallel on an out-of-order CPU.
+// function. Make sure they would not be computed in parallel on an out-of-order CPU.
 
 NEVER_INLINE int64_t timehash_small ( pfHash hash, const void * key, int len, int seed )
 {
@@ -215,7 +215,7 @@ NEVER_INLINE int64_t timehash_small ( pfHash hash, const void * key, int len, in
 double SpeedTest ( pfHash hash, uint32_t seed, const int trials, const int blocksize, const int align )
 {
   Rand r(seed);
-  uint8_t * buf = new uint8_t[blocksize + 512];
+  uint8_t *buf = new uint8_t[blocksize + 512];
   uint64_t t1 = reinterpret_cast<uint64_t>(buf);
   
   t1 = (t1 + 255) & UINT64_C(0xFFFFFFFFFFFFFF00);
@@ -303,11 +303,10 @@ double TinySpeedTest ( pfHash hash, int hashsize, int keysize, uint32_t seed, bo
 
 double HashMapSpeedTest ( pfHash pfhash, const int hashbits,
                           std::vector<std::string> words,
-                          const int trials, bool verbose )
+                          const uint32_t seed, const int trials, bool verbose )
 {
   //using phmap::flat_node_hash_map;
   Rand r(82762);
-  const uint32_t seed = r.rand_u32();
   std_hashmap hashmap(words.size(), [=](const std::string &key)
                   {
                     // 256 needed for hasshe2, but only size_t used
