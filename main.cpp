@@ -237,9 +237,6 @@ HashInfo g_hashes[] =
 #endif
 #endif
   // 32bit crashes
-#if defined(HAVE_CLMUL) && !defined(_MSC_VER) && defined(__x86_64__)
-  { crc32c_pclmul_test,   32, 0x0, "crc32_pclmul","-mpclmul crc32 in asm on HW", POOR, {0x0} /* !! */ },
-#endif
 #ifdef HAVE_INT64
   { o1hash_test,          64, 0x85051E87, "o1hash",       "o(1)hash unseeded, from wyhash", POOR, {0x0} /* !! */ },
 #endif
@@ -249,6 +246,10 @@ HashInfo g_hashes[] =
 #endif
   { fibonacci_test, __WORDSIZE, FIBONACCI_VERIF, "fibonacci",   "wordwise Fibonacci", POOR,
     {0x0, 0xffffffff00000000ULL} /* !! all keys ending with 0x0000_0000 */ },
+#ifndef HAVE_ALIGNED_ACCESS_REQUIRED
+  { khash32_test,         32, 0x99B3FFCD, "k-hash32",    "K-Hash mixer, 32-bit", POOR, {0,1,2,3,5,0x40000001} /*... !!*/},
+  { khash64_test,         64, 0xAB5518A1, "k-hash64",    "K-Hash mixer, 64-bit", POOR, {0,1,2,3,4,5} /*...!!*/},
+#endif
   { FNV32a_test,          32, 0xE3CBBE91, "FNV1a",       "Fowler-Noll-Vo hash, 32-bit", POOR,
     {0x811c9dc5} /* !! */ },
 #ifdef HAVE_INT64
@@ -449,9 +450,9 @@ HashInfo g_hashes[] =
 #endif
   { lookup3_test,         32, 0x3D83917A, "lookup3",     "Bob Jenkins' lookup3", POOR, {0x21524101} /* !! */},
 #ifdef __aarch64__
-  #define SFAST_VERIF 0xB2623D87
+  #define SFAST_VERIF 0x6306A6FE
 #else
-  #define SFAST_VERIF 0xC4CB7C07
+  #define SFAST_VERIF 0x0C80403A
 #endif
   { SuperFastHash_test,   32, SFAST_VERIF,"superfast",   "Paul Hsieh's SuperFastHash", POOR, {0x0} /* !! */},
   { MurmurOAAT_test,      32, 0x5363BD98, "MurmurOAAT",  "Murmur one-at-a-time", POOR,
@@ -567,17 +568,13 @@ HashInfo g_hashes[] =
   { halfsiphash_test,     32, 0xA7A05F72, "HalfSipHash", "HalfSipHash 2-4, 32bit", GOOD, {} },
   { GoodOAAT_test,        32, 0x7B14EEE5, "GoodOAAT",    "Small non-multiplicative OAAT", GOOD, {0x3b00} },
 #ifdef HAVE_INT64
-  { prvhash64_64mtest,    64, 0xDB5E9857, "prvhash64_64m", "prvhash64m 64bit", GOOD,
-    {12905183526369792234ULL} },
-  { prvhash64_64test,     64, 0xDB5E9857, "prvhash64_64",  "prvhash64 64bit", GOOD,
-    {12905183526369792234ULL} },
-  { prvhash64_128test,   128, 0xDE1D7A0C, "prvhash64_128", "prvhash64 128bit", GOOD,
-    {12905183526369792234ULL} },
-  { prvhash64s_64test,    64, 0x14E1A788, "prvhash64s_64", "prvhash64s 64bit", GOOD,
-    {12905183526369792234ULL} },
-  { prvhash64s_128test,  128, 0xDE4B217A, "prvhash64s_128","prvhash64s 128bit", GOOD,
-    {12905183526369792234ULL} },
+  { prvhash64_64mtest,    64, 0x41C04BB4, "prvhash64_64m", "prvhash64m 64bit", GOOD, {} },
+  { prvhash64_64test,     64, 0x41C04BB4, "prvhash64_64",  "prvhash64 64bit", GOOD, {} },
+  { prvhash64_128test,   128, 0x2DBC2E1E, "prvhash64_128", "prvhash64 128bit", GOOD, {} },
+  { prvhash64s_64test,    64, 0,          "prvhash64s_64", "prvhash64s 64bit", GOOD, {} }, // seed changes
+  { prvhash64s_128test,  128, 0,          "prvhash64s_128","prvhash64s 128bit", GOOD, {} }, // seed compiler-specific
 #endif
+  { komihash_test,        64, 0x7D4E9C0B, "komihash",      "komihash", GOOD, {} },
   // as in rust and swift:
   { siphash13_test,       64, 0x29C010BF, "SipHash13",   "SipHash 1-3 - SSSE3 optimized", GOOD, {} },
 #ifndef _MSC_VER
@@ -661,6 +658,9 @@ HashInfo g_hashes[] =
     {0x26bb3cda} /* !! */},
   { SpookyHash64_test,    64, 0xA7F955F1, "Spooky64",    "Bob Jenkins' SpookyHash, 64-bit result", GOOD, {} },
   { SpookyHash128_test,  128, 0x8D263080, "Spooky128",   "Bob Jenkins' SpookyHash, 128-bit result", GOOD, {} },
+  { SpookyV2_32_test,     32, 0xA48BE265, "SpookyV2_32",  "Bob Jenkins' SpookyV2, 32-bit result", GOOD, {} },
+  { SpookyV2_64_test,     64, 0x972C4BDC, "SpookyV2_64",  "Bob Jenkins' SpookyV2, 64-bit result", GOOD, {} },
+  { SpookyV2_128_test,   128, 0x893CFCBE, "SpookyV2_128", "Bob Jenkins' SpookyV2, 128-bit result", GOOD, {} },
   { pengyhash_test,       64, 0x1FC2217B, "pengyhash",   "pengyhash", GOOD, {} },
   { mx3hash64_test,       64, 0x4DB51E5B, "mx3",         "mx3 64bit", GOOD, {0x10} /* !! and all & 0x10 */},
 #if defined(HAVE_SSE42) &&  (defined(__x86_64__) ||  defined(__aarch64__)) && !defined(_MSC_VER)
@@ -729,8 +729,8 @@ HashInfo g_hashes[] =
     { 0x14cc886e, 0x1bf4ed84, 0x14cc886e14cc886eULL} /* !! 2^33 bad seeds, but easy to check */ },
   //{ wyhash_condom_test,   64, 0x7C62138D, "wyhash_condom",  "wyhash v3 condom 2 (64-bit)", GOOD, { } },
 #endif
-  { nmhash32_test,        32, 0x0DC5C2DC, "nmhash32",       "nmhash32", GOOD, {}},
-  { nmhash32x_test,       32, 0x3F6AF4B5, "nmhash32x",      "nmhash32x", GOOD, {}},
+  { nmhash32_test,        32, 0x12A30553, "nmhash32",       "nmhash32", GOOD, {}},
+  { nmhash32x_test,       32, 0xA8580227, "nmhash32x",      "nmhash32x", GOOD, {}},
 };
 
 HashInfo * findHash ( const char * name )
@@ -1495,7 +1495,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
   // 7m for FNV64 with windowbits=27 / 32bit keys
   // 5m35 for hasshe2 with windowbits=25 / 32bit keys
 
-  if((g_testWindow || g_testAll) && !need_minlen64_align16(hash))
+  if(g_testWindow || g_testAll)
   {
     printf("[[[ Keyset 'Window' Tests ]]]\n\n");
 
@@ -1522,7 +1522,7 @@ void test ( hashfunc<hashtype> hash, HashInfo* info )
   // 5s for crc32_hw
   // 18s for farmhash128_c
 
-  if ((g_testCyclic || g_testAll) && !need_minlen64_align16(hash))
+  if (g_testCyclic || g_testAll)
   {
     printf("[[[ Keyset 'Cyclic' Tests ]]]\n\n");
     fflush(NULL);

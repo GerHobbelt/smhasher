@@ -66,6 +66,8 @@ SMhasher
 | [FNV1a_YT](doc/FNV1a_YT.txt)                  |      9643.42 |    32.06 | 175.19 (2) | 321 | bad seed, UB, fails all tests          |
 | [FNV2](doc/FNV2.txt)                          |      6258.84 |    33.25 | 142.89 (1) | 278 | fails all tests              |
 | [FNV64](doc/FNV64.txt)                        |       791.82 |    70.24 | 159.29 (1) |  79 | fails all tests              |
+| [k-hash32](doc/k-hash32.txt)                  |      2686.33 |    42.99 | 504.48 (17)| 808 | insecure, zeros, UB, bad seeds, fails all tests       |
+| [k-hash64](doc/k-hash64.txt)                  |      2808.54 |    39.19 | 434.43 (15)| 609 | insecure, zeros, UB, bad seeds, fails all tests       |
 | [fletcher2](doc/fletcher2.txt)                |     12011.15 |    25.29 | 298.60 (1) | 248 | bad seed 0, UB, fails all tests          |
 | [fletcher4](doc/fletcher4.txt)                |     11928.55 |    25.27 | 293.49 (2) | 371 | bad seed 0, UB, fails all tests          |
 | [bernstein](doc/bernstein.txt)                |       791.82 |    68.63 | 180.71 (2) |  41 | bad seed 0, fails all tests              |
@@ -132,11 +134,11 @@ SMhasher
 | [pearsonbhash64](doc/pearsonbhash64.txt)      |      1486.34 |   104.32 | 185.03 (2) | 683 |                            |
 | [pearsonbhash128](doc/pearsonbhash128.txt)    |      1347.03 |   121.75 | 214.84 (2) |1134 |                            |
 | [pearsonbhash256](doc/pearsonbhash256.txt)    |       998.90 |   167.05 | 261.29 (3) | 844 |                            |
-| [prvhash64_64m](doc/prvhash64_64m.txt)        |      2386.19 |    51.18 | 186.87 (1) | 349 |                            |
-| [prvhash64_64](doc/prvhash64_64.txt)          |      2375.72 |    51.61 | 190.97 (2) | 384 |                            |
-| [prvhash64_128](doc/prvhash64_128.txt)        |      2383.57 |   103.44 | 246.45 (1) | 718  |                           |
-| [prvhash64s_64](doc/prvhash64s_64.txt)        |      5481.48 |   170.05 | 325.39 (6) |2640 |                            |
-| [prvhash64s_128](doc/prvhash64s_128.txt)      |      5161.33 |   260.96 | 442.70 (22)|2799 |                            |
+| [prvhash64_64m](doc/prvhash64_64m.txt)        |      2308.85 |    53.03 | 241.00 (5) | 349 |                            |
+| [prvhash64_64](doc/prvhash64_64.txt)          |      2302.42 |    53.31 | 253.73 (5) | 384 |                            |
+| [prvhash64_128](doc/prvhash64_128.txt)        |      2296.75 |   106.79 | 323.24 (5) | 718  |                           |
+| [prvhash64s_64](doc/prvhash64s_64.txt)        |      2455.28 |   369.19 | 624.65 (18)|2640 |                            |
+| [prvhash64s_128](doc/prvhash64s_128.txt)      |      2462.49 |   471.74 | 697.91 (19)|2799 |                            |
 | [SipHash13](doc/SipHash13.txt)                |      1889.10 |    89.00 | 199.95 (4) | 778 | 0.9% bias                  |
 | [TSip](doc/TSip.txt)                          |      3228.14 |    57.96 | 211.71 (3) | 519 | !msvc                      |
 | [seahash](doc/seahash.txt)                    |      4796.97 |    58.55 | 201.58 (2) | 871 | PerlinNoise, !msvc         |
@@ -174,6 +176,9 @@ SMhasher
 | [Spooky32](doc/Spooky32.txt)                  |      9747.13 |    62.24 | 196.96 (4) |2221 | UB                         |
 | [Spooky64](doc/Spooky64.txt)                  |      9747.47 |    62.20 | 191.71 (2) |2221 | UB                         |
 | [Spooky128](doc/Spooky128.txt)                |      9751.14 |    63.84 | 192.47 (2) |2221 | UB                         |
+| [SpookyV2_32](doc/SpookyV2_32.txt)            |      9529.38 |    64.36 | 194.47 (1) |2069 |                            |
+| [SpookyV2_64](doc/SpookyV2_64.txt)            |      9505.69 |    64.44 | 192.19 (1) |2069 |                            |
+| [SpookyV2_128](doc/SpookyV2_128.txt)          |      9524.31 |    65.81 | 187.24 (1) |2069 |                            |
 | [ahash64](doc/ahash64.txt)                    |      9862.62 |    27.32 | 181.68 (1) | 412 | rust                       |
 | [xxh3](doc/xxh3.txt)                          |     16538.52 |    32.81 | 184.86 (2) | 744 | DiffDist bit 7 w. 36 bits, BIC |
 | [xxh3low](doc/xxh3low.txt)                    |     16462.36 |    32.77 | 199.79 (2) | 756 |                            |
@@ -195,8 +200,9 @@ SMhasher
 | [halftime_hash128](doc/halftime_hash128.txt)  |     13478.23 |    97.79 | 252.14 (2) |2462 |                            |
 | [halftime_hash256](doc/halftime_hash256.txt)  |     11620.28 |    98.44 | 252.60 (2) |2622 |                            |
 | [halftime_hash512](doc/halftime_hash512.txt)  |      7681.62 |   125.81 | 274.01 (3) |3550 |                            |
-| [nmhash32](doc/nmhash32.txt)                  |      7003.30 |    68.93 | 216.59 (2) |2445 |                            |
-| [nmhash32x](doc/nmhash32x.txt)                |      6342.95 |    56.41 | 217.75 (2) |1494 |                            |
+| [nmhash32](doc/nmhash32.txt)                  |      7850.01 |    56.74 | 207.59 (1) |2445 |                            |
+| [nmhash32x](doc/nmhash32x.txt)                |      7850.92 |    46.94 | 193.94 (1) |1494 |                            |
+| [komihash](doc/komihash.txt)                  |      9756.63 |    43.54 | 180.99 (1) | 728 |                            |
 
 The sortable table variants:
 
@@ -218,6 +224,7 @@ So the fastest hash functions on x86_64 without quality problems are:
 - wyhash
 - ahash64
 - t1ha2_atonce
+- komihash
 - FarmHash (_not portable, too machine specific: 64 vs 32bit, old gcc, ..._)
 - halftime_hash128
 - Spooky32
@@ -308,7 +315,8 @@ with all hash functions.  Using Murmur is usually slower than a simple
 Mult, even in the worst case.  Provable secure is only uniform
 hashing, i.e. 2-5 independent Mult or Tabulation, or using a
 guaranteed logarithmic collision scheme (a tree) or a linear collision
-scheme, such as Robin Hood or Cuckoo hashing with collision counting.
+scheme, such as swisstable/folly-F14, Robin Hood or Cuckoo hashing
+with collision counting.
 
 One more note regarding security: Nowadays even SHA1 can be solved in
 a solver, like Z3 (or faster ones) for practical hash table collision
