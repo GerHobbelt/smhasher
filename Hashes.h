@@ -1181,7 +1181,8 @@ void farsh256_test ( const void * key, int len, unsigned seed, void * out );
 
 extern "C" {
 #include "blake3/blake3_impl.h"
-// The C API, serially
+  // The C API, serially
+  // objsize: 425e10-429e5e=16462
   inline void blake3c_test ( const void * key, int len, uint32_t seed, void * out )
   {
     blake3_hasher hasher;
@@ -1448,3 +1449,10 @@ extern "C" void crc64_jones_default(const void *input, int len, uint32_t seed, v
 #if defined(HAVE_SSE2) && defined(HAVE_AESNI)
 void aesnihash_peterrk(const void * in, int len0, uint32_t seed, void * out);
 #endif
+
+void rainbow64_test (const void *key, int len, uint32_t seed, void *out);
+void rainbow128_test (const void *key, int len, uint32_t seed, void *out);
+void rainbow256_test (const void *key, int len, uint32_t seed, void *out);
+void rainstorm64_test (const void *key, int len, uint32_t seed, void *out);
+void rainstorm128_test (const void *key, int len, uint32_t seed, void *out);
+void rainstorm256_test (const void *key, int len, uint32_t seed, void *out);
