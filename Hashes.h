@@ -13,6 +13,7 @@
 #define XXH_INLINE_ALL
 #include "xxhash.h"
 #include "gxhash.h"
+#include "lanehash.h"
 
 #include "metrohash/metrohash64.h"
 #include "metrohash/metrohash128.h"
@@ -677,17 +678,17 @@ inline void w1hash_test (const void * key, int len, uint32_t seed, void * out) {
 
 #ifdef HAVE_INT64
 #include "rapidhash.h"
-// objsize: 181e0-1841e: 574
+// objsize: 515c-4e74: 744
 inline void rapidhash_test (const void * key, int len, uint32_t seed, void * out) {
   *(uint64_t*)out = rapidhash_withSeed(key, (uint64_t)len, (uint64_t)seed);
 }
 
-// objsize: 18420-1872e: 782
+// objsize: 539c-515c: 576
 inline void rapidhashMicro_test (const void * key, int len, uint32_t seed, void * out) {
   *(uint64_t*)out = rapidhashMicro_withSeed(key, (uint64_t)len, (uint64_t)seed);
 }
 
-// objsize: 18420-1872e: 782
+// objsize: 553c-539c: 416
 inline void rapidhashNano_test (const void * key, int len, uint32_t seed, void * out) {
   *(uint64_t*)out = rapidhashNano_withSeed(key, (uint64_t)len, (uint64_t)seed);
 }
@@ -1482,3 +1483,11 @@ void rainbow256_test (const void *key, int len, uint32_t seed, void *out);
 void rainstorm64_test (const void *key, int len, uint32_t seed, void *out);
 void rainstorm128_test (const void *key, int len, uint32_t seed, void *out);
 void rainstorm256_test (const void *key, int len, uint32_t seed, void *out);
+
+// ---- lanehash: AES lanes (>64 B) + multiply short path, 64/128-bit ----
+inline void lanehash64_test( const void * key, int len, uint32_t seed, void * out ) {
+  *(uint64_t*)out = lanehash64(key, (size_t) len, (uint64_t) seed);
+}
+inline void lanehash128_test( const void * key, int len, uint32_t seed, void * out ) {
+  lanehash128(key, (size_t) len, (uint64_t) seed, out);
+}

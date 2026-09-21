@@ -530,6 +530,11 @@ endif(AES_FOUND AND (PROCESSOR_FAMILY STREQUAL "Intel"))
 if(AES_FOUND)
   set(GX_SRC gxhash.c)
 endif(AES_FOUND)
+# lanehash: AES-NI/VAES via -march=native, portable software AES otherwise
+# TODO i686
+if((CMAKE_SIZEOF_VOID_P GREATER 4) OR (CMAKE_SYSTEM_PROCESSOR STREQUAL "arm"))
+  set(LANEHASH_SRC lanehash.c)
+endif()
 
 if(SHA_FOUND)
   # todo: arm, power
@@ -718,6 +723,7 @@ add_library(
   ${T1HA_SRC}
   ${SHA_SRC}
   ${GX_SRC}
+  ${LANEHASH_SRC}
   mum.cc
   mum_v3.cc
   jody_hash32.c
