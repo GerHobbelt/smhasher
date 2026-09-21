@@ -132,7 +132,6 @@ FNV2(const char *key, int len, size_t seed)
   size_t h;
   size_t *dw = (size_t *)key; //word stepper
   const size_t *const endw = &((const size_t*)key)[len/sizeof(size_t)];
-  int i;
 
 #ifdef HAVE_BIT32
   h = seed ^ UINT32_C(2166136261);
@@ -142,7 +141,8 @@ FNV2(const char *key, int len, size_t seed)
 
 #ifdef HAVE_ALIGNED_ACCESS_REQUIRED
   // avoid ubsan, misaligned writes
-  if ((i = (uintptr_t)dw % sizeof (size_t))) {
+  int i = (uintptr_t)dw % sizeof (size_t);
+  if (i) {
     uint8_t *dc = (uint8_t*)key;
     switch (i) {
     case 1:
@@ -596,17 +596,19 @@ Crap8(const uint8_t * key, uint32_t len, uint32_t seed)
 }
 
 extern "C" {
-#ifdef __SSE2__
+#ifdef HAVE_SSE2
   void		  hasshe2 (const void *input, int len, uint32_t seed, void *out);
 #endif
-#if defined(__SSE4_2__) && defined(__x86_64__)
+#ifdef HAVE_SSE42
+# ifndef HAVE_BROKEN_MSVC_CRC32C_HW
   uint32_t	  crc32c_hw(const void *input, int len, uint32_t seed);
-  uint32_t	  crc32c(const void *input, size_t len, uint32_t seed);
   uint64_t	  crc64c_hw(const void *input, int len, uint32_t seed);
+# endif
+  uint32_t	  crc32c(const void *input, size_t len, uint32_t seed);
 #endif
 }
 
-#ifdef __SSE2__
+#if defined(HAVE_SSE2)
 void
 hasshe2_test(const void *input, int len, uint32_t seed, void *out)
 {
@@ -623,7 +625,9 @@ hasshe2_test(const void *input, int len, uint32_t seed, void *out)
 }
 #endif
 
-#if defined(__SSE4_2__) && (defined(__i686__) || defined(_M_IX86) || defined(__x86_64__))
+#ifdef HAVE_SSE42
+# ifndef HAVE_BROKEN_MSVC_CRC32C_HW
+//#if defined(__SSE4_2__) && (defined(__i686__) || defined(_M_IX86) || defined(__x86_64__))
 /* Compute CRC-32C using the Intel hardware instruction.
    TODO: arm8
  */
@@ -637,18 +641,6 @@ crc32c_hw_test(const void *input, int len, uint32_t seed, void *out)
   // objsize: 0-28d: 653
   *(uint32_t *) out = crc32c_hw(input, len, seed);
 }
-/* Faster Adler SSE4.2 crc32 in HW */
-void
-crc32c_hw1_test(const void *input, int len, uint32_t seed, void *out)
-{
-  if (!len) {
-    *(uint32_t *) out = 0;
-    return;
-  }
-  // objsize: 0-29f: 671
-  *(uint32_t *) out = crc32c(input, len, seed);
-}
-#if defined(__SSE4_2__) && defined(__x86_64__)
 /* Compute CRC-64C using the Intel hardware instruction. */
 void
 crc64c_hw_test(const void *input, int len, uint32_t seed, void *out)
@@ -660,7 +652,21 @@ crc64c_hw_test(const void *input, int len, uint32_t seed, void *out)
   // objsize: 0x290-0x51c: 652
   *(uint64_t *) out = crc64c_hw(input, len, seed);
 }
-#endif
+# endif
+
+# if defined(__SSE4_2__) && (defined(__i686__) || defined(_M_IX86) || defined(__x86_64__))
+/* Faster Adler SSE4.2 crc32 on Intel HW only. FIXME aarch64 */
+void
+crc32c_hw1_test(const void *input, int len, uint32_t seed, void *out)
+{
+  if (!len) {
+    *(uint32_t *) out = 0;
+    return;
+  }
+  // objsize: 0-29f: 671
+  *(uint32_t *) out = crc32c(input, len, seed);
+}
+# endif
 #endif
 
 #if 0 && defined(__x86_64__) && (defined(__linux__) || defined(__APPLE__))
@@ -674,8 +680,6 @@ fhtw_test(const void *input, int len, uint32_t seed, void *out)
   *(uint32_t *) out = fhtw_hash(input, len);
 }
 #endif
-
-#include "siphash.h"
 
 /* https://github.com/floodyberry/siphash */
 void
@@ -735,7 +739,7 @@ falkhash_test_cxx(const void *input, int len, uint32_t seed, void *out)
 }
 #endif
 
-#if defined(__SSE4_2__) && defined(__x86_64__)
+#if defined(HAVE_SSE42) && defined(__x86_64__)
 
 #include "clhash.h"
 static char clhash_random[RANDOM_BYTES_NEEDED_FOR_CLHASH];
@@ -928,7 +932,7 @@ void halftime_hash_seed_init(size_t &seed)
    static __uint128_t rand128() {
      return rand_u128();
    }
-   void multiply_shift_seed_init_slow(size_t seed) {
+   void multiply_shift_seed_init_slow(uint32_t seed) {
       srand(seed);
       for (int i = 0; i < MULTIPLY_SHIFT_RANDOM_WORDS; i++) {
          multiply_shift_random[i] = rand128();
@@ -943,7 +947,7 @@ void halftime_hash_seed_init(size_t &seed)
      seeds = std::vector<uint64_t> { UINT64_C(0xfffffff0), UINT64_C(0x1fffffff0) };
      return true;
    }
-   void multiply_shift_seed_init(size_t &seed) {
+   void multiply_shift_seed_init(uint32_t &seed) {
      // The seeds we get are not random values, but just something like 1, 2 or 3.
      // So we xor it with a random number to get something slightly more reasonable.
      // But skip really bad seed patterns: 0x...fffffff0
@@ -1054,7 +1058,7 @@ void halftime_hash_seed_init(size_t &seed)
    void poly_4_mersenne(const void * key, int len_bytes, uint32_t seed, void * out) {
       *(uint32_t*)out = (uint32_t)poly_k_mersenne(key, len_bytes, seed, 4);
    }
-   void poly_mersenne_seed_init(size_t &seed) {
+   void poly_mersenne_seed_init(uint32_t &seed) {
       srand(seed);
       // a has be at most 2^60, or the lazy modular reduction won't work.
       poly_mersenne_a = rand128() % (MERSENNE_61/2);
@@ -1066,7 +1070,7 @@ void halftime_hash_seed_init(size_t &seed)
       }
    }
    void poly_mersenne_init() {
-     size_t seed = 0;
+     uint32_t seed = 0;
      poly_mersenne_seed_init(seed);
    }
 
@@ -1094,15 +1098,44 @@ void tsip_test(const void *bytes, int len, uint32_t seed, void *out)
 #endif /* !MSVC */
 #endif /* HAVE_INT64 */
 
-// arm also has AESNI, check for sse2
-#if defined(HAVE_SSE2) && defined(HAVE_AESNI) && !defined(_MSC_VER)
+#ifdef HAVE_SSE2
+#  ifdef __AVX2__
+#   define FARSH_AVX2
+#  elif defined HAVE_SSE42
+#   define FARSH_SSE2
+#  endif
+# include "farsh.c"
+
+// objsize: 0-3b0: 944
+void farsh32_test ( const void * key, int len, unsigned seed, void * out )
+{
+  farsh_n(key,len,0,1,seed,out);
+}
+void farsh64_test ( const void * key, int len, unsigned seed, void * out )
+{
+  farsh_n(key,len,0,2,seed,out);
+}
+void farsh128_test ( const void * key, int len, unsigned seed, void * out )
+{
+  farsh_n(key,len,0,4,seed,out);
+}
+void farsh256_test ( const void * key, int len, unsigned seed, void * out )
+{
+  farsh_n(key,len,0,8,seed,out);
+}
+#endif
+
+// arm also has AESNI, check for sse
+#if defined(HAVE_SSE42) && defined(HAVE_AESNI) && !defined(_MSC_VER)
 /* See https://news.ycombinator.com/item?id=22463979 */
-/* From https://gist.github.com/majek/96dd615ed6c8aa64f60aac14e3f6ab5a */
-uint64_t aesnihash(uint8_t *in, unsigned long src_sz) {
+/* From https://gist.github.com/majek/96dd615ed6c8aa64f60aac14e3f6ab5a, but added a seed */
+uint64_t aesnihash(uint8_t *in, unsigned long src_sz, uint32_t seed) {
   uint8_t tmp_buf[16] = {0};
   __m128i rk0 = {0x736f6d6570736575ULL, 0x646f72616e646f6dULL};
   __m128i rk1 = {0x1231236570743245ULL, 0x126f12321321456dULL};
   __m128i hash = rk0;
+  uint64_t seed64 = (uint64_t)seed;
+  hash[0] ^= seed64;
 
   while (src_sz >= 16) {
   onemoretry:
@@ -1128,3 +1161,48 @@ uint64_t aesnihash(uint8_t *in, unsigned long src_sz) {
   return hash[0] ^ hash[1];
 }
 #endif
+
+#if defined(HAVE_CLMUL) && !defined(_MSC_VER)
+void crc32c_pclmul_test(const void *key, int len, uint32_t seed, void *out)
+{
+  if (!len) {
+    *(uint32_t *) out = 0;
+    return;
+  }
+  // objsize: 0x1e1 = 481
+  if (((uintptr_t)key & 15) != 0) {
+    if (len < 1024) {
+      alignas(16) unsigned char stack[1024];
+      memcpy(stack, key, len);
+      *(uint32_t *) out = crc32_pclmul_le_16(stack, (size_t)len, seed);
+    }
+    else {
+#ifdef _MSC_VER // TODO need to verify
+      alignas(16) unsigned char const *input = (unsigned char const *)_aligned_malloc(len, 16);
+#elif __STDC_VERSION__ > 201200L // macports gcc-mp-6 has 201112 but no aligned_alloc
+      alignas(16) unsigned char const *input = (unsigned char const *)aligned_alloc(16, len);
+#else
+      alignas(16) unsigned char const *input = NULL;
+      posix_memalign((void**)&input, 16, len);
+#endif
+      memcpy((void*)input, key, len);
+      *(uint32_t *) out = crc32_pclmul_le_16(input, (size_t)len, seed);
+      free ((void*)input);
+    }
+  }
+  else {
+    assert(((uintptr_t)key & 15) == 0); // input is 16byte aligned already
+    *(uint32_t *) out = crc32_pclmul_le_16((unsigned char const *)key, (size_t)len, seed);
+  }
+}
+#endif
+
+#include "hash-garage/nmhash.h"
+// objsize: 4202f0-420c7d: 2445
+void nmhash32_test ( const void * key, int len, uint32_t seed, void * out ) {
+  *(uint32_t*)out = NMHASH32 (key, (const size_t) len, seed);
+}
+// objsize: 466100-4666d6: 1494
+void nmhash32x_test ( const void * key, int len, uint32_t seed, void * out ) {
+  *(uint32_t*)out = NMHASH32X (key, (const size_t) len, seed);
+}

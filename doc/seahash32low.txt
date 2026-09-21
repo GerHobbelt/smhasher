@@ -1081,20 +1081,22 @@ Testing collisions (low   8-bit) - Expected    2096896.0, actual 2096896 (1.00x)
 
 [[[ MomentChi2 Tests ]]]
 
-Analyze hashes produced from a serie of linearly increasing numbers of 32-bit, using a step of 3 ... 
-Target values to approximate : 1391290.000000 - 1030.900000 
-Popcount 1 stats : 1391334.027442 - 1031.153454
-Popcount 0 stats : 1391267.637552 - 1030.776081
-MomentChi2 for bits 1 :  0.940041 
-MomentChi2 for bits 0 :  0.242559 
+Analyze hashes produced from a serie of linearly increasing numbers of 32-bit, using a step of 2 ... 
+Target values to approximate : 1391290.000000 - 686.666667 
+4 threads starting...  done
+Popcount 1 stats : 1391317.719234 - 687.345214
+Popcount 0 stats : 1391278.511974 - 687.296421
+MomentChi2 for bits 1 :  0.559206 
+MomentChi2 for bits 0 :  0.0960541 
 
 Derivative stats (transition from 2 consecutive values) : 
-Popcount 1 stats : 1391278.128526 - 1030.918796
-Popcount 0 stats : 1391315.452929 - 1030.997177
-MomentChi2 for deriv b1 :  0.0683532 
-MomentChi2 for deriv b0 :  0.314202 
+Popcount 1 stats : 1391322.558916 - 687.363468
+Popcount 0 stats : 1391271.234168 - 687.255147
+MomentChi2 for deriv b1 :  0.771514 
+MomentChi2 for deriv b0 :  0.256315 
 
   Great !! 
+
 
 
 [[[ Prng Tests ]]]
@@ -1111,3 +1113,13 @@ Max bias 0.005212 - (  4 :  10, 21)
 Input vcode 0x00000001, Output vcode 0x00000001, Result vcode 0x00000001
 Verification value is 0x00000001 - Testing took 1066.075082 seconds
 -------------------------------------------------------------------------------
+[[[ BadSeeds Tests ]]]
+
+Testing 0 internal secrets:
+0x0 PASS
+Testing the first 0xffffffff seeds ...
+4 threads starting...
+at 0 at 40000000 at 80000000 at c0000000 1ffffff 41ffffff 81ffffff 43ffffff 83ffffff 3ffffff 45ffffff 5ffffff 85ffffff 47ffffff 7ffffff 87ffffff 49ffffff 9ffffff 89ffffff 4bffffff bffffff 8bffffff dffffff 4dffffff 8dffffff fffffff 4fffffff 8fffffff 11ffffff 51ffffff 91ffffff 13ffffff 53ffffff 93ffffff 15ffffff 55ffffff 95ffffff 17ffffff 57ffffff 97ffffff 19ffffff 59ffffff 99ffffff 1bffffff 5bffffff 9bffffff 1dffffff 5dffffff 9dffffff 1fffffff 5fffffff 9fffffff 21ffffff 61ffffff a1ffffff 23ffffff 63ffffff a3ffffff 25ffffff 65ffffff a5ffffff 67ffffff 27ffffff a7ffffff 69ffffff 29ffffff a9ffffff 6bffffff 2bffffff abffffff 6dffffff 2dffffff adffffff 6fffffff 2fffffff afffffff 71ffffff 31ffffff b1ffffff 73ffffff 33ffffff b3ffffff 75ffffff 35ffffff b5ffffff 77ffffff 37ffffff b7ffffff 79ffffff 39ffffff b9ffffff 7bffffff 3bffffff bbffffff 7dffffff 3dffffff bdffffff 7fffffff 3fffffff bfffffff All 4 threads ended
+PASS
+
+

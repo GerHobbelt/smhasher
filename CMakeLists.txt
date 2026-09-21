@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 cmake_policy(SET CMP0003 NEW)
 if(POLICY CMP0056) # Honor link flags in try_compile() source-file signature.
   cmake_policy(SET CMP0056 NEW) # since 3.2
@@ -57,6 +57,7 @@ if ((CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 elseif ((CMAKE_SYSTEM_PROCESSOR STREQUAL "arm")
     OR (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64"))
   set(PROCESSOR_FAMILY "Arm")
+  add_definitions(-DHAVE_NEON)
 endif()
 
 # TODO: rather parse `$CC -march=native -dM -E - <<< ''` [GH #10]
@@ -235,8 +236,8 @@ if(CMAKE_COMPILER_IS_GNUCC
                               PROPERTIES COMPILE_FLAGS "-std=c99")
 elseif(MSVC)
   # using Visual Studio C++, already the default with VS17
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O3 /arch:SSE2")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O3 /arch:SSE2")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:SSE2")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE2")
 else()
   message(WARNING "Unknown ${CMAKE_CXX_COMPILER_ID} compiler")
   # TODO: BSD and ARM8 crc detection TODO: 32bit filter
@@ -253,11 +254,11 @@ else(SSE2_TRUE)
   message(WARNING "SSE2 not available")
 endif(SSE2_TRUE)
 if(SSE42_TRUE)
-  set(SSE4_2_FOUND
+  set(SSE42_FOUND
       true
       CACHE BOOL "SSE4.2 available")
 else(SSE42_TRUE)
-  set(SSE4_2_FOUND
+  set(SSE42_FOUND
       false
       CACHE BOOL "SSE4.2 not available")
   message(WARNING "SSE4.2 not available")
@@ -323,12 +324,34 @@ else(AVX512VL_TRUE)
 endif(AVX512VL_TRUE)
 
 if(CMAKE_CROSSCOMPILING)
-  set(SSE2_FOUND false)
-  set(SSE4_2_FOUND false)
+  if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+    set(SSE2_FOUND true)
+    set(SSE42_FOUND true)
+  else()
+    set(SSE2_FOUND false)
+    set(SSE42_FOUND false)
+  endif()
   set(AES_FOUND false)
   set(SHA_FOUND false)
+  set(CLMUL_FOUND false)
+  set(CRC_PCLMUL_SRC "")
 endif(CMAKE_CROSSCOMPILING)
 
+if(SSE2_FOUND)
+  add_definitions(-DHAVE_SSE2)
+endif()
+if(SSE42_FOUND)
+  add_definitions(-DHAVE_SSE42)
+endif()
+if(AES_FOUND)
+  add_definitions(-DHAVE_AESNI)
+endif()
+if(SHA_FOUND)
+  add_definitions(-DHAVE_SHANI)
+endif()
+if(CLMUL_FOUND)
+  add_definitions(-DHAVE_CLMUL)
+endif(CLMUL_FOUND)
 if(HAVE___UINT128_T)
   add_definitions(-DHAVE_INT128)
 endif()
@@ -408,32 +431,43 @@ endif()
 find_package( Threads )
 #set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 
-if(SSE4_2_FOUND)
-  add_definitions(-DHAVE_SSE42)
+if(SSE2_FOUND)
   set(SSE2_SRC hasshe2.c)
-  set(SSE4_SRC crc32_hw.c)
+endif()
+if(SSE42_FOUND)
+  # MSVC CL 14.16.27023 32bit crashes, 14.28.29910 works fine.
+  if (MSVC AND (CMAKE_SIZEOF_VOID_P EQUAL 4) AND (MSVC_VERSION LESS 1928))
+    add_definitions(-DHAVE_BROKEN_MSVC_CRC32C_HW)
+  else()
+    set(SSE4_SRC "crc32_hw.c")
+  endif()
   # 64bit only:
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     # enable_language(ASM-NASM) set(CMAKE_ASM_FLAGS "-f elf64") # or
     # macho64/win64
-    set(X86_64ONLY_SRC farmhash-c.c farmhash-c-test.cc)
+    set(X86_64ONLY_SRC farmhash-c.c farmhash-c-test.cc clhash.c)
     if(NOT MSVC)
       list(APPEND X86_64ONLY_SRC metrohash/metrohash64crc.cpp
-           metrohash/metrohash128crc.cpp crc32_hw1.c clhash.c)
+           metrohash/metrohash128crc.cpp)
+    endif()
+    if(NOT (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64") AND NOT MSVC)
+      list(APPEND X86_64ONLY_SRC crc32_hw1.c)
     endif()
   else()
     message(STATUS "32bit only: CMAKE_SIZEOF_VOID_P=${CMAKE_SIZEOF_VOID_P}")
   endif()
-  set(SIPHASH_SRC siphash_ssse3.c)
+  if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+    set(SIPHASH_SRC siphash.c)
+  else()
+    set(SIPHASH_SRC siphash_ssse3.c)
+  endif()
 elseif(SSE2_FOUND)
-  set(SSE2_SRC hasshe2.c)
   set(SIPHASH_SRC siphash_sse2.c)
 else()
   set(SIPHASH_SRC siphash.c)
-endif(SSE4_2_FOUND)
+endif(SSE42_FOUND)
 
 if(AES_FOUND AND (PROCESSOR_FAMILY STREQUAL "Intel"))
-  add_definitions(-DHAVE_AESNI)
   set(T1HA_SRC
       t1ha/t1ha0.c t1ha/t1ha1.c t1ha/t1ha2.c t1ha/t1ha0_ia32aes_noavx.c
       t1ha/t1ha0_ia32aes_avx.c t1ha/t1ha0_ia32aes_avx2.c)
@@ -458,40 +492,30 @@ else()
   set(T1HA_SRC t1ha/t1ha0.c t1ha/t1ha1.c t1ha/t1ha2.c)
 endif(AES_FOUND AND (PROCESSOR_FAMILY STREQUAL "Intel"))
 
-if(CLMUL_FOUND)
-  add_definitions(-DHAVE_CLMUL)
-endif(CLMUL_FOUND)
 if(SHA_FOUND)
-  add_definitions(-DHAVE_SHANI)
   # todo: arm, power
   set(SHA_SRC SHA-Intrinsics/sha1-x86.c SHA-Intrinsics/sha256-x86.c)
 endif(SHA_FOUND)
 
+if(SSE42_FOUND AND (PROCESSOR_FAMILY STREQUAL "Intel") AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
+  set(SSE4_OBJ ${SSE4_OBJ} pearson_hash/pearson.c)
+endif()
 
 if(NOT MSVC)
   set(NOTMSVC_SRC seahash.c)
-  set_source_files_properties(HashMapTest.cpp PROPERTIES COMPILE_FLAGS
-                                                         "-std=c++11")
-  set_source_files_properties(
-    SpeedTest.cpp PROPERTIES COMPILE_FLAGS "-std=c++0x -I${CMAKE_SOURCE_DIR}")
+  set_source_files_properties(HashMapTest.cpp PROPERTIES COMPILE_FLAGS "-std=c++11")
+  set_source_files_properties(SpeedTest.cpp PROPERTIES COMPILE_FLAGS "-std=c++0x -I${CMAKE_SOURCE_DIR}")
   set_source_files_properties(main.cpp PROPERTIES COMPILE_FLAGS "-std=c++0x")
-  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    set_source_files_properties(Hashes.cpp PROPERTIES COMPILE_FLAGS "-std=c++1y -I${CMAKE_SOURCE_DIR} -DWYHASH32 -flax-vector-conversions")
-  else()
-    set_source_files_properties(Hashes.cpp PROPERTIES COMPILE_FLAGS "-std=c++1y -I${CMAKE_SOURCE_DIR} -flax-vector-conversions")
-  endif()
+  set_source_files_properties(Hashes.cpp PROPERTIES COMPILE_FLAGS "-std=c++1y -I${CMAKE_SOURCE_DIR} -flax-vector-conversions")
   set_source_files_properties(bittest.cpp PROPERTIES COMPILE_FLAGS "-std=c++0x")
+  set_source_files_properties(Hashes.cpp PROPERTIES COMPILE_FLAGS "-std=c++1y -I${CMAKE_SOURCE_DIR} -flax-vector-conversions")
   # https://github.com/dgryski/trifles/tree/master/tsip
   set(TSIP_SRC tsip.c)
-else()
-  set_source_files_properties(SpeedTest.cpp PROPERTIES COMPILE_FLAGS
-                                                       "-I${CMAKE_SOURCE_DIR}")
-  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    set_source_files_properties(Hashes.cpp PROPERTIES COMPILE_FLAGS "-I${CMAKE_SOURCE_DIR} -DWYHASH32 -flax-vector-conversions")
-  else()
-    set_source_files_properties(Hashes.cpp PROPERTIES COMPILE_FLAGS "-I${CMAKE_SOURCE_DIR} -flax-vector-conversions")
-  endif()
-endif()
+else(NOT MSVC)
+  set_source_files_properties(SpeedTest.cpp PROPERTIES COMPILE_FLAGS "-I${CMAKE_SOURCE_DIR}")
+  # nmhash32 wants "/std:c++latest"
+  set_source_files_properties(Hashes.cpp PROPERTIES COMPILE_FLAGS "/std:c++latest -I${CMAKE_SOURCE_DIR}")
+endif(NOT MSVC)
 
 find_library(HIGHWAY highwayhash)
 if(HIGHWAY
@@ -514,7 +538,7 @@ if(AHASH_C
   endif()
 endif()
 
-if(SSE4_2_FOUND AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
+if(SSE42_FOUND AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
   find_library(BLAKE3 blake3)
   # if (BLAKE3)
   #   set(BLAKE3_LIB ${BLAKE3})
@@ -524,10 +548,14 @@ endif()
 
 set(BLAKE3_SRC blake3/blake3.c blake3/blake3_dispatch.c
                blake3/blake3_portable.c)
-if(SSE4_2_FOUND)
-  set(BLAKE3_SRC ${BLAKE3_SRC} blake3/blake3_sse41.c)
-  set_source_files_properties(blake3/blake3_sse41.c
-                              PROPERTIES COMPILE_FLAGS "-DBLAKE3_USE_SSE41 -msse4.2")
+if(SSE42_FOUND)
+  if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+    set(BLAKE3_SRC ${BLAKE3_SRC} blake3/blake3_neon.c)
+  else()
+    set(BLAKE3_SRC ${BLAKE3_SRC} blake3/blake3_sse41.c)
+    set_source_files_properties(blake3/blake3_sse41.c
+      PROPERTIES COMPILE_FLAGS "-DBLAKE3_USE_SSE41")
+  endif()
 endif()
 if(AVX2_FOUND)
   set(BLAKE3_SRC ${BLAKE3_SRC} blake3/blake3_avx2.c)
@@ -542,7 +570,7 @@ if(AVX512F_FOUND AND AVX512VL_FOUND)
     PROPERTIES COMPILE_FLAGS
                "-DBLAKE3_USE_SSE41 -DBLAKE3_USE_AVX2 -DBLAKE3_USE_AVX512 -mavx512f -mavx512vl")
 endif()
-if(SSE4_2_FOUND
+if(SSE42_FOUND
    AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
    AND (NOT MSVC))
   set(UMASH_SRC umash.c umash.hpp)
@@ -565,6 +593,7 @@ if(CMAKE_CROSSCOMPILING)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCROSSCOMPILING")
 endif()
 if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+  #HAVE_SSE42
   unset(PMPML_SRC)
 endif()
 
@@ -612,6 +641,8 @@ add_library(
   SpeedTest.cpp
   Spooky.cpp
   SpookyTest.cpp
+  SpookyV2.cpp
+  SpookyTestV2.cpp
   Stats.cpp
   SuperFastHash.cpp
   Types.cpp
@@ -655,6 +686,7 @@ add_library(
   rijndael-alg-fst.c
   ${BLAKE3_SRC}
   pengyhash.c
+  pearson_hash/pearsonb.c
   # wyhash_condom.c
   ${ASCON_SRC}
   ${UMASH_SRC})

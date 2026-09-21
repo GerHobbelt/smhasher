@@ -4,11 +4,13 @@
 #include <string.h>
 #ifdef _MSC_VER
 #include <intrin.h>
+#elif defined(__aarch64__)
+#include "sse2neon.h"
 #else
 #include <x86intrin.h>
 #endif
 
-#ifdef __WIN32
+#ifdef _WIN32
 #define posix_memalign(p, a, s) (((*(p)) = _aligned_malloc((s), (a))), *(p) ?0 :errno)
 #endif
 

@@ -1075,20 +1075,22 @@ Testing collisions (low   8-bit) - Expected    2096896.0, actual 2096896 (1.00x)
 
 [[[ MomentChi2 Tests ]]]
 
-Analyze hashes produced from a serie of linearly increasing numbers of 32-bit, using a step of 3 ... 
-Target values to approximate : 1391290.000000 - 1030.900000 
-Popcount 1 stats : 1391312.804594 - 1030.968834
-Popcount 0 stats : 1391306.581507 - 1031.026023
-MomentChi2 for bits 1 :  0.252222 
-MomentChi2 for bits 0 :  0.133344 
+Analyze hashes produced from a serie of linearly increasing numbers of 32-bit, using a step of 2 ... 
+Target values to approximate : 1391290.000000 - 686.666667 
+4 threads starting...  done
+Popcount 1 stats : 1391312.639498 - 687.263387
+Popcount 0 stats : 1391274.294509 - 687.280444
+MomentChi2 for bits 1 :  0.373052 
+MomentChi2 for bits 0 :  0.179528 
 
 Derivative stats (transition from 2 consecutive values) : 
-Popcount 1 stats : 1391293.442717 - 1030.920469
-Popcount 0 stats : 1391308.232102 - 1030.950035
-MomentChi2 for deriv b1 :  0.00574846 
-MomentChi2 for deriv b0 :  0.161219 
+Popcount 1 stats : 1391308.601819 - 687.353500
+Popcount 0 stats : 1391292.718363 - 687.241375
+MomentChi2 for deriv b1 :  0.251836 
+MomentChi2 for deriv b0 :  0.00537845 
 
   Great !! 
+
 
 
 [[[ Prng Tests ]]]
@@ -1099,3 +1101,17 @@ The PRNG test is designed for hashes >= 64-bit
 Input vcode 0x00000001, Output vcode 0x00000001, Result vcode 0x00000001
 Verification value is 0x00000001 - Testing took 947.969072 seconds
 -------------------------------------------------------------------------------
+[[[ BadSeeds Tests ]]]
+
+Testing 0 internal secrets:
+0x0 PASS
+Testing the first 0xffffffff seeds ...
+4 threads starting...
+at 0 at 80000000 at 40000000 at c0000000 81ffffff 41ffffff 1ffffff 83ffffff 43ffffff 3ffffff 85ffffff 45ffffff 5ffffff 87ffffff 47ffffff 7ffffff 89ffffff 9ffffff 49ffffff 8bffffff bffffff 4bffffff 8dffffff dffffff 4dffffff 8fffffff fffffff 4fffffff 91ffffff 11ffffff Broken seed 0x920e7c64 => 0 with key[16] of all 0 bytes
+51ffffff 93ffffff 13ffffff 53ffffff 95ffffff 15ffffff 55ffffff 97ffffff 17ffffff 57ffffff 99ffffff 19ffffff 59ffffff 9bffffff 1bffffff 5bffffff 9dffffff 5dffffff 1dffffff 9fffffff 5fffffff 1fffffff a1ffffff 61ffffff 21ffffff a3ffffff 63ffffff 23ffffff a5ffffff 65ffffff 25ffffff a7ffffff 67ffffff 27ffffff a9ffffff 69ffffff 29ffffff abffffff 6bffffff 2bffffff adffffff 6dffffff 2dffffff afffffff 6fffffff 2fffffff b1ffffff 71ffffff 31ffffff b3ffffff 73ffffff 33ffffff b5ffffff 75ffffff 35ffffff b7ffffff 77ffffff 37ffffff b9ffffff 79ffffff 39ffffff bbffffff 7bffffff 3bffffff bdffffff 7dffffff 3dffffff bfffffff 7fffffff 3fffffff All 4 threads ended
+FAIL
+Ensure to add these bad seeds to the list of secrets in main.cpp
+
+*********FAIL*********
+
+

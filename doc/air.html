@@ -569,6 +569,46 @@ tr.good {background-color:#afa}
 <td align="left">100% bias, distrib</td>
 </tr>
 <tr class="poor">
+<td align="left"><a href="beamsplitter.txt">beamsplitter</a></td>
+<td align="right">619.02</td>
+<td align="right">675.57</td>
+<td align="right">967.83 (49)</td>
+<td align="right"></td>
+<td align="left"><a href="../#problems">UB</a>, too many bad seeds</td>
+</tr>
+<tr class="poor">
+<td align="left"><a href="BEBB4185.txt">BEBB4185</a></td>
+<td align="right">2951.01</td>
+<td align="right">213.86</td>
+<td align="right">346.87 (4)</td>
+<td align="right">1294</td>
+<td align="left"><a href="../#problems">UB</a>, too many bad seeds, MSVC specific</td>
+</tr>
+<tr class="poor">
+<td align="left"><a href="pearsonhash64.txt">pearsonhash64</a></td>
+<td align="right">400.88</td>
+<td align="right">124.53</td>
+<td align="right">456.56 (74)</td>
+<td align="right"></td>
+<td align="left"> Avalanche, Seed, SSSE3 only. broken MSVC</td>
+</tr>
+<tr class="poor">
+<td align="left"><a href="pearsonhash128.txt">pearsonhash128</a></td>
+<td align="right">405.76</td>
+<td align="right">123.17</td>
+<td align="right">392.48 (15)</td>
+<td align="right"></td>
+<td align="left"> Avalanche, Seed, SSSE3 only. broken MSVC</td>
+</tr>
+<tr class="poor">
+<td align="left"><a href="pearsonhash256.txt">pearsonhash256</a></td>
+<td align="right">403.93</td>
+<td align="right">127.41</td>
+<td align="right">403.75 (28)</td>
+<td align="right"></td>
+<td align="left"> Avalanche, Seed, SSSE3 only. broken MSVC</td>
+</tr>
+<tr class="poor">
 <td align="left"><a href="VHASH_32.txt">VHASH_32</a></td>
 <td align="right">7713.21</td>
 <td align="right">68.96</td>
@@ -877,8 +917,8 @@ tr.good {background-color:#afa}
 <td align="right">2963.39</td>
 <td align="right">71.24</td>
 <td align="right">217.73 (3) </td>
-<td align="right"></td>
-<td align="left">fails most tests, machine-specific (x64 AES-NI)</td>
+<td align="right">1209</td>
+<td align="left">fails many tests, machine-specific (x64 AES-NI)</td>
 </tr>
 <tr class="poor">
 <td align="left"><a href="falkhash.txt">falkhash</a></td>
@@ -921,14 +961,6 @@ tr.good {background-color:#afa}
 <td align="left"></td>
 </tr>
 <tr class="good">
-<td align="left"><a href="beamsplitter.txt">beamsplitter</a></td>
-<td align="right">619.02</td>
-<td align="right">675.57</td>
-<td align="right">967.83 (49)</td>
-<td align="right"></td>
-<td align="left"><a href="../#problems">UB</a></td>
-</tr>
-<tr class="good">
 <td align="left"><a href="floppsyhash.txt">floppsyhash</a></td>
 <td align="right">62.76</td>
 <td align="right">1099.01</td>
@@ -966,6 +998,30 @@ tr.good {background-color:#afa}
 <td align="right">65.66</td>
 <td align="right">548.21 (65)</td>
 <td align="right">237</td>
+<td align="left"></td>
+</tr>
+<tr class="good">
+<td align="left"><a href="pearsonbhash64.txt">pearsonbhash64</a></td>
+<td align="right">2321.28</td>
+<td align="right">71.86</td>
+<td align="right">390.69 (18)</td>
+<td align="right">683</td>
+<td align="left"></td>
+</tr>
+<tr class="good">
+<td align="left"><a href="pearsonbhash128.txt">pearsonbhash128</a></td>
+<td align="right">2221.71</td>
+<td align="right">79.17</td>
+<td align="right">400.51 (20)</td>
+<td align="right">1134</td>
+<td align="left"></td>
+</tr>
+<tr class="good">
+<td align="left"><a href="pearsonbhash256.txt">pearsonbhash256</a></td>
+<td align="right">1850.94</td>
+<td align="right">91.40</td>
+<td align="right">414.29 (19)</td>
+<td align="right">844</td>
 <td align="left"></td>
 </tr>
 <tr class="good">
@@ -1015,14 +1071,6 @@ tr.good {background-color:#afa}
 <td align="right">499.35 (105)</td>
 <td align="right">778</td>
 <td align="left">0.9% bias</td>
-</tr>
-<tr class="good">
-<td align="left"><a href="BEBB4185.txt">BEBB4185</a></td>
-<td align="right">2951.01</td>
-<td align="right">213.86</td>
-<td align="right">346.87 (4)</td>
-<td align="right">1294</td>
-<td align="left"><a href="../#problems">UB</a>, MSVC specific</td>
 </tr>
 <tr class="good">
 <td align="left"><a href="TSip.txt">TSip</a></td>
@@ -1088,13 +1136,13 @@ tr.good {background-color:#afa}
 <td align="right">509</td>
 <td align="left"><a href="../#problems">UB</a>, Moment Chi2 5159 !</td>
 </tr>
-<tr class="good">
+<tr class="poor">
 <td align="left"><a href="MUM.txt">MUM</a></td>
 <td align="right">9550.97</td>
 <td align="right">34.82</td>
 <td align="right">444.64 (90)</td>
 <td align="right">1912</td>
-<td align="left"><a href="../#problems">UB</a>, machine-specific (32/64 differs)</td>
+<td align="left"><a href="../#problems">UB</a>, too many bad seeds, machine-specific (32/64 differs)</td>
 </tr>
 <tr class="good">
 <td align="left"><a href="MUMlow.txt">MUMlow</a></td>
@@ -1102,7 +1150,7 @@ tr.good {background-color:#afa}
 <td align="right">40.25</td>
 <td align="right">458.62 (86)</td>
 <td align="right">1912</td>
-<td align="left"><a href="../#problems">UB</a></td>
+<td align="left"><a href="../#problems">UB</a>, 5 bad seeds</td>
 </tr>
 <tr class="good">
 <td align="left"><a href="mirhash.txt">mirhash</a></td>
@@ -1297,6 +1345,30 @@ tr.good {background-color:#afa}
 <td align="left"><a href="../#problems">UB</a></td>
 </tr>
 <tr class="good">
+<td align="left"><a href="SpookyV2_32.txt">SpookyV2_32</a></td>
+<td align="right">16816.08</td>
+<td align="right">45.12</td>
+<td align="right">472.80 (19)</td>
+<td align="right">2069</td>
+<td align="left"></td>
+</tr>
+<tr class="good">
+<td align="left"><a href="SpookyV2_64.txt">SpookyV2_64</a></td>
+<td align="right">16879.61</td>
+<td align="right">45.18</td>
+<td align="right">490.62 (35)</td>
+<td align="right">2069</td>
+<td align="left"></td>
+</tr>
+<tr class="good">
+<td align="left"><a href="SpookyV2_128.txt">SpookyV2_128</a></td>
+<td align="right">16326.13</td>
+<td align="right">48.59</td>
+<td align="right">486.83 (124)</td>
+<td align="right">2069</td>
+<td align="left"></td>
+</tr>
+<tr class="good">
 <td align="left"><a href="t1ha2_atonce.txt">t1ha2_atonce</a></td>
 <td align="right">13024.80</td>
 <td align="right">40.82</td>
@@ -1470,6 +1542,22 @@ tr.good {background-color:#afa}
 <td align="right">77.91</td>
 <td align="right">434.56 (14)</td>
 <td align="right">1530</td>
+<td align="left"></td>
+</tr>
+<tr class="good">
+<td align="left"><a href="nmhash32.txt">nmhash32</a></td>
+<td align="right">12544.62</td>
+<td align="right">55.36</td>
+<td align="right">616.33 (49)</td>
+<td align="right">2445</td>
+<td align="left"></td>
+</tr>
+<tr class="good">
+<td align="left"><a href="nmhash32x.txt">nmhash32x</a></td>
+<td align="right">13986.77</td>
+<td align="right">41.40</td>
+<td align="right">628.08 (61)</td>
+<td align="right">1494</td>
 <td align="left"></td>
 </tr>
 </tbody>

@@ -10,6 +10,7 @@
 #include "Types.h"
 #include "Stats.h"
 #include "Random.h"   // for rand_p
+#include "Hashes.h"
 
 #include <stdint.h>
 #include <inttypes.h>
@@ -148,7 +149,7 @@ void TestSecretRangeThread ( const HashInfo* info, const uint64_t hi,
     Hash_Seed_init (hash, seed);
     for (int x : std::vector<int> {0,32,127,255}) {
       hashtype h;
-      uint8_t key[16];
+      uint8_t key[64]; // for crc32_pclmul, otherwie we would need only 16 byte
       memset(&key, x, sizeof(key));
       hash(key, 16, seed, &h);
       if (h == 0 && x == 0) {
@@ -163,7 +164,7 @@ void TestSecretRangeThread ( const HashInfo* info, const uint64_t hi,
     }
     if (!TestHashList(hashes, false, true, false, false, false, false)) {
       fails++;
-      printf("Bad seed 0x0x%" PRIx64 "\n", seed);
+      printf("Bad seed 0x%" PRIx64 "\n", seed);
       if (fails < 32) // don't print too many lines
         TestHashList(hashes, false);
       result = false;
@@ -173,6 +174,7 @@ void TestSecretRangeThread ( const HashInfo* info, const uint64_t hi,
       exit(1);
     }
   }
+  fflush(NULL);
   //printf("\n");
   return;
 }
@@ -214,10 +216,8 @@ bool BadSeedsTest ( HashInfo* info, bool testAll ) {
   bool result = true;
   bool have_lower = false;
 #ifdef HAVE_INT64
-  const uint64_t max_seed = sizeof(hashtype) == 4 ? UINT64_C(0xffffffff) : UINT64_C(0xffffffffffffffff);
   const std::vector<uint64_t> secrets = info->secrets;
 #else
-  const size_t max_seed = 0xffffffff;
   const std::vector<size_t> secrets = info->secrets;
 #endif
 #if !defined __arm__ && !defined __aarch64__
@@ -255,7 +255,6 @@ bool BadSeedsTest ( HashInfo* info, bool testAll ) {
     if (have_lower) {
       for (auto secret : secrets) {
         if (secret <= 0xffffffff) {
-          uint32_t s32 = (uint32_t)(secret & 0xffffffff);
           uint64_t s = secret;
           s = s << 32;
           printf("Suspect the 0x%" PRIx64 " seeds ...\n", s);
@@ -271,6 +270,7 @@ bool BadSeedsTest ( HashInfo* info, bool testAll ) {
     printf("PASS\n");
   else
     printf("FAIL\nEnsure to add these bad seeds to the list of secrets in main.cpp\n");
+  fflush(NULL);
   return result;
 }
 
@@ -298,9 +298,9 @@ void PerlinNoiseTest (int Xbits, int Ybits,
 
   printf("Testing %i coordinates (L%i) : \n", xMax * yMax, inputLen);
 
-  for(int x = 0; x < xMax; x++) {
+  for(uint64_t x = 0; x < xMax; x++) {
       memcpy(key, &x, inputLen);  // Note : only works with Little Endian
-      for (int y=0; y < yMax; y++) {
+      for (size_t y=0; y < yMax; y++) {
           hashtype h;
           Hash_Seed_init (hash, y);
           hash(key, inputLen, y, &h);
@@ -334,8 +334,8 @@ bool PerlinNoise ( hashfunc<hashtype> hash, int inputLen,
 
 template< typename hashtype, class blocktype >
 void CombinationKeygenRecurse ( blocktype * key, int len, int maxlen,
-                  blocktype * blocks, int blockcount,
-                  pfHash hash, std::vector<hashtype> & hashes )
+                                blocktype * blocks, int blockcount,
+                                pfHash hash, std::vector<hashtype> & hashes )
 {
   if(len == maxlen) return;  // end recursion
 
@@ -343,17 +343,11 @@ void CombinationKeygenRecurse ( blocktype * key, int len, int maxlen,
   {
     key[len] = blocks[i];
 
-    //if(len == maxlen-1)
-    {
-      hashtype h;
-      hash(key, (len+1) * sizeof(blocktype), 0, &h);
-      hashes.push_back(h);
-    }
+    hashtype h;
+    hash(key, (len+1) * sizeof(blocktype), 0, &h);
+    hashes.push_back(h);
 
-    //else
-    {
-      CombinationKeygenRecurse(key,len+1,maxlen,blocks,blockcount,hash,hashes);
-    }
+    CombinationKeygenRecurse(key,len+1,maxlen,blocks,blockcount,hash,hashes);
   }
 }
 
@@ -656,7 +650,7 @@ bool TextKeyTest ( hashfunc<hashtype> hash, const char * prefix, const char * co
   for(int i = 0; i < corelen; i++) printf("X");
   printf("%s\" - %ld keys\n",suffix,keycount);
 
-  uint8_t * key = new uint8_t[keybytes+1];
+  uint8_t * key = new uint8_t[std::min(keybytes+1, 64)];
 
   key[keybytes] = 0;
 
@@ -707,7 +701,7 @@ bool WordsKeyTest ( hashfunc<hashtype> hash, const long keycount,
   hashes.resize(keycount);
   Rand r(483723);
 
-  char* key = new char[maxlen+1];
+  char* key = new char[std::min(maxlen+1, 64)];
   std::string key_str;
 
   for(long i = 0; i < keycount; i++)
@@ -760,9 +754,11 @@ bool WordsStringTest ( hashfunc<hashtype> hash, std::vector<std::string> & words
       i--;
       continue;
     }
+    if (need_minlen64_align16(hash) && words[i].capacity() < 64)
+      words[i].resize(64);
     wordset.insert(words[i]);
+    const int len = words[i].length();
     const char *key = words[i].c_str();
-    int len = words[i].length();
     hash(key, len, 0, &hashes[i]);
   }
 
@@ -815,7 +811,7 @@ bool SeedTest ( pfHash hash, int keycount, bool drawDiagram )
 {
   printf("Keyset 'Seed' - %d keys\n",keycount);
 
-  const char * text = "The quick brown fox jumps over the lazy dog";
+  const char text[64] = "The quick brown fox jumps over the lazy dog";
   const int len = (int)strlen(text);
 
   //----------

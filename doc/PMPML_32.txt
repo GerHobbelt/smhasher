@@ -823,23 +823,25 @@ Testing collisions ( 32-bit) - Expected  512.0, actual   6444 (12.59x) (5933) !!
 
 [[[ MomentChi2 Tests ]]]
 
-Analyze hashes produced from a serie of linearly increasing numbers of 32-bit, using a step of 3 ... 
-Target values to approximate : 1391290.000000 - 1030.900000 
-Popcount 1 stats : 1391311.787344 - 1030.915509
-Popcount 0 stats : 1391272.287083 - 1030.945016
-MomentChi2 for bits 1 :  0.230228 
-MomentChi2 for bits 0 :  0.152168 
+Analyze hashes produced from a serie of linearly increasing numbers of 32-bit, using a step of 2 ... 
+Target values to approximate : 1391290.000000 - 686.666667 
+4 threads starting...  done
+Popcount 1 stats : 1391301.061718 - 687.272673
+Popcount 0 stats : 1391290.705194 - 687.301374
+MomentChi2 for bits 1 :  0.089059 
+MomentChi2 for bits 0 :  0.000361943 
 
 Derivative stats (transition from 2 consecutive values) : 
-Popcount 1 stats : 1396423.694661 - 1050.919206
-Popcount 0 stats : 1395011.033039 - 1038.103661
-MomentChi2 for deriv b1 :   12659.5 
-MomentChi2 for deriv b0 :   6692.15 
+Popcount 1 stats : 1372545.115483 - 634.864927
+Popcount 0 stats : 1374678.576061 - 639.728793
+MomentChi2 for deriv b1 :    265881 
+MomentChi2 for deriv b0 :    208037 
 
   FAIL !!!! 
 
 
 *********FAIL*********
+
 
 [[[ Prng Tests ]]]
 
@@ -852,5 +854,15 @@ The PRNG test is designed for hashes >= 64-bit
 Max bias 0.854642 - ( 15 :   1, 17)
 
 *********FAIL*********
+
+
+[[[ BadSeeds Tests ]]]
+
+Testing 0 internal secrets:
+0x0 PASS
+Testing the first 0xffffffff seeds ...
+4 threads starting...
+at 0 at 40000000 at 80000000 at c0000000 81ffffff 1ffffff 41ffffff 83ffffff 3ffffff 43ffffff 85ffffff 5ffffff 45ffffff 87ffffff 47ffffff 7ffffff 89ffffff 49ffffff 9ffffff 8bffffff 4bffffff bffffff 4dffffff 8dffffff dffffff 8fffffff 4fffffff fffffff 51ffffff 91ffffff 11ffffff 13ffffff 53ffffff 93ffffff 55ffffff 95ffffff 15ffffff 97ffffff 57ffffff 17ffffff 19ffffff 59ffffff 99ffffff 1bffffff 5bffffff 9bffffff 1dffffff 5dffffff 9dffffff 1fffffff 5fffffff 9fffffff 21ffffff a1ffffff 61ffffff 23ffffff a3ffffff 63ffffff 25ffffff 65ffffff a5ffffff 27ffffff 67ffffff a7ffffff 29ffffff 69ffffff a9ffffff 2bffffff 6bffffff abffffff 2dffffff 6dffffff adffffff 2fffffff 6fffffff afffffff 31ffffff 71ffffff b1ffffff 33ffffff b3ffffff 73ffffff 35ffffff 75ffffff b5ffffff 37ffffff 77ffffff b7ffffff 39ffffff 79ffffff b9ffffff 3bffffff 7bffffff bbffffff 7dffffff 3dffffff bdffffff 7fffffff 3fffffff bfffffff All 4 threads ended
+PASS
 
 

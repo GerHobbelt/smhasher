@@ -1,11 +1,12 @@
 //
-// SpookyHash: a 128-bit noncryptographic hash function
+// SpookyHash V1: a 128-bit noncryptographic hash function
 // By Bob Jenkins, public domain
 //   Oct 31 2010: alpha, framework + SpookyHash::Mix appears right
 //   Oct 31 2011: alpha again, Mix only good to 2^^69 but rest appears right
 //   Dec 31 2011: beta, improved Mix, tested it for 2-bit deltas
 //   Feb  2 2012: production, same bits as beta
 //   Feb  5 2012: adjusted definitions of uint* to be more portable
+//   Oct 2021: renamed to SpookyHashV1 (use V2 instead)
 // 
 // Up to 4 bytes/cycle for long messages.  Reasonably fast for short messages.
 // All 1 or 2 bit deltas achieve avalanche within 1% bias per output bit.
@@ -22,6 +23,9 @@
 // SpookyHash, they have nice math for combining the CRCs of pieces to form 
 // the CRCs of wholes.  There are also cryptographic hashes, but those are even 
 // slower than MD5.
+//
+// rurban: Note that this old version has UB and a known bad seed of 0x26bb3cda.
+// Rather use the better V2 instead.
 //
 
 #include "Platform.h"
@@ -43,7 +47,7 @@
 #endif
 
 
-class SpookyHash
+class SpookyHashV1
 {
 public:
     //

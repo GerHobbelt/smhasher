@@ -417,23 +417,25 @@ Testing collisions ( 32-bit) - Expected 2606569.0, actual 17442384 (6.69x) (1483
 
 [[[ MomentChi2 Tests ]]]
 
-Analyze hashes produced from a serie of linearly increasing numbers of 32-bit, using a step of 3 ... 
-Target values to approximate : 1391290.000000 - 1030.900000 
-Popcount 1 stats : 1391295.935186 - 1030.935871
-Popcount 0 stats : 1391296.311088 - 1030.970406
-MomentChi2 for bits 1 :  0.017085 
-MomentChi2 for bits 0 :  0.0193173 
+Analyze hashes produced from a serie of linearly increasing numbers of 32-bit, using a step of 2 ... 
+Target values to approximate : 1391290.000000 - 686.666667 
+4 threads starting...  done
+Popcount 1 stats : 1391855.911558 - 688.577863
+Popcount 0 stats : 1391771.712478 - 687.877481
+MomentChi2 for bits 1 :   232.872 
+MomentChi2 for bits 0 :   168.817 
 
 Derivative stats (transition from 2 consecutive values) : 
-Popcount 1 stats : 108149.757688 - 39.031160
-Popcount 0 stats : 7460472.379769 - 7493.008655
-MomentChi2 for deriv b1 :  1.53884e+09 
-MomentChi2 for deriv b0 :  4.32137e+09 
+Popcount 1 stats : 38250.278262 - 7.303216
+Popcount 0 stats : 11736290.783808 - 9999.075484
+MomentChi2 for deriv b1 :  2.63803e+09 
+MomentChi2 for deriv b0 :  1.00151e+10 
 
   FAIL !!!! 
 
 
 *********FAIL*********
+
 
 [[[ Keyset 'Text' Tests ]]]
 
@@ -733,6 +735,20 @@ The PRNG test is designed for hashes >= 64-bit
 
 ...........
 Max bias 3.000000 - ( 13 :   0,  1)
+*********FAIL*********
+
+
+[[[ BadSeeds Tests ]]]
+
+Testing 0 internal secrets:
+0x0 PASS
+Testing the first 0xffffffff seeds ...
+4 threads starting...
+at 0 at 40000000 at 80000000 at c0000000 41ffffff 81ffffff 1ffffff 83ffffff 43ffffff 3ffffff 85ffffff 45ffffff 5ffffff 87ffffff 47ffffff 7ffffff 89ffffff 9ffffff 49ffffff 8bffffff bffffff 4bffffff 8dffffff dffffff 4dffffff fffffff 8fffffff 4fffffff 11ffffff 91ffffff 51ffffff 13ffffff 93ffffff 53ffffff 15ffffff 95ffffff 55ffffff 17ffffff 97ffffff 57ffffff 19ffffff 99ffffff 59ffffff 1bffffff 9bffffff 5bffffff 9dffffff 1dffffff 5dffffff 1fffffff 9fffffff 5fffffff 21ffffff a1ffffff 61ffffff 23ffffff a3ffffff 63ffffff 25ffffff a5ffffff 65ffffff 27ffffff a7ffffff 67ffffff 29ffffff a9ffffff 69ffffff Broken seed 0xaa7c39ea => 0 with key[16] of all 0 bytes
+2bffffff abffffff 6bffffff 2dffffff adffffff 6dffffff 2fffffff afffffff 6fffffff 31ffffff b1ffffff 71ffffff 33ffffff b3ffffff 73ffffff 35ffffff b5ffffff 75ffffff 37ffffff b7ffffff 77ffffff 39ffffff b9ffffff 79ffffff 3bffffff bbffffff 7bffffff 3dffffff bdffffff 7dffffff 3fffffff bfffffff 7fffffff All 4 threads ended
+FAIL
+Ensure to add these bad seeds to the list of secrets in main.cpp
+
 *********FAIL*********
 
 

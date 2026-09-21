@@ -882,20 +882,22 @@ Testing distribution - Worst bias is the 20-bit window at bit 106 - 0.027%
 
 [[[ MomentChi2 Tests ]]]
 
-Analyze hashes produced from a serie of linearly increasing numbers of 32-bit, using a step of 3 ... 
-Target values to approximate : 38918200.000000 - 410450.000000 
-Popcount 1 stats : 38918833.167212 - 410465.067666
-Popcount 0 stats : 38919131.050341 - 410474.848307
-MomentChi2 for bits 1 :  0.488358 
-MomentChi2 for bits 0 :   1.05595 
+Analyze hashes produced from a serie of linearly increasing numbers of 32-bit, using a step of 2 ... 
+Target values to approximate : 38918200.000000 - 273633.333333 
+4 threads starting...  done
+Popcount 1 stats : 38919076.214497 - 273647.814056
+Popcount 0 stats : 38918663.532731 - 273629.961939
+MomentChi2 for bits 1 :   1.40285 
+MomentChi2 for bits 0 :  0.392613 
 
 Derivative stats (transition from 2 consecutive values) : 
-Popcount 1 stats : 38917737.965546 - 410436.138901
-Popcount 0 stats : 38919779.268852 - 410480.678047
-MomentChi2 for deriv b1 :  0.260055 
-MomentChi2 for deriv b0 :   3.03813 
+Popcount 1 stats : 38918387.971660 - 273638.718176
+Popcount 0 stats : 38919179.728116 - 273637.951735
+MomentChi2 for deriv b1 :  0.0645627 
+MomentChi2 for deriv b0 :   1.75391 
 
   Great !! 
+
 
 
 [[[ Keyset 'Text' Tests ]]]
@@ -1907,3 +1909,16 @@ Max bias 0.030320 - ( 12 :  70, 80)
 Input vcode 0x00000001, Output vcode 0x00000001, Result vcode 0x00000001
 Verification value is 0x00000001 - Testing took 1979.358647 seconds
 -------------------------------------------------------------------------------
+[[[ BadSeeds Tests ]]]
+
+Testing 0 internal secrets:
+0x0 PASS
+Testing the first 0xffffffff seeds ...
+4 threads starting...
+at 0 at 40000000 at 80000000 at c0000000 41ffffff 1ffffff 81ffffff 43ffffff 83ffffff 3ffffff 45ffffff 85ffffff 5ffffff 87ffffff 47ffffff 7ffffff 49ffffff 89ffffff 9ffffff 4bffffff 8bffffff bffffff 8dffffff 4dffffff dffffff 4fffffff fffffff 8fffffff 51ffffff 91ffffff 11ffffff 93ffffff 53ffffff 13ffffff 95ffffff 15ffffff 55ffffff 97ffffff 17ffffff 57ffffff 19ffffff 99ffffff 59ffffff 1bffffff 5bffffff 9bffffff 1dffffff 9dffffff 5dffffff 1fffffff 9fffffff 5fffffff 21ffffff a1ffffff 61ffffff 23ffffff a3ffffff 63ffffff 25ffffff a5ffffff 65ffffff 27ffffff a7ffffff 67ffffff 29ffffff a9ffffff 69ffffff 2bffffff abffffff 6bffffff 2dffffff 6dffffff adffffff 2fffffff 6fffffff afffffff 31ffffff b1ffffff 71ffffff 33ffffff b3ffffff 73ffffff 35ffffff 75ffffff b5ffffff 37ffffff 77ffffff b7ffffff 39ffffff b9ffffff 79ffffff 3bffffff bbffffff 7bffffff 3dffffff bdffffff 7dffffff 3fffffff bfffffff 7fffffff All 4 threads ended
+And the last 0xffffffff00000000 seeds ...
+4 threads starting...
+at ffffffff00000000 at ffffffffc0000000 at ffffffff40000000 at ffffffff80000000 ffffffff41ffffff ffffffff01ffffff ffffffff81ffffff ffffffff43ffffff ffffffff83ffffff ffffffff03ffffff ffffffff45ffffff ffffffff85ffffff ffffffff05ffffff ffffffff47ffffff ffffffff87ffffff ffffffff07ffffff ffffffff49ffffff ffffffff09ffffff ffffffff89ffffff ffffffff8bffffff ffffffff4bffffff ffffffff0bffffff ffffffff8dffffff ffffffff4dffffff ffffffff0dffffff ffffffff0fffffff ffffffff4fffffff ffffffff8fffffff ffffffff51ffffff ffffffff11ffffff ffffffff91ffffff ffffffff53ffffff ffffffff93ffffff ffffffff13ffffff ffffffff55ffffff ffffffff95ffffff ffffffff15ffffff ffffffff57ffffff ffffffff17ffffff ffffffff97ffffff ffffffff59ffffff ffffffff19ffffff ffffffff99ffffff ffffffff5bffffff ffffffff1bffffff ffffffff9bffffff ffffffff5dffffff ffffffff1dffffff ffffffff9dffffff ffffffff5fffffff ffffffff1fffffff ffffffff9fffffff ffffffff61ffffff ffffffff21ffffff ffffffffa1ffffff ffffffff63ffffff ffffffff23ffffff ffffffffa3ffffff ffffffff65ffffff ffffffff25ffffff ffffffffa5ffffff ffffffff67ffffff ffffffff27ffffff ffffffffa7ffffff ffffffff69ffffff ffffffff29ffffff ffffffffa9ffffff ffffffff6bffffff ffffffff2bffffff ffffffffabffffff ffffffff2dffffff ffffffff6dffffff ffffffffadffffff ffffffff2fffffff ffffffff6fffffff ffffffffafffffff ffffffffb1ffffff ffffffff31ffffff ffffffff71ffffff ffffffff33ffffff ffffffffb3ffffff ffffffff73ffffff ffffffff35ffffff ffffffffb5ffffff ffffffff75ffffff ffffffffb7ffffff ffffffff37ffffff ffffffff77ffffff ffffffff79ffffff ffffffffb9ffffff ffffffff39ffffff ffffffff7bffffff ffffffff3bffffff ffffffffbbffffff ffffffff7dffffff ffffffff3dffffff ffffffffbdffffff ffffffff7fffffff ffffffff3fffffff ffffffffbfffffff All 4 threads ended
+PASS
+
+

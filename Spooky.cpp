@@ -4,6 +4,7 @@
 //   Oct 31 2010: published framework, disclaimer ShortHash isn't right
 //   Nov 7 2010: disabled ShortHash
 //   Oct 31 2011: replace End, ShortMix, ShortEnd, enable ShortHash again
+//   Oct 2021: renamed to SpookyHashV1 (use V2 instead)
 
 #include <memory.h>
 #include "Spooky.h"
@@ -14,7 +15,7 @@
 // short hash ... it could be used on any message, 
 // but it's used by Spooky just for short messages.
 //
-void SpookyHash::Short(
+void SpookyHashV1::Short(
     const void *message,
     size_t length,
     uint64 *hash1,
@@ -120,7 +121,7 @@ void SpookyHash::Short(
 
 
 // do the whole hash in one call
-void SpookyHash::Hash128(
+void SpookyHashV1::Hash128(
     const void *message, 
     size_t length, 
     uint64 *hash1, 
@@ -185,7 +186,7 @@ void SpookyHash::Hash128(
 
 
 // init spooky state
-void SpookyHash::Init(uint64 seed1, uint64 seed2)
+void SpookyHashV1::Init(uint64 seed1, uint64 seed2)
 {
     m_length = 0;
     m_remainder = 0;
@@ -195,7 +196,7 @@ void SpookyHash::Init(uint64 seed1, uint64 seed2)
 
 
 // add a message fragment to the state
-void SpookyHash::Update(const void *message, size_t length)
+void SpookyHashV1::Update(const void *message, size_t length)
 {
     uint64 h0,h1,h2,h3,h4,h5,h6,h7,h8,h9,h10,h11;
     size_t newLength = length + m_remainder;
@@ -299,7 +300,7 @@ void SpookyHash::Update(const void *message, size_t length)
 
 
 // report the hash for the concatenation of all message fragments so far
-void SpookyHash::Final(uint64 *hash1, uint64 *hash2)
+void SpookyHashV1::Final(uint64 *hash1, uint64 *hash2)
 {
     // init the variables
     if (m_length < sc_bufSize)

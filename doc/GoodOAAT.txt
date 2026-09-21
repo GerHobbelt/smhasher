@@ -531,20 +531,22 @@ Testing distribution - Worst bias is the 20-bit window at bit 15 - 0.002%
 
 [[[ MomentChi2 Tests ]]]
 
-Analyze hashes produced from a serie of linearly increasing numbers of 32-bit, using a step of 3 ... 
-Target values to approximate : 1391290.000000 - 1030.900000 
-Popcount 1 stats : 1391283.667426 - 1030.856425
-Popcount 0 stats : 1391267.539119 - 1030.866735
-MomentChi2 for bits 1 :  0.0194502 
-MomentChi2 for bits 0 :  0.244689 
+Analyze hashes produced from a serie of linearly increasing numbers of 32-bit, using a step of 2 ... 
+Target values to approximate : 1391290.000000 - 686.666667 
+4 threads starting...  done
+Popcount 1 stats : 1391309.425743 - 687.298651
+Popcount 0 stats : 1391258.865161 - 687.222327
+MomentChi2 for bits 1 :   0.27465 
+MomentChi2 for bits 0 :  0.705572 
 
 Derivative stats (transition from 2 consecutive values) : 
-Popcount 1 stats : 1391332.199796 - 1031.059629
-Popcount 0 stats : 1391252.059059 - 1030.788059
-MomentChi2 for deriv b1 :  0.863655 
-MomentChi2 for deriv b0 :  0.698222 
+Popcount 1 stats : 1391252.277492 - 687.307647
+Popcount 0 stats : 1391366.594048 - 687.410601
+MomentChi2 for deriv b1 :   1.03567 
+MomentChi2 for deriv b0 :   4.26952 
 
   Great !! 
+
 
 
 [[[ Keyset 'Text' Tests ]]]
@@ -1115,3 +1117,10 @@ The PRNG test is designed for hashes >= 64-bit
 Max bias 0.009808 - ( 87 :  23, 24)
 
 
+[[[ BadSeeds Tests ]]]
+
+Testing 1 internal secrets:
+0x3b00 PASS
+Testing the first 0xffffffff seeds ...
+4 threads starting...
+at 0 at 40000000 at c0000000 at 80000000 41ffffff 81ffffff 1ffffff 43ffffff 3ffffff 83ffffff 85ffffff 45ffffff 5ffffff 87ffffff 7ffffff 47ffffff 89ffffff 9ffffff 49ffffff bffffff 8bffffff 4bffffff dffffff 8dffffff 4dffffff fffffff 8fffffff 4fffffff 11ffffff 91ffffff 51ffffff 13ffffff 93ffffff 53ffffff 15ffffff 95ffffff 55ffffff 17ffffff 97ffffff 57ffffff 19ffffff 99ffffff 59ffffff 1bffffff 9bffffff 5bffffff 1dffffff 9dffffff 5dffffff 1fffffff 9fffffff 5fffffff 21ffffff a1ffffff 61ffffff 23ffffff a3ffffff 63ffffff 25ffffff a5ffffff 65ffffff 27ffffff a7ffffff 67ffffff 29ffffff a9ffffff 69ffffff abffffff 2bffffff 6bffffff adffffff 2dffffff 6dffffff afffffff 2fffffff 6fffffff 31ffffff b1ffffff 71ffffff b3ffffff 33ffffff 73ffffff b5ffffff 35ffffff 75ffffff b7ffffff 37ffffff 77ffffff 

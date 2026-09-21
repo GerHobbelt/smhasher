@@ -407,20 +407,22 @@ Testing collisions ( 32-bit) - Expected 2606569.0, actual 131722472 (50.53x) (12
 
 [[[ MomentChi2 Tests ]]]
 
-Analyze hashes produced from a serie of linearly increasing numbers of 32-bit, using a step of 3 ... 
-Target values to approximate : 1391290.000000 - 1030.900000 
-Popcount 1 stats : 1391304.767889 - 1030.901031
-Popcount 0 stats : 1391307.599876 - 1030.983867
-MomentChi2 for bits 1 :  0.105777 
-MomentChi2 for bits 0 :  0.150229 
+Analyze hashes produced from a serie of linearly increasing numbers of 32-bit, using a step of 2 ... 
+Target values to approximate : 1391290.000000 - 686.666667 
+4 threads starting...  done
+Popcount 1 stats : 1391303.090340 - 687.277806
+Popcount 0 stats : 1391266.782174 - 687.218778
+MomentChi2 for bits 1 :  0.124719 
+MomentChi2 for bits 0 :  0.392367 
 
 Derivative stats (transition from 2 consecutive values) : 
-Popcount 1 stats : 1391288.299560 - 1031.009993
-Popcount 0 stats : 1391335.314310 - 1031.042799
-MomentChi2 for deriv b1 :  0.00140234 
-MomentChi2 for deriv b0 :   0.99585 
+Popcount 1 stats : 1391318.704021 - 687.322764
+Popcount 0 stats : 1391273.775387 - 687.238675
+MomentChi2 for deriv b1 :  0.599656 
+MomentChi2 for deriv b0 :  0.191598 
 
   Great !! 
+
 
 
 [[[ Keyset 'Text' Tests ]]]
@@ -950,5 +952,27 @@ The PRNG test is designed for hashes >= 64-bit
 
 ...........
 Max bias 0.005872 - ( 52 :   0,  8)
+
+
+[[[ BadSeeds Tests ]]]
+
+Testing 1 internal secrets:
+0x0 Broken seed 0x0 => 0 with key[1] of all 0 bytes confirmed => hash 0
+Broken seed 0x0 => 0 with key[2] of all 0 bytes confirmed => hash 0
+Broken seed 0x0 => 0 with key[4] of all 0 bytes confirmed => hash 0
+Broken seed 0x0 => 0 with key[8] of all 0 bytes confirmed => hash 0
+Broken seed 0x0 => 0 with key[12] of all 0 bytes confirmed => hash 0
+Broken seed 0x0 => 0 with key[16] of all 0 bytes confirmed => hash 0
+Broken seed 0x0 => 0 with key[32] of all 0 bytes confirmed => hash 0
+Broken seed 0x0 => 0 with key[64] of all 0 bytes confirmed => hash 0
+Broken seed 0x0 => 0 with key[128] of all 0 bytes confirmed => hash 0
+Testing the first 0xffffffff seeds ...
+4 threads starting...
+at 0 Broken seed 0x0 => 0 with key[16] of all 0 bytes
+at 40000000 at 80000000 at c0000000 81ffffff 1ffffff 41ffffff 83ffffff 43ffffff 3ffffff 85ffffff 5ffffff 45ffffff 87ffffff 47ffffff 7ffffff 89ffffff 49ffffff 9ffffff 8bffffff 4bffffff bffffff 8dffffff 4dffffff dffffff 8fffffff 4fffffff fffffff 91ffffff 51ffffff 11ffffff 93ffffff 13ffffff 53ffffff 95ffffff 15ffffff 55ffffff 97ffffff 17ffffff 57ffffff 19ffffff 99ffffff 59ffffff 9bffffff 1bffffff 5bffffff 9dffffff 1dffffff 5dffffff 9fffffff 1fffffff 5fffffff a1ffffff 21ffffff 61ffffff 23ffffff a3ffffff 63ffffff a5ffffff 25ffffff 65ffffff a7ffffff 67ffffff 27ffffff a9ffffff 69ffffff 29ffffff abffffff 2bffffff 6bffffff adffffff 2dffffff 6dffffff afffffff 2fffffff 6fffffff b1ffffff 31ffffff 71ffffff b3ffffff 73ffffff 33ffffff b5ffffff 75ffffff 35ffffff b7ffffff 77ffffff 37ffffff b9ffffff 79ffffff 39ffffff bbffffff 7bffffff 3bffffff bdffffff 7dffffff 3dffffff bfffffff 7fffffff 3fffffff All 4 threads ended
+FAIL
+Ensure to add these bad seeds to the list of secrets in main.cpp
+
+*********FAIL*********
 
 
