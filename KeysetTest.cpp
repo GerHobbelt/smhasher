@@ -24,16 +24,13 @@ bool VerificationTest ( pfHash hash, const int hashbits, uint32_t expected, bool
 
   // Hash keys of the form {0}, {0,1}, {0,1,2}... up to N=255,using 256-N as
   // the seed
-
   for(int i = 0; i < 256; i++)
   {
     key[i] = (uint8_t)i;
-
     hash(key,i,256-i,&hashes[i*hashbytes]);
   }
 
   // Then hash the result array
-
   hash(hashes,hashbytes*256,0,final);
 
   // The first four bytes of that hash, interpreted as a little-endian integer, is our
@@ -49,12 +46,12 @@ bool VerificationTest ( pfHash hash, const int hashbits, uint32_t expected, bool
 
   if(expected != verification)
   {
-    if(verbose) printf("Verification value 0x%08X : Failed! (Expected 0x%08x)\n",verification,expected);
+    if(verbose) printf("Verification value 0x%08X : FAIL! (Expected 0x%08x)\n",verification,expected);
     return false;
   }
   else
   {
-    if(verbose) printf("Verification value 0x%08X : Passed!\n",verification);
+    if(verbose) printf("Verification value 0x%08X : PASS\n",verification);
     return true;
   }
 }
@@ -73,7 +70,7 @@ bool VerificationTest ( pfHash hash, const int hashbits, uint32_t expected, bool
 
 bool SanityTest ( pfHash hash, const int hashbits )
 {
-  printf("Running sanity check 1");
+  printf("Running sanity check 1    ");
   
   Rand r(883741);
 
@@ -139,7 +136,7 @@ bool SanityTest ( pfHash hash, const int hashbits )
 
   if(result == false)
   {
-    printf("*********FAIL*********\n");
+    printf("FAIL  !!!!!\n");
   }
   else
   {
@@ -161,7 +158,7 @@ bool SanityTest ( pfHash hash, const int hashbits )
 
 void AppendedZeroesTest ( pfHash hash, const int hashbits )
 {
-  printf("Running sanity check 2");
+  printf("Running AppendedZeroesTest");
   
   Rand r(173994);
 
@@ -189,7 +186,7 @@ void AppendedZeroesTest ( pfHash hash, const int hashbits )
 
       if(memcmp(h1,h2,hashbytes) == 0)
       {
-        printf("\n*********FAIL*********\n");
+        printf("FAIL !!!!!\n");
         return;
       }
 
@@ -299,32 +296,18 @@ void DumpCollisionMap ( CollisionMap<hashtype,ByteVec> & cmap )
 void ReportCollisions ( pfHash hash )
 {
   printf("Hashing keyset\n");
-
   std::vector<uint128_t> hashes;
-
   HashCallback<uint128_t> c(hash,hashes);
-
   TwoBytesKeygen(20,c);
-
   printf("%d hashes\n",(int)hashes.size());
-
   printf("Finding collisions\n");
-
   HashSet<uint128_t> collisions;
-
   FindCollisions(hashes,collisions,1000);
-
   printf("%d collisions\n",(int)collisions.size());
-
   printf("Mapping collisions\n");
-
   CollisionMap<uint128_t,ByteVec> cmap;
-
   CollisionCallback<uint128_t> c2(hash,collisions,cmap);
-
   TwoBytesKeygen(20,c2);
-
   printf("Dumping collisions\n");
-
   DumpCollisionMap(cmap);
 }
