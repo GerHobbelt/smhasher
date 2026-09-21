@@ -12,9 +12,15 @@ if (NOT (CMAKE_C_COMPILER_ID STREQUAL CMAKE_CXX_COMPILER_ID))
 endif()
 
 IF (CMAKE_MAJOR_VERSION GREATER 2)
-  cmake_policy(SET CMP0056 OLD)
-  cmake_policy(SET CMP0065 NEW) # ENABLE_EXPORTS
-  cmake_policy(SET CMP0066 OLD)
+  IF (CMAKE_MAJOR_VERSION GREATER 3 OR CMAKE_MINOR_VERSION GREATER 1)
+    cmake_policy(SET CMP0056 OLD) # since 3.2. Honor link flags in try_compile() source-file signature.
+  ENDIF()
+  IF (CMAKE_MAJOR_VERSION GREATER 3 OR CMAKE_MINOR_VERSION GREATER 3)
+    cmake_policy(SET CMP0065 NEW) # since 3.4. ENABLE_EXPORTS.
+  ENDIF()
+  IF (CMAKE_MAJOR_VERSION GREATER 3 OR CMAKE_MINOR_VERSION GREATER 6)
+    cmake_policy(SET CMP0066 OLD) # since 3.7. Honor per-config flags in try_compile() source-file signature.
+  ENDIF()
 
   include (TestBigEndian)
   TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
@@ -31,6 +37,7 @@ if(NOT CMAKE_BUILD_TYPE)
   FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+# TODO: rather parse `$CC -march=native -dM -E - <<< ''` [gh #10]
 IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
    EXEC_PROGRAM(cat ARGS "/proc/cpuinfo" OUTPUT_VARIABLE CPUINFO)
    STRING(REGEX REPLACE "^.*(sse2).*$" "\\1" SSE_THERE ${CPUINFO})
@@ -38,6 +45,9 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
    STRING(REGEX REPLACE "^.*(sse4_2).*$" "\\1" SSE_THERE ${CPUINFO})
    STRING(COMPARE EQUAL "sse4_2" "${SSE_THERE}" SSE42_TRUE)
    set(FALKHASH_OBJ      falkhash-elf64.o)
+   IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
+     set(FHTW_OBJ          fhtw-elf64.o)
+   ENDIF()
    STRING(REGEX REPLACE "^.*(aes).*$" "\\1" AES_THERE ${CPUINFO})
    STRING(COMPARE EQUAL "aes" "${AES_THERE}" AES_TRUE)
 ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Darwin")
@@ -48,6 +58,9 @@ ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Darwin")
    STRING(REGEX REPLACE "^.*(SSE4.2).*$" "\\1" SSE_THERE ${CPUINFO})
    STRING(COMPARE EQUAL "SSE4.2" "${SSE_THERE}" SSE42_TRUE)
    set(FALKHASH_OBJ      falkhash-macho64.o)
+   IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
+     set(FHTW_OBJ          fhtw-macho64.o)
+   ENDIF()
    STRING(REGEX REPLACE "^.*(AES).*$" "\\1" AES_THERE ${CPUINFO})
    STRING(COMPARE EQUAL "AES" "${AES_THERE}" AES_TRUE)
 ELSEIF(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
@@ -58,6 +71,9 @@ ELSEIF(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
    STRING(REGEX REPLACE "^.*(SSE4.2).*$" "\\1" SSE_THERE ${CPUINFO})
    STRING(COMPARE EQUAL "SSE4.2" "${SSE_THERE}" SSE42_TRUE)
    set(FALKHASH_OBJ      falkhash-elf64.o)
+   IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
+     set(FHTW_OBJ          fhtw-elf64.o)
+   ENDIF()
    STRING(REGEX REPLACE "^.*(AES).*$" "\\1" AES_THERE ${CPUINFO})
    STRING(COMPARE EQUAL "AES" "${AES_THERE}" AES_TRUE)
 ENDIF(CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -176,8 +192,11 @@ add_library(
   ${METROCRC64_SRC}
   ${METROCRC128_SRC}
   ${SSE4_OBJ}
+  # ${FHTW_OBJ}
   t1ha.c
   mum.cc
+  jody_hash32.c
+  jody_hash64.c
 )
 
 add_executable(
