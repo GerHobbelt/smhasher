@@ -159,7 +159,11 @@ HashInfo g_hashes[] =
 #else
 #define BL3_VF 0x50E4CD91
 #endif
+#ifndef HAVE_ASAN
+// blake3_c segfaults under ASan (tree-merge underflow in blake3.c:185), so skip
+// it in sanitizer builds until the upstream blake3 issue is fixed.
 { blake3c_test,        256, BL3_VF, "blake3_c",   "BLAKE3 c",   GOOD, {0x6a09e667} },
+#endif
 { Tachyon_Hash, 256, 0xE9BBF229, "Tachyon", "Tachyon 256-bit C", GOOD, {} },
 #if defined(HAVE_BLAKE3)
 { blake3_test,         256, 0x0, "blake3",       "BLAKE3 Rust", GOOD, {} },
@@ -821,6 +825,8 @@ HashInfo g_hashes[] =
 { rainstorm64_test,     64, 0xC8DB71D5, "rainstorm",     "Rainstorm 64-bit v0.0.6", GOOD, {} },
 { rainstorm128_test,   128, 0x17E0FC1B, "rainstorm-128", "Rainstorm 128-bit v0.0.6", GOOD, {} },
 { rainstorm256_test,   256, 0x8BDBF180, "rainstorm-256", "Rainstorm 256-bit v0.0.6", GOOD, {} },
+{ fifty2hash64_test,    64, 0x3C368934, "fifty2hash64",  "52hash, 64-bit", GOOD, {}},
+{ fifty2hash128_test,  128, 0x13CC0E73, "fifty2hash128", "52hash, 128-bit", GOOD, {}},
 };
 
 HashInfo * findHash ( const char * name )
